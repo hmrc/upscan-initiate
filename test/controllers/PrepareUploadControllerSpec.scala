@@ -2,6 +2,7 @@ package controllers
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
+import infrastructure.stub.StubPrepareUploadService
 import org.scalatest.Matchers
 import play.api.libs.json.{JsValue, Json}
 import play.api.test.{FakeRequest, Helpers}
@@ -19,7 +20,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers {
 
     "PrepareUploadController" should {
 
-      val controller = new PrepareUploadController()
+      val controller = new PrepareUploadController(new StubPrepareUploadService())
 
       "build and return upload URL if valid request" in {
 
