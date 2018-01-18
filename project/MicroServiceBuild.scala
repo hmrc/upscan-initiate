@@ -31,7 +31,6 @@ private object AppDependencies {
 
   private def commonTestDependencies(scope: String) = Seq(
     "uk.gov.hmrc" %% "hmrctest" % "3.0.0" % scope,
-    "uk.gov.hmrc" %% "auth-test" % "4.1.0" % scope,
     "uk.gov.hmrc" %% "http-verbs-test" % "1.1.0" % scope,
     "org.scalatest" %% "scalatest" % "2.2.6" % scope,
     "org.pegdown" % "pegdown" % "1.6.0" % scope,
