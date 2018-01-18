@@ -1,12 +1,18 @@
 import sbt._
+import uk.gov.hmrc.SbtAutoBuildPlugin
+import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
+import uk.gov.hmrc.versioning.SbtGitVersioning
 
 object MicroServiceBuild extends Build with MicroService {
-  import scala.util.Properties.envOrElse
 
-  val appName = "fu-prepare"
-  val appVersion = envOrElse("FU_PREPARE_VERSION", "999-SNAPSHOT")
+  val appName = "upscan-initiate"
+
+  override lazy val plugins: Seq[Plugins] = Seq(
+    SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin
+  )
 
   override lazy val appDependencies: Seq[ModuleID] = AppDependencies()
+
 }
 
 private object AppDependencies {
@@ -14,7 +20,8 @@ private object AppDependencies {
 
   val compile = Seq(
     "uk.gov.hmrc" %% "bootstrap-play-25" % "1.2.0",
-    "com.amazonaws" % "aws-java-sdk-s3" % "1.11.261"
+    "com.amazonaws" % "aws-java-sdk-s3" % "1.11.261",
+    "com.typesafe.akka" %% "akka-stream" % "2.5.6"
   )
 
   trait TestDependencies {
@@ -32,7 +39,10 @@ private object AppDependencies {
     "org.mockito" % "mockito-core" % "2.6.2" % scope,
     "com.github.tomakehurst" % "wiremock" % "2.2.2" % scope,
     "org.scalamock" %% "scalamock-scalatest-support" % "3.5.0" % scope,
-    "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % scope
+    "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % scope,
+    "io.findify" %% "s3mock" % "0.2.4" % scope,
+    "com.typesafe.play" %% "play-ws" % "2.5.6" % scope,
+    "commons-io" % "commons-io" % "2.6" % scope
   )
 
   object Test {
