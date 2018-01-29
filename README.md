@@ -14,7 +14,6 @@ should contain details about expected upload, which include additional metadata,
 about content type and size, and callback URL which will be used to notify user. Here is an example of the request:
 ```
 {
-	"id" : "test123",
 	"callbackUrl": "http://myservice.com/callback?fileId=123"
 }
 ```
@@ -27,7 +26,11 @@ functionality will be removed). Here is a sample response from the service:
         "upload": {
             "href": "https://upload.aws.com?someParams=1234
             "method": "PUT"
-        }
+        },
+        "download": {
+                    "href": "https://upload.aws.com?someParams=1234
+                    "method": "GET"
+                }
     }
 }
 ```
@@ -50,9 +53,10 @@ Prerequisites:
 - Working AWS MFA authentication
 
 In order to run the app against lab environment it's neeeded to run the following commands:
-- export AWS_DEFAULT_PROFILE=name_of_proper_profile_in_dot_aws_credentials_file
-- ./aws-profile sbt
-
+```
+export AWS_DEFAULT_PROFILE=name_of_proper_profile_in_dot_aws_credentials_file
+./aws-profile sbt
+```
 These commands will give you an access to SBT shell where you can run the service using 'run' or 'start' commands.
 
 ### License

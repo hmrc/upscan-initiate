@@ -32,11 +32,17 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers {
 
         status(result) shouldBe 200
         val json = Helpers.contentAsJson(result)
-        json shouldBe Json.obj("_links" -> Json.obj(
-          "upload" -> Json.obj(
-            "href" -> "http://localhost:8080/1",
-            "method" -> "PUT"
-          )
+        json shouldBe Json.obj(
+          "reference" -> "TEST",
+          "_links" -> Json.obj(
+            "upload" -> Json.obj(
+              "href" -> "http://localhost:8080/link",
+              "method" -> "PUT"
+            ),
+            "download" -> Json.obj(
+              "href" -> "http://localhost:8080/link",
+              "method" -> "GET"
+            )
         ))
       }
 

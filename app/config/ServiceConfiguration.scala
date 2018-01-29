@@ -7,6 +7,7 @@ import play.api.Configuration
 
 trait ServiceConfiguration {
 
+  def useInstanceProfileCredentials: Boolean
   def region: String
   def transientBucketName: String
   def sessionToken: Option[String]
@@ -16,6 +17,8 @@ trait ServiceConfiguration {
 }
 
 class PlayBasedServiceConfiguration @Inject() (configuration : Configuration) extends ServiceConfiguration {
+
+  override def useInstanceProfileCredentials = configuration.getBoolean("aws.s3.use.instance.profile.credentials").getOrElse(false)
 
   override def region = getRequired(configuration.getString(_), "aws.s3.region")
 

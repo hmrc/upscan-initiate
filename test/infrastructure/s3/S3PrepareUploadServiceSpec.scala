@@ -6,7 +6,6 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import config.ServiceConfiguration
 import domain.UploadSettings
-import org.apache.commons.io.IOUtils
 import org.scalatest.Matchers
 import play.api.libs.ws.ahc.AhcWSClient
 import uk.gov.hmrc.play.test.UnitSpec
@@ -15,6 +14,10 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 
 class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with WithS3Mock {
+
+  implicit val actorSystem = ActorSystem()
+
+  implicit val materializer = ActorMaterializer()
 
   val serviceConfiguration = new ServiceConfiguration {
 
@@ -39,29 +42,31 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with WithS3Mock 
 
       s3client.createBucket(serviceConfiguration.transientBucketName)
 
-      val uploadSettings = UploadSettings("foo", "http://www.google.com")
+      val uploadSettings = UploadSettings("http://www.test.com")
 
-      val link = service.setupUpload(uploadSettings)
+      val result = service.setupUpload(uploadSettings)
 
-      uploadTheFile(link.href, "TEST")
+      uploadTheFile(result.uploadLink.href, "TEST")
 
-      val createdObject = s3client.getObject(serviceConfiguration.transientBucketName, "foo")
-      assert(createdObject != null)
-      IOUtils.toString(createdObject.getObjectContent) shouldBe "TEST"
+      val createdObject = downloadTheFile(result.downloadLink.href)
+      createdObject shouldBe "TEST"
 
     }
   }
 
   def uploadTheFile(url : String, content : String): Unit = {
-
-    implicit val actorSystem = ActorSystem()
-
-    implicit val materializer = ActorMaterializer()
-
     val wsClient = AhcWSClient()
     val result = Await.result(wsClient.url(url).put(content), 10 seconds)
     val status = result.status
     assert(status >= 200 && status <= 299)
+  }
+
+  def downloadTheFile(url : String) : String = {
+    val wsClient = AhcWSClient()
+    val result = Await.result(wsClient.url(url).get(), 10 seconds)
+    val status = result.status
+    assert(status >= 200 && status <= 299)
+    result.body
   }
 
 }
