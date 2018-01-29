@@ -1,56 +1,51 @@
 package infrastructure.s3
 
-import java.nio.file.Files
+import java.time
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import com.amazonaws.auth.{AWSStaticCredentialsProvider, AnonymousAWSCredentials}
-import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
-import com.amazonaws.services.s3.AmazonS3ClientBuilder
+import config.ServiceConfiguration
 import domain.UploadSettings
-import io.findify.s3mock.S3Mock
 import org.apache.commons.io.IOUtils
-import org.scalatest.{BeforeAndAfter, Matchers}
+import org.scalatest.Matchers
 import play.api.libs.ws.ahc.AhcWSClient
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with BeforeAndAfter {
+class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with WithS3Mock {
 
-  val s3mock = S3Mock(port = 8001, dir = Files.createTempDirectory("s3").toFile.getAbsolutePath)
+  val serviceConfiguration = new ServiceConfiguration {
 
-  lazy val client = AmazonS3ClientBuilder
-    .standard
-    .withPathStyleAccessEnabled(true)
-    .withEndpointConfiguration(new EndpointConfiguration("http://localhost:8001", "us-west-2"))
-    .withCredentials(new AWSStaticCredentialsProvider(new AnonymousAWSCredentials()))
-    .build
+    override def accessKeyId: String = ???
 
-  before {
-    s3mock.start
-  }
+    override def secretAccessKey: String = ???
 
-  after {
-    s3mock.stop
+    override def transientBucketName: String = "test-bucket"
+
+    override def sessionToken: Option[String] = ???
+
+    override def region: String = ???
+
+    override def fileExpirationPeriod: time.Duration = time.Duration.ofDays(7)
   }
 
   "S3 Upload Service" should {
 
-    val service = new S3PrepareUploadService(client)
+    val service = new S3PrepareUploadService(s3client, serviceConfiguration)
 
     "create link that allows to upload the file" in {
 
-      client.createBucket(service.bucketName)
+      s3client.createBucket(serviceConfiguration.transientBucketName)
 
       val uploadSettings = UploadSettings("foo", "http://www.google.com")
 
-      val link = Await.result(service.setupUpload(uploadSettings), 10 seconds)
+      val link = service.setupUpload(uploadSettings)
 
       uploadTheFile(link.href, "TEST")
 
-      val createdObject = client.getObject(service.bucketName, "foo")
+      val createdObject = s3client.getObject(serviceConfiguration.transientBucketName, "foo")
       assert(createdObject != null)
       IOUtils.toString(createdObject.getObjectContent) shouldBe "TEST"
 
@@ -64,7 +59,8 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with BeforeAndAf
     implicit val materializer = ActorMaterializer()
 
     val wsClient = AhcWSClient()
-    val status = Await.result(wsClient.url(url).put(content), 10 seconds).status
+    val result = Await.result(wsClient.url(url).put(content), 10 seconds)
+    val status = result.status
     assert(status >= 200 && status <= 299)
   }
 

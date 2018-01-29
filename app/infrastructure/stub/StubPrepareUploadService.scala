@@ -6,5 +6,5 @@ import scala.concurrent.Future
 
 class StubPrepareUploadService extends PrepareUploadService {
 
-  override def setupUpload(settings: UploadSettings) = Future.successful(Link(s"http://localhost:8080/${settings.id}", "PUT"))
+  override def setupUpload(settings: UploadSettings) = Link(s"http://localhost:8080/${settings.id}", "PUT")
 }

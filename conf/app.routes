@@ -1,1 +1,1 @@
-POST        /prepare                                                    @controllers.PrepareUploadController.prepareUpload
+POST        /initiate                                                  @controllers.PrepareUploadController.prepareUpload

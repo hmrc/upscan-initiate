@@ -1,32 +1,28 @@
 package infrastructure.s3
 
-import java.time.{Instant, Period}
+import java.time.Instant
 import java.util.Date
+import javax.inject.Inject
 
 import com.amazonaws.HttpMethod
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest
+import config.ServiceConfiguration
 import domain.{Link, PrepareUploadService, UploadSettings}
 
-import scala.concurrent.Future
-
-
-class S3PrepareUploadService(client : AmazonS3) extends PrepareUploadService {
-
-  val bucketName = "test-bucket"
-
-  val expirationPeriod = Period.ofDays(7)
+class S3PrepareUploadService @Inject() (client : AmazonS3, configuration: ServiceConfiguration) extends PrepareUploadService {
 
   override def setupUpload(settings: UploadSettings) = {
 
-    val expiration = Instant.now().plus(expirationPeriod)
+    val expiration = Instant.now().plus(configuration.fileExpirationPeriod)
 
-    val generatePresignedUrlRequest = new GeneratePresignedUrlRequest(bucketName, settings.id)
+    val generatePresignedUrlRequest = new GeneratePresignedUrlRequest(configuration.transientBucketName, settings.id)
     generatePresignedUrlRequest.setMethod(HttpMethod.PUT)
     generatePresignedUrlRequest.setExpiration(Date.from(expiration))
 
     val url = client.generatePresignedUrl(generatePresignedUrlRequest)
 
-    Future.successful(Link(url.toString, "PUT"))
+    Link(url.toString, "PUT")
   }
+
 }
