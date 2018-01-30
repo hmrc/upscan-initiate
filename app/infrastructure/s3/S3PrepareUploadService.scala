@@ -1,32 +1,41 @@
 package infrastructure.s3
 
-import java.time.{Instant, Period}
-import java.util.Date
+import java.time.Instant
+import java.util.{Date, UUID}
+import javax.inject.{Inject, Singleton}
 
 import com.amazonaws.HttpMethod
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest
-import domain.{Link, PrepareUploadService, UploadSettings}
+import config.ServiceConfiguration
+import domain._
 
-import scala.concurrent.Future
+@Singleton
+class S3PrepareUploadService @Inject() (client : AmazonS3, configuration: ServiceConfiguration) extends PrepareUploadService {
 
+  override def setupUpload(settings: UploadSettings) : PreparedUpload = {
 
-class S3PrepareUploadService(client : AmazonS3) extends PrepareUploadService {
+    val reference = generateReference()
 
-  val bucketName = "test-bucket"
+    val expiration = Instant.now().plus(configuration.fileExpirationPeriod)
 
-  val expirationPeriod = Period.ofDays(7)
+    val uploadUrl = generatePresignedS3Url(reference, expiration, HttpMethod.PUT)
+    val downloadUrl = generatePresignedS3Url(reference, expiration, HttpMethod.GET)
 
-  override def setupUpload(settings: UploadSettings) = {
+    PreparedUpload(reference = reference, uploadLink = uploadUrl, downloadLink = downloadUrl)
+  }
 
-    val expiration = Instant.now().plus(expirationPeriod)
+  private def generateReference() : Reference = {
+    Reference(UUID.randomUUID().toString)
+  }
 
-    val generatePresignedUrlRequest = new GeneratePresignedUrlRequest(bucketName, settings.id)
-    generatePresignedUrlRequest.setMethod(HttpMethod.PUT)
-    generatePresignedUrlRequest.setExpiration(Date.from(expiration))
+  private def generatePresignedS3Url(reference : Reference, expiration: Instant, httpMethod: HttpMethod) = {
 
-    val url = client.generatePresignedUrl(generatePresignedUrlRequest)
+    val presignedUploadUrlRequest = new GeneratePresignedUrlRequest(configuration.transientBucketName, reference.value)
+    presignedUploadUrlRequest.setMethod(httpMethod)
+    presignedUploadUrlRequest.setExpiration(Date.from(expiration))
+    val url = client.generatePresignedUrl(presignedUploadUrlRequest)
 
-    Future.successful(Link(url.toString, "PUT"))
+    Link(url.toString, httpMethod.name())
   }
 }
