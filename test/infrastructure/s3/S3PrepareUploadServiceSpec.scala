@@ -32,6 +32,8 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with WithS3Mock 
     override def region: String = ???
 
     override def fileExpirationPeriod: time.Duration = time.Duration.ofDays(7)
+
+    override def useInstanceProfileCredentials = ???
   }
 
   "S3 Upload Service" should {
