@@ -1,6 +1,7 @@
 import config.{PlayBasedServiceConfiguration, ServiceConfiguration}
 import domain.PrepareUploadService
-import infrastructure.s3.{S3PostSigner, S3PostSignerProvider, S3PrepareUploadService}
+import infrastructure.s3.awsclient.S3PostSigner
+import infrastructure.s3.{S3PostSignerProvider, S3PrepareUploadService}
 import play.api.inject.{Binding, Module}
 import play.api.{Configuration, Environment}
 

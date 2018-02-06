@@ -17,24 +17,33 @@ about content type and size, and callback URL which will be used to notify user.
 	"callbackUrl": "http://myservice.com/callback?fileId=123"
 }
 ```
-The service replies with JSON containg two URLs: one that allows to upload the file using PUT method and the second
-one that later allows to dowload the file (TBD: download link is likely to be removed when virus scan and callback
-functionality will be removed). Here is a sample response from the service:
+The service replies with JSON containg reference of the upload and information about the POST form that has to be sent in order to upload the file:
 ```
 {
-    "_links": {
-        "upload": {
-            "href": "https://upload.aws.com?someParams=1234
-            "method": "PUT"
-        },
-        "download": {
-                    "href": "https://upload.aws.com?someParams=1234
-                    "method": "GET"
-                }
+    "reference": "11370e18-6e24-453e-b45a-76d3e32ea33d",
+    "uploadRequest": {
+        "href": "https://hmrc-live-upcheck-transient.s3.eu-west-2.amazonaws.com",
+        "fields": {
+            "X-Amz-Algorithm": "AWS4-HMAC-SHA256",
+            "X-Amz-Expiration": "2018-02-09T12:35:45.297Z",
+            "X-Amz-Signature": "xxxx",
+            "key": "xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+            "acl": "public-read",
+            "X-Amz-Credential": "ASIAxxxxxxxxx/20180202/eu-west-2/s3/aws4_request",
+            "policy": "xxxxxxxx=="
+        }
     }
 }
 ```
-Calling service should pass upload url to the client and let him upload the file. 
+In order to upload the file, initiating microservice or the client should send the following form:
+```
+<form method="POST" href="...value of the href from the response underneath...">
+    <input type="hidden" name="X-Amz-Algorithm" value="AWS4-HMAC-SHA256">
+    ... all the fields returned in "fields" map in the respone underneath ...
+    <input type="file" name="file"/> <- form field representing the file to upload
+    <input type="submit" value="OK"/>
+</form>
+```
 
 # Additional notes
 
@@ -59,6 +68,9 @@ export AWS_DEFAULT_PROFILE=name_of_proper_profile_in_dot_aws_credentials_file
 ```
 These commands will give you an access to SBT shell where you can run the service using 'run' or 'start' commands.
 
+### Tests
+
+Upscan service has end-to-end acceptance tests which can be found in https://github.com/hmrc/upscan-acceptance-tests repository
 ### License
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html")

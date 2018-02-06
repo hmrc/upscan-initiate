@@ -4,6 +4,7 @@ import javax.inject.{Inject, Provider}
 
 import com.amazonaws.auth._
 import config.ServiceConfiguration
+import infrastructure.s3.awsclient.{JavaAWSClientBasedS3PostSigner, S3PostSigner}
 
 class S3PostSignerProvider @Inject()(configuration: ServiceConfiguration) extends Provider[S3PostSigner] {
 

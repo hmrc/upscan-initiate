@@ -5,6 +5,7 @@ import java.util.Date
 
 import config.ServiceConfiguration
 import domain.UploadSettings
+import infrastructure.s3.awsclient.S3PostSigner
 import org.scalatest.Matchers
 import uk.gov.hmrc.play.test.UnitSpec
 
@@ -30,7 +31,7 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers {
   }
 
   val s3PostSigner = new S3PostSigner {
-    override def presignForm(userSpecifiedExpirationDate: Date, bucketName: String, key: String) =
+    override def presignForm(userSpecifiedExpirationDate: Date, bucketName: String, key: String, acl : String, additionalMetadata : java.util.Map[String, String]) =
       Map("bucket" ->  bucketName, "key" -> key).asJava
 
     override def buildEndpoint(bucketName: String): String = s"$bucketName.s3"

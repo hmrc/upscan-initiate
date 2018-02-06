@@ -1,9 +1,4 @@
-//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by Fernflower decompiler)
-//
-
-package infrastructure.s3;
+package infrastructure.s3.awsclient;
 
 import com.amazonaws.DefaultRequest;
 import com.amazonaws.SdkClientException;
@@ -14,6 +9,7 @@ import com.amazonaws.auth.internal.AWS4SignerUtils;
 import com.amazonaws.regions.RegionUtils;
 import com.amazonaws.util.BinaryUtils;
 import com.amazonaws.util.StringUtils;
+import infrastructure.s3.awsclient.S3PostSigner;
 import sun.misc.BASE64Encoder;
 
 import javax.crypto.Mac;
@@ -43,12 +39,13 @@ public class JavaAWSClientBasedS3PostSigner implements S3PostSigner {
     }
 
     @Override
-    public Map<String, String> presignForm(Date userSpecifiedExpirationDate, String bucketName, String key)
+    public Map<String, String> presignForm(Date userSpecifiedExpirationDate, String bucketName, String key, String acl,
+                                           Map<String, String> additionalMetadata)
             throws UnsupportedEncodingException {
         AWSCredentials credentials = credentialsProvider.getCredentials();
         if (!this.isAnonymous(credentials)) {
             AWSCredentials sanitizedCredentials = this.sanitizeCredentials(credentials);
-            String timeStamp = AWS4SignerUtils.formatDateStamp(Instance.get().currentTimeMillis());
+            String timeStamp = AWS4SignerUtils.formatTimestamp(Instance.get().currentTimeMillis());
 
             AWS4SignerRequestParams signerRequestParams = new AWS4SignerRequestParams(new DefaultRequest("s3"), null, this.regionName, "s3", "AWS4-HMAC-SHA256", null);
             byte[] signingKey = this.newSigningKey(sanitizedCredentials, signerRequestParams.getFormattedSigningDate(), signerRequestParams.getRegionName(), signerRequestParams.getServiceName());
@@ -61,29 +58,43 @@ public class JavaAWSClientBasedS3PostSigner implements S3PostSigner {
             String signingCredentials = credentials.getAWSAccessKeyId() + "/" + signerRequestParams.getScope();
             fields.put("X-Amz-Algorithm", "AWS4-HMAC-SHA256");
             fields.put("X-Amz-Credential", signingCredentials);
-            fields.put("X-Amz-Expiration", ISO_INSTANT.format(userSpecifiedExpirationDate.toInstant()));
+            fields.put("X-Amz-Date", timeStamp);
 
-            String policy = "{ \"expiration\": \"" + ISO_INSTANT.format(userSpecifiedExpirationDate.toInstant()) + "\"," +
-                    "\"conditions\": [" +
-                    "{\"bucket\": \"" + bucketName + "\"}," +
-                    "{\"acl\": \"public-read\"}," +
-                    ((sanitizedCredentials instanceof AWSSessionCredentials) ?
-                            ("{\"x-amz-security-token\": \"" + ((AWSSessionCredentials) sanitizedCredentials).getSessionToken() + "\"},") : "") +
-                    "{\"x-amz-credential\": \"" + signingCredentials + "\"}," +
-                    "{\"x-amz-algorithm\": \"AWS4-HMAC-SHA256\"}," +
-                    "{\"key\": \"" + key + "\"}," +
-                    "{\"x-amz-date\": \"" + timeStamp + "\" }]}";
+            for (Map.Entry<String, String> field : additionalMetadata.entrySet()) {
+                fields.put("X-Amz-Meta-" + field.getKey(), field.getValue());
+            }
+
+            String policy = buildPolicy(userSpecifiedExpirationDate, bucketName, key, acl, additionalMetadata, sanitizedCredentials, timeStamp, signingCredentials);
 
             String encodedPolicy = new BASE64Encoder().encode(policy.getBytes("UTF-8")).replaceAll("\n", "").replaceAll("\r", "");
             fields.put("policy", encodedPolicy);
             byte[] signature = this.sign(encodedPolicy, signingKey, SigningAlgorithm.HmacSHA256);
             fields.put("X-Amz-Signature", BinaryUtils.toHex(signature));
-            fields.put("acl", "public-read");
+            fields.put("acl", acl);
             fields.put("key", key);
             return fields;
         } else {
             return new HashMap<>();
         }
+    }
+
+    private String buildPolicy(Date userSpecifiedExpirationDate, String bucketName, String key, String acl, Map<String, String> additionalMetadata, AWSCredentials sanitizedCredentials, String timeStamp, String signingCredentials) {
+        StringBuilder metadataJsonPart = new StringBuilder();
+        for (Map.Entry<String, String> field : additionalMetadata.entrySet()) {
+            metadataJsonPart.append("{\"X-Amz-Meta-" + field.getKey() + "\": \"" + field.getValue() + "\"},"); //TODO escaping
+        }
+
+        return "{ \"expiration\": \"" + ISO_INSTANT.format(userSpecifiedExpirationDate.toInstant()) + "\"," +
+                "\"conditions\": [" +
+                "{\"bucket\": \"" + bucketName + "\"}," +
+                "{\"acl\": \"" + acl + "\"}," +
+                ((sanitizedCredentials instanceof AWSSessionCredentials) ?
+                        ("{\"x-amz-security-token\": \"" + ((AWSSessionCredentials) sanitizedCredentials).getSessionToken() + "\"},") : "") +
+                "{\"x-amz-credential\": \"" + signingCredentials + "\"}," +
+                "{\"x-amz-algorithm\": \"AWS4-HMAC-SHA256\"}," +
+                "{\"key\": \"" + key + "\"}," +
+                metadataJsonPart +
+                "{\"x-amz-date\": \"" + timeStamp + "\" }]}";
     }
 
     protected AWSCredentials sanitizeCredentials(AWSCredentials credentials) {
