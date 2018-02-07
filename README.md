@@ -22,7 +22,7 @@ The service replies with JSON containg reference of the upload and information a
 {
     "reference": "11370e18-6e24-453e-b45a-76d3e32ea33d",
     "uploadRequest": {
-        "href": "https://hmrc-live-upcheck-transient.s3.eu-west-2.amazonaws.com",
+        "href": "https://bucketName.s3.eu-west-2.amazonaws.com",
         "fields": {
             "X-Amz-Algorithm": "AWS4-HMAC-SHA256",
             "X-Amz-Expiration": "2018-02-09T12:35:45.297Z",
@@ -37,9 +37,9 @@ The service replies with JSON containg reference of the upload and information a
 ```
 In order to upload the file, initiating microservice or the client should send the following form:
 ```
-<form method="POST" href="...value of the href from the response underneath...">
+<form method="POST" href="...value of the href from the response above...">
     <input type="hidden" name="X-Amz-Algorithm" value="AWS4-HMAC-SHA256">
-    ... all the fields returned in "fields" map in the respone underneath ...
+    ... all the fields returned in "fields" map in the response above ...
     <input type="file" name="file"/> <- form field representing the file to upload
     <input type="submit" value="OK"/>
 </form>

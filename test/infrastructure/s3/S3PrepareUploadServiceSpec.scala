@@ -6,12 +6,12 @@ import java.util.Date
 import config.ServiceConfiguration
 import domain.UploadSettings
 import infrastructure.s3.awsclient.S3PostSigner
-import org.scalatest.Matchers
+import org.scalatest.{GivenWhenThen, Matchers}
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.collection.JavaConverters._
 
-class S3PrepareUploadServiceSpec extends UnitSpec with Matchers {
+class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen {
 
   val serviceConfiguration = new ServiceConfiguration {
 
@@ -43,15 +43,15 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers {
 
     "create post form that allows to upload the file" in {
 
-      //given
+      Given("there are have valid upload settings")
 
       val uploadSettings = UploadSettings("http://www.callback.com")
 
-      //when
+      When("we setup the uploat")
 
       val result = service.setupUpload(uploadSettings)
 
-      //then
+      Then("proper upload request form definition should be returned")
 
       result.uploadRequest.href shouldBe s"${serviceConfiguration.transientBucketName}.s3"
       result.uploadRequest.fields shouldBe Map(

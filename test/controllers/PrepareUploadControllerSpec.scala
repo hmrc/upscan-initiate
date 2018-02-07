@@ -3,14 +3,14 @@ package controllers
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import domain._
-import org.scalatest.Matchers
+import org.scalatest.{GivenWhenThen, Matchers}
 import play.api.libs.json.{JsValue, Json}
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.duration._
 
-class PrepareUploadControllerSpec extends UnitSpec with Matchers {
+class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenThen {
 
   implicit val actorSystem = ActorSystem()
 
@@ -24,17 +24,17 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers {
 
       "build and return upload URL if valid request" in {
 
-        //given
+        Given("there is a valid upload request")
 
-        val request: FakeRequest[JsValue] = FakeRequest().withHeaders("Content-type" -> "application/json")
+        val request: FakeRequest[JsValue] = FakeRequest()
           .withBody(Json.obj("id" -> "1", "callbackUrl" -> "http://www.example.com")
         )
 
-        //when
+        When("upload initiation has been requested")
 
         val result = controller.prepareUpload()(request)
 
-        //then
+        Then("service returns valid response with reference and template of upload form")
 
         status(result) shouldBe 200
         val json = Helpers.contentAsJson(result)
@@ -50,15 +50,17 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers {
       }
 
       "return a bad request error if invalid request" in {
-        //given
-        val request: FakeRequest[JsValue] = FakeRequest().withHeaders("Content-type" -> "application/json")
-          .withBody(Json.obj("invalid" -> "body")
-          )
 
-        //when
+        Given("there is an invalid upload request")
+
+        val request: FakeRequest[JsValue] = FakeRequest().withBody(Json.obj("invalid" -> "body"))
+
+        When("upload initiation has been requested")
+
         val result = controller.prepareUpload()(request)
 
-        //then
+        Then("service returns error response")
+
         status(result) shouldBe 400
 
       }
