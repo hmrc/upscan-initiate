@@ -1,23 +1,17 @@
 package infrastructure.s3
 
 import java.time
+import java.util.Date
 
-import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
 import config.ServiceConfiguration
 import domain.UploadSettings
-import org.scalatest.Matchers
-import play.api.libs.ws.ahc.AhcWSClient
+import infrastructure.s3.awsclient.S3PostSigner
+import org.scalatest.{GivenWhenThen, Matchers}
 import uk.gov.hmrc.play.test.UnitSpec
 
-import scala.concurrent.Await
-import scala.concurrent.duration._
+import scala.collection.JavaConverters._
 
-class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with WithS3Mock {
-
-  implicit val actorSystem = ActorSystem()
-
-  implicit val materializer = ActorMaterializer()
+class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen {
 
   val serviceConfiguration = new ServiceConfiguration {
 
@@ -36,39 +30,37 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with WithS3Mock 
     override def useInstanceProfileCredentials = ???
   }
 
+  val s3PostSigner = new S3PostSigner {
+    override def presignForm(userSpecifiedExpirationDate: Date, bucketName: String, key: String, acl : String, additionalMetadata : java.util.Map[String, String]) =
+      Map("bucket" ->  bucketName, "key" -> key).asJava
+
+    override def buildEndpoint(bucketName: String): String = s"$bucketName.s3"
+  }
+
   "S3 Upload Service" should {
 
-    val service = new S3PrepareUploadService(s3client, serviceConfiguration)
+    val service = new S3PrepareUploadService(s3PostSigner, serviceConfiguration)
 
-    "create link that allows to upload the file" in {
+    "create post form that allows to upload the file" in {
 
-      s3client.createBucket(serviceConfiguration.transientBucketName)
+      Given("there are have valid upload settings")
 
-      val uploadSettings = UploadSettings("http://www.test.com")
+      val uploadSettings = UploadSettings("http://www.callback.com")
+
+      When("we setup the uploat")
 
       val result = service.setupUpload(uploadSettings)
 
-      uploadTheFile(result.uploadLink.href, "TEST")
+      Then("proper upload request form definition should be returned")
 
-      val createdObject = downloadTheFile(result.downloadLink.href)
-      createdObject shouldBe "TEST"
+      result.uploadRequest.href shouldBe s"${serviceConfiguration.transientBucketName}.s3"
+      result.uploadRequest.fields shouldBe Map(
+        "bucket" -> serviceConfiguration.transientBucketName,
+        "key" -> result.reference.value
+      )
 
     }
   }
 
-  def uploadTheFile(url : String, content : String): Unit = {
-    val wsClient = AhcWSClient()
-    val result = Await.result(wsClient.url(url).put(content), 10 seconds)
-    val status = result.status
-    assert(status >= 200 && status <= 299)
-  }
-
-  def downloadTheFile(url : String) : String = {
-    val wsClient = AhcWSClient()
-    val result = Await.result(wsClient.url(url).get(), 10 seconds)
-    val status = result.status
-    assert(status >= 200 && status <= 299)
-    result.body
-  }
 
 }

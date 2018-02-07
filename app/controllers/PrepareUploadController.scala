@@ -2,7 +2,7 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 
-import domain.{Link, PrepareUploadService, PreparedUpload, UploadSettings}
+import domain._
 import play.api.libs.json.{JsPath, JsValue, Json, Writes}
 import play.api.mvc.Action
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
@@ -22,17 +22,16 @@ class PrepareUploadController @Inject() (prepareUploadService : PrepareUploadSer
       (JsPath \ "method").write[String]
     )(unlift(Link.unapply))
 
+  implicit val postWrites: Writes[PostRequest] = Json.writes[PostRequest]
+
   implicit val uploadWrites: Writes[PreparedUpload] = new Writes[PreparedUpload] {
     def writes(preparedUpload: PreparedUpload) = Json.obj(
       "reference" -> preparedUpload.reference.value,
-      "_links" -> Json.obj(
-        "upload" -> preparedUpload.uploadLink,
-        "download" -> preparedUpload.downloadLink
-      )
+      "uploadRequest" -> preparedUpload.uploadRequest
     )
   }
 
-  def prepareUpload(): Action[JsValue] = Action.async(parse.json) { implicit request =>
+  def prepareUpload() = Action.async(parse.json) { implicit request =>
     withJsonBody[UploadSettings] {
       (fileUploadDetails: UploadSettings) =>
       val result: PreparedUpload = prepareUploadService.setupUpload(fileUploadDetails)

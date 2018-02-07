@@ -3,22 +3,14 @@ package infrastructure.s3
 import javax.inject.{Inject, Provider}
 
 import com.amazonaws.auth._
-import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
 import config.ServiceConfiguration
+import infrastructure.s3.awsclient.{JavaAWSClientBasedS3PostSigner, S3PostSigner}
 
-class S3ClientProvider @Inject() (configuration : ServiceConfiguration) extends Provider[AmazonS3] {
+class S3PostSignerProvider @Inject()(configuration: ServiceConfiguration) extends Provider[S3PostSigner] {
 
+  override def get() = new JavaAWSClientBasedS3PostSigner(configuration.region, credentialsProvider)
 
-  override def get() = {
-
-    AmazonS3ClientBuilder
-      .standard
-      .withRegion(configuration.region)
-      .withCredentials(buildCredentialsProvider)
-      .build()
-  }
-
-  private def buildCredentialsProvider = {
+  private lazy val credentialsProvider: AWSCredentialsProvider = {
     if (configuration.useInstanceProfileCredentials) {
       new EC2ContainerCredentialsProviderWrapper()
     } else {
@@ -30,3 +22,4 @@ class S3ClientProvider @Inject() (configuration : ServiceConfiguration) extends 
     }
   }
 }
+

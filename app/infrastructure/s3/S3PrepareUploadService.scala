@@ -4,14 +4,15 @@ import java.time.Instant
 import java.util.{Date, UUID}
 import javax.inject.{Inject, Singleton}
 
-import com.amazonaws.HttpMethod
-import com.amazonaws.services.s3.AmazonS3
-import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest
 import config.ServiceConfiguration
 import domain._
+import infrastructure.s3.awsclient.S3PostSigner
+
+import scala.collection.JavaConverters._
 
 @Singleton
-class S3PrepareUploadService @Inject() (client : AmazonS3, configuration: ServiceConfiguration) extends PrepareUploadService {
+class S3PrepareUploadService @Inject() (postSigner: S3PostSigner,
+                                        configuration: ServiceConfiguration) extends PrepareUploadService {
 
   override def setupUpload(settings: UploadSettings) : PreparedUpload = {
 
@@ -19,23 +20,17 @@ class S3PrepareUploadService @Inject() (client : AmazonS3, configuration: Servic
 
     val expiration = Instant.now().plus(configuration.fileExpirationPeriod)
 
-    val uploadUrl = generatePresignedS3Url(reference, expiration, HttpMethod.PUT)
-    val downloadUrl = generatePresignedS3Url(reference, expiration, HttpMethod.GET)
-
-    PreparedUpload(reference = reference, uploadLink = uploadUrl, downloadLink = downloadUrl)
+    PreparedUpload(reference = reference, uploadRequest = generatePost(reference.value, expiration))
   }
 
   private def generateReference() : Reference = {
     Reference(UUID.randomUUID().toString)
   }
 
-  private def generatePresignedS3Url(reference : Reference, expiration: Instant, httpMethod: HttpMethod) = {
-
-    val presignedUploadUrlRequest = new GeneratePresignedUrlRequest(configuration.transientBucketName, reference.value)
-    presignedUploadUrlRequest.setMethod(httpMethod)
-    presignedUploadUrlRequest.setExpiration(Date.from(expiration))
-    val url = client.generatePresignedUrl(presignedUploadUrlRequest)
-
-    Link(url.toString, httpMethod.name())
+  private def generatePost(key : String, expiration: Instant):PostRequest = {
+    val form = postSigner.presignForm(Date.from(expiration), configuration.transientBucketName, key, "private",
+      Map.empty[String, String].asJava)
+    PostRequest(postSigner.buildEndpoint(configuration.transientBucketName), form.asScala.toMap)
   }
+
 }
