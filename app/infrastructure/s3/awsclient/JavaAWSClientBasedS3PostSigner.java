@@ -9,7 +9,6 @@ import com.amazonaws.auth.internal.AWS4SignerUtils;
 import com.amazonaws.regions.RegionUtils;
 import com.amazonaws.util.BinaryUtils;
 import com.amazonaws.util.StringUtils;
-import infrastructure.s3.awsclient.S3PostSigner;
 import sun.misc.BASE64Encoder;
 
 import javax.crypto.Mac;
@@ -28,9 +27,16 @@ public class JavaAWSClientBasedS3PostSigner implements S3PostSigner {
 
     private AWSCredentialsProvider credentialsProvider;
 
+    private SdkClock sdkClock;
+
     public JavaAWSClientBasedS3PostSigner(String regionName, AWSCredentialsProvider awsCredentialsProvider) {
+        this(regionName, awsCredentialsProvider, Instance.get());
+    }
+
+    public JavaAWSClientBasedS3PostSigner(String regionName, AWSCredentialsProvider awsCredentialsProvider, SdkClock sdkClock) {
         this.regionName = regionName;
         this.credentialsProvider = awsCredentialsProvider;
+        this.sdkClock = sdkClock;
     }
 
     @Override
@@ -45,7 +51,7 @@ public class JavaAWSClientBasedS3PostSigner implements S3PostSigner {
         AWSCredentials credentials = credentialsProvider.getCredentials();
         if (!this.isAnonymous(credentials)) {
             AWSCredentials sanitizedCredentials = this.sanitizeCredentials(credentials);
-            String timeStamp = AWS4SignerUtils.formatTimestamp(Instance.get().currentTimeMillis());
+            String timeStamp = AWS4SignerUtils.formatTimestamp(sdkClock.currentTimeMillis());
 
             AWS4SignerRequestParams signerRequestParams = new AWS4SignerRequestParams(new DefaultRequest("s3"), null, this.regionName, "s3", "AWS4-HMAC-SHA256", null);
             byte[] signingKey = this.newSigningKey(sanitizedCredentials, signerRequestParams.getFormattedSigningDate(), signerRequestParams.getRegionName(), signerRequestParams.getServiceName());
@@ -81,20 +87,20 @@ public class JavaAWSClientBasedS3PostSigner implements S3PostSigner {
     private String buildPolicy(Date userSpecifiedExpirationDate, String bucketName, String key, String acl, Map<String, String> additionalMetadata, AWSCredentials sanitizedCredentials, String timeStamp, String signingCredentials) {
         StringBuilder metadataJsonPart = new StringBuilder();
         for (Map.Entry<String, String> field : additionalMetadata.entrySet()) {
-            metadataJsonPart.append("{\"X-Amz-Meta-" + field.getKey() + "\": \"" + field.getValue() + "\"},"); //TODO escaping
+            metadataJsonPart.append("{\"X-Amz-Meta-" + field.getKey() + "\":\"" + field.getValue() + "\"},"); //TODO escaping
         }
 
-        return "{ \"expiration\": \"" + ISO_INSTANT.format(userSpecifiedExpirationDate.toInstant()) + "\"," +
-                "\"conditions\": [" +
-                "{\"bucket\": \"" + bucketName + "\"}," +
-                "{\"acl\": \"" + acl + "\"}," +
+        return "{\"expiration\":\"" + ISO_INSTANT.format(userSpecifiedExpirationDate.toInstant()) + "\"," +
+                "\"conditions\":[" +
+                "{\"bucket\":\"" + bucketName + "\"}," +
+                "{\"acl\":\"" + acl + "\"}," +
                 ((sanitizedCredentials instanceof AWSSessionCredentials) ?
-                        ("{\"x-amz-security-token\": \"" + ((AWSSessionCredentials) sanitizedCredentials).getSessionToken() + "\"},") : "") +
-                "{\"x-amz-credential\": \"" + signingCredentials + "\"}," +
-                "{\"x-amz-algorithm\": \"AWS4-HMAC-SHA256\"}," +
-                "{\"key\": \"" + key + "\"}," +
+                        ("{\"x-amz-security-token\":\"" + ((AWSSessionCredentials) sanitizedCredentials).getSessionToken() + "\"},") : "") +
+                "{\"x-amz-credential\":\"" + signingCredentials + "\"}," +
+                "{\"x-amz-algorithm\":\"AWS4-HMAC-SHA256\"}," +
+                "{\"key\":\"" + key + "\"}," +
                 metadataJsonPart +
-                "{\"x-amz-date\": \"" + timeStamp + "\" }]}";
+                "{\"x-amz-date\":\"" + timeStamp + "\"}]}";
     }
 
     protected AWSCredentials sanitizeCredentials(AWSCredentials credentials) {

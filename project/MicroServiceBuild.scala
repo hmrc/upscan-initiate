@@ -43,7 +43,8 @@ private object AppDependencies {
     "org.scalatestplus.play" %% "scalatestplus-play"          % "2.0.0"             % scope,
     "io.findify"             %% "s3mock"                      % "0.2.4"             % scope,
     "com.typesafe.play"      %% "play-ws"                     % "2.5.6"             % scope,
-    "commons-io"             % "commons-io"                   % "2.6"               % scope
+    "commons-io"             % "commons-io"                   % "2.6"               % scope,
+    "org.scalacheck"         %% "scalacheck"                  % "1.13.4"            % scope
   )
 
   object Test {

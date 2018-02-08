@@ -1,24 +1,20 @@
 package infrastructure.s3
 
-import javax.inject.{Inject, Provider}
-
-import com.amazonaws.auth._
 import config.ServiceConfiguration
-import infrastructure.s3.awsclient.{JavaAWSClientBasedS3PostSigner, S3PostSigner}
+import infrastructure.s3.awsclient.{AwsCredentials, S3PostSigner, S3PostSignerImpl}
+import java.time.Instant
+import javax.inject.{Inject, Provider, Singleton}
 
+@Singleton
 class S3PostSignerProvider @Inject()(configuration: ServiceConfiguration) extends Provider[S3PostSigner] {
 
-  override def get() = new JavaAWSClientBasedS3PostSigner(configuration.region, credentialsProvider)
+  import configuration._
 
-  private lazy val credentialsProvider: AWSCredentialsProvider = {
-    if (configuration.useInstanceProfileCredentials) {
-      new EC2ContainerCredentialsProviderWrapper()
-    } else {
-      new AWSStaticCredentialsProvider(configuration.sessionToken match {
-        case Some(sessionToken) =>
-          new BasicSessionCredentials(configuration.accessKeyId, configuration.secretAccessKey, sessionToken)
-        case None => new BasicAWSCredentials(configuration.accessKeyId, configuration.secretAccessKey)
-      })
-    }
-  }
+  override def get() =
+    new S3PostSignerImpl(
+      AwsCredentials(accessKeyId, secretAccessKey, sessionToken),
+      regionName  = region,
+      currentTime = Instant.now
+    )
+
 }
