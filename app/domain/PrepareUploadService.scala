@@ -2,6 +2,6 @@ package domain
 
 trait PrepareUploadService {
 
-  def setupUpload(settings : UploadSettings) : PreparedUpload
+  def setupUpload(settings: UploadSettings): PreparedUpload
 
 }
