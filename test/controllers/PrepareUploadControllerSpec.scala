@@ -16,56 +16,55 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
   implicit val materializer = ActorMaterializer()
 
-  implicit val timeout : akka.util.Timeout = 10 seconds
+  implicit val timeout: akka.util.Timeout = 10 seconds
 
-    "PrepareUploadController" should {
+  "PrepareUploadController" should {
 
-      val controller = new PrepareUploadController(new StubPrepareUploadService())
+    val controller = new PrepareUploadController(new StubPrepareUploadService())
 
-      "build and return upload URL if valid request" in {
+    "build and return upload URL if valid request" in {
 
-        Given("there is a valid upload request")
+      Given("there is a valid upload request")
 
-        val request: FakeRequest[JsValue] = FakeRequest()
-          .withBody(Json.obj("id" -> "1", "callbackUrl" -> "http://www.example.com")
-        )
+      val request: FakeRequest[JsValue] = FakeRequest()
+        .withBody(Json.obj("id" -> "1", "callbackUrl" -> "http://www.example.com"))
 
-        When("upload initiation has been requested")
+      When("upload initiation has been requested")
 
-        val result = controller.prepareUpload()(request)
+      val result = controller.prepareUpload()(request)
 
-        Then("service returns valid response with reference and template of upload form")
+      Then("service returns valid response with reference and template of upload form")
 
-        status(result) shouldBe 200
-        val json = Helpers.contentAsJson(result)
-        json shouldBe Json.obj(
-          "reference" -> "TEST",
-          "uploadRequest" -> Json.obj(
-            "href" -> "http://test.com",
-            "fields" -> Json.obj(
-              "field1" -> "value1",
-              "field2" -> "value2"
-            )
+      status(result) shouldBe 200
+      val json = Helpers.contentAsJson(result)
+      json shouldBe Json.obj(
+        "reference" -> "TEST",
+        "uploadRequest" -> Json.obj(
+          "href" -> "http://test.com",
+          "fields" -> Json.obj(
+            "field1" -> "value1",
+            "field2" -> "value2"
+          )
         ))
-      }
+    }
 
-      "return a bad request error if invalid request" in {
+    "return a bad request error if invalid request" in {
 
-        Given("there is an invalid upload request")
+      Given("there is an invalid upload request")
 
-        val request: FakeRequest[JsValue] = FakeRequest().withBody(Json.obj("invalid" -> "body"))
+      val request: FakeRequest[JsValue] = FakeRequest().withBody(Json.obj("invalid" -> "body"))
 
-        When("upload initiation has been requested")
+      When("upload initiation has been requested")
 
-        val result = controller.prepareUpload()(request)
+      val result = controller.prepareUpload()(request)
 
-        Then("service returns error response")
+      Then("service returns error response")
 
-        status(result) shouldBe 400
-
-      }
+      status(result) shouldBe 400
 
     }
+
+  }
 
 }
 

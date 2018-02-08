@@ -14,12 +14,11 @@ class S3PostSignerProvider @Inject()(configuration: ServiceConfiguration) extend
     if (configuration.useInstanceProfileCredentials) {
       new EC2ContainerCredentialsProviderWrapper()
     } else {
-      new AWSStaticCredentialsProvider(
-        configuration.sessionToken match {
-          case Some(sessionToken) => new BasicSessionCredentials(configuration.accessKeyId, configuration.secretAccessKey, sessionToken)
-          case None => new BasicAWSCredentials(configuration.accessKeyId, configuration.secretAccessKey)
-        })
+      new AWSStaticCredentialsProvider(configuration.sessionToken match {
+        case Some(sessionToken) =>
+          new BasicSessionCredentials(configuration.accessKeyId, configuration.secretAccessKey, sessionToken)
+        case None => new BasicAWSCredentials(configuration.accessKeyId, configuration.secretAccessKey)
+      })
     }
   }
 }
-

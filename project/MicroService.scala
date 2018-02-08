@@ -14,9 +14,9 @@ trait MicroService {
 
   val appName: String
 
-  lazy val appDependencies : Seq[ModuleID] = ???
-  lazy val plugins : Seq[Plugins] = Nil
-  lazy val playSettings : Seq[Setting[_]] = Seq.empty
+  lazy val appDependencies: Seq[ModuleID] = ???
+  lazy val plugins: Seq[Plugins]          = Nil
+  lazy val playSettings: Seq[Setting[_]]  = Seq.empty
 
   routesGenerator := InjectedRoutesGenerator
 
@@ -35,8 +35,8 @@ trait MicroService {
   }
 
   lazy val microservice = Project(appName, file("."))
-    .enablePlugins(Seq(play.sbt.PlayScala) ++ plugins : _*)
-    .settings(playSettings : _*)
+    .enablePlugins(Seq(play.sbt.PlayScala) ++ plugins: _*)
+    .settings(playSettings: _*)
     .settings(scalaSettings ++ scoverageSettings: _*)
     .settings(publishingSettings: _*)
     .settings(defaultSettings(): _*)
@@ -57,7 +57,8 @@ trait MicroService {
       unmanagedSourceDirectories in IntegrationTest <<= (baseDirectory in IntegrationTest)(base => Seq(base / "it")),
       addTestReportOption(IntegrationTest, "int-test-reports"),
       testGrouping in IntegrationTest := oneForkedJvmPerTest((definedTests in IntegrationTest).value),
-      parallelExecution in IntegrationTest := false)
+      parallelExecution in IntegrationTest := false
+    )
     .settings(
       resolvers += Resolver.bintrayRepo("hmrc", "releases"),
       resolvers += Resolver.jcenterRepo
@@ -66,14 +67,14 @@ trait MicroService {
 
 private object TestPhases {
 
-  val allPhases = "tt->test;test->test;test->compile;compile->compile"
+  val allPhases   = "tt->test;test->test;test->compile;compile->compile"
   val allItPhases = "tit->it;it->it;it->compile;compile->compile"
 
-  lazy val TemplateTest = config("tt") extend Test
+  lazy val TemplateTest   = config("tt") extend Test
   lazy val TemplateItTest = config("tit") extend IntegrationTest
 
   def oneForkedJvmPerTest(tests: Seq[TestDefinition]) =
-    tests map {
-      test => new Group(test.name, Seq(test), SubProcess(ForkOptions(runJVMOptions = Seq("-Dtest.name=" + test.name))))
+    tests map { test =>
+      new Group(test.name, Seq(test), SubProcess(ForkOptions(runJVMOptions = Seq("-Dtest.name=" + test.name))))
     }
 }

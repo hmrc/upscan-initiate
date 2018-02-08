@@ -31,8 +31,13 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenTh
   }
 
   val s3PostSigner = new S3PostSigner {
-    override def presignForm(userSpecifiedExpirationDate: Date, bucketName: String, key: String, acl : String, additionalMetadata : java.util.Map[String, String]) =
-      Map("bucket" ->  bucketName, "key" -> key).asJava
+    override def presignForm(
+      userSpecifiedExpirationDate: Date,
+      bucketName: String,
+      key: String,
+      acl: String,
+      additionalMetadata: java.util.Map[String, String]) =
+      Map("bucket" -> bucketName, "key" -> key).asJava
 
     override def buildEndpoint(bucketName: String): String = s"$bucketName.s3"
   }
@@ -56,11 +61,10 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenTh
       result.uploadRequest.href shouldBe s"${serviceConfiguration.transientBucketName}.s3"
       result.uploadRequest.fields shouldBe Map(
         "bucket" -> serviceConfiguration.transientBucketName,
-        "key" -> result.reference.value
+        "key"    -> result.reference.value
       )
 
     }
   }
-
 
 }
