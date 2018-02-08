@@ -1,7 +1,6 @@
 package infrastructure.s3
 
 import config.ServiceConfiguration
-import infrastructure.s3.awsclient.{AwsCredentials, S3PostSigner, S3PostSignerImpl}
 import java.time.Instant
 import javax.inject.{Inject, Provider, Singleton}
 
