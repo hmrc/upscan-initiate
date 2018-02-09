@@ -7,7 +7,7 @@ import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
 @Singleton
-class S3PrepareUploadService @Inject()(postSigner: S3PostSigner, configuration: ServiceConfiguration)
+class S3PrepareUploadService @Inject()(postSigner: UploadFormGenerator, configuration: ServiceConfiguration)
     extends PrepareUploadService {
 
   override def setupUpload(settings: UploadSettings): PreparedUpload = {
@@ -24,11 +24,11 @@ class S3PrepareUploadService @Inject()(postSigner: S3PostSigner, configuration: 
     val uploadParameters = UploadParameters(
       expirationDateTime = expiration,
       bucketName         = configuration.transientBucketName,
-      key                = key,
+      objectKey          = key,
       acl                = "private",
       additionalMetadata = Map.empty
     )
-    val form = postSigner.presignForm(uploadParameters)
+    val form = postSigner.generateFormFields(uploadParameters)
     PostRequest(postSigner.buildEndpoint(configuration.transientBucketName), form)
   }
 

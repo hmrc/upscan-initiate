@@ -25,9 +25,9 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenTh
     override def useInstanceProfileCredentials = ???
   }
 
-  val s3PostSigner = new S3PostSigner {
-    override def presignForm(uploadParameters: UploadParameters) =
-      Map("bucket" -> uploadParameters.bucketName, "key" -> uploadParameters.key)
+  val s3PostSigner = new UploadFormGenerator {
+    override def generateFormFields(uploadParameters: UploadParameters) =
+      Map("bucket" -> uploadParameters.bucketName, "key" -> uploadParameters.objectKey)
 
     override def buildEndpoint(bucketName: String): String = s"$bucketName.s3"
   }
