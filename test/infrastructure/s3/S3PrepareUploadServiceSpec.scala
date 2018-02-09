@@ -1,15 +1,10 @@
 package infrastructure.s3
 
-import java.time
-import java.util.Date
-
 import config.ServiceConfiguration
 import domain.UploadSettings
-import infrastructure.s3.awsclient.S3PostSigner
+import java.time
 import org.scalatest.{GivenWhenThen, Matchers}
 import uk.gov.hmrc.play.test.UnitSpec
-
-import scala.collection.JavaConverters._
 
 class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen {
 
@@ -30,14 +25,9 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenTh
     override def useInstanceProfileCredentials = ???
   }
 
-  val s3PostSigner = new S3PostSigner {
-    override def presignForm(
-      userSpecifiedExpirationDate: Date,
-      bucketName: String,
-      key: String,
-      acl: String,
-      additionalMetadata: java.util.Map[String, String]) =
-      Map("bucket" -> bucketName, "key" -> key).asJava
+  val s3PostSigner = new UploadFormGenerator {
+    override def generateFormFields(uploadParameters: UploadParameters) =
+      Map("bucket" -> uploadParameters.bucketName, "key" -> uploadParameters.objectKey)
 
     override def buildEndpoint(bucketName: String): String = s"$bucketName.s3"
   }
