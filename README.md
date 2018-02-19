@@ -66,7 +66,7 @@ aws_access_key_id = YOUR_ACCESS_KEY_HERE
 aws_secret_access_key = YOUR_SECRET_KEY_HERE
 output = json
 region = eu-west-2
-mfa_serial = arn:aws:iam::638924580364:mfa/joanna.your.username
+mfa_serial = arn:aws:iam::638924580364:mfa/your.username
 role_arn = arn:aws:iam::415042754718:role/RoleServicePrototypesEngineer
 
 [webops-users]
