@@ -53,21 +53,38 @@ notifications using callbacks do not work yet.
 # Running locally
 
 In order to run the service against one of HMRC accounts (labs, live) it's needed to have an AWS accounts with proper
-role. See (https://github.tools.tax.service.gov.uk/HMRC/aws-users/blob/master/AccountLinks.md) UpScan Accounts/roles
+role. See [UpScan Accounts/roles](https://github.tools.tax.service.gov.uk/HMRC/aws-users/blob/master/AccountLinks.md)
 for proper details.
 
 Prerequisites:
 - AWS accounts with proper roles setup
-- Proper AWS credential configuration set up according to this document (https://github.tools.tax.service.gov.uk/HMRC/aws-users#aws-credential-configuration)
+- Proper AWS credential configuration set up according to this document [aws-credential-configuration](https://github.tools.tax.service.gov.uk/HMRC/aws-users), with the credentials below:
+```
+[upscan-service-prototypes-engineer]
+source_profile = webops-users
+aws_access_key_id = YOUR_ACCESS_KEY_HERE
+aws_secret_access_key = YOUR_SECRET_KEY_HERE
+output = json
+region = eu-west-2
+mfa_serial = arn:aws:iam::638924580364:mfa/joanna.your.username
+role_arn = arn:aws:iam::415042754718:role/RoleServicePrototypesEngineer
+
+[webops-users]
+aws_access_key_id = YOUR_ACCESS_KEY_HERE
+aws_secret_access_key = YOUR_SECRET_KEY_HERE
+mfa_serial = arn:aws:iam::638924580364:mfa/your.username
+region = eu-west-2
+role_arn = arn:aws:iam::415042754718:role/RoleServicePrototypesEngineer
+```
 - Working AWS MFA authentication
 - Have python 2.7 installed
 - Install botocore and awscli python modules locally:
--- For Linux:
+  - For Linux:
 ```
 sudo pip install botocore
 sudo pip install awscli
 ```
--- For Mac (Mac has issues with pre-installed version of ```six``` as discussed (https://github.com/pypa/pip/issues/3165#here):
+  - For Mac (Mac has issues with pre-installed version of ```six``` as discussed [here](https://github.com/pypa/pip/issues/3165):
 ```
 sudo pip install botocore --ignore-installed six
 sudo pip install awscli --ignore-installed six
