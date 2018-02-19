@@ -60,6 +60,17 @@ Prerequisites:
 - AWS accounts with proper roles setup
 - Proper AWS credential configuration set up according to this document (https://github.tools.tax.service.gov.uk/HMRC/aws-users#aws-credential-configuration)
 - Working AWS MFA authentication
+- Install botocore and awscli modules locally:
+-- For Linux:
+```
+sudo pip install botocore
+sudo pip install awscli
+```
+-- For Mac (Mac has issues with pre-installed version of ```six``` as discussed (https://github.com/pypa/pip/issues/3165#here):
+```
+sudo pip install botocore --ignore-installed six
+sudo pip install awscli --ignore-installed six
+```
 
 In order to run the app against lab environment it's neeeded to run the following commands:
 ```
