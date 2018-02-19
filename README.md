@@ -60,7 +60,8 @@ Prerequisites:
 - AWS accounts with proper roles setup
 - Proper AWS credential configuration set up according to this document (https://github.tools.tax.service.gov.uk/HMRC/aws-users#aws-credential-configuration)
 - Working AWS MFA authentication
-- Install botocore and awscli modules locally:
+- Have python 2.7 installed
+- Install botocore and awscli python modules locally:
 -- For Linux:
 ```
 sudo pip install botocore
