@@ -14,19 +14,19 @@ class S3PrepareUploadService @Inject()(postSigner: UploadFormGenerator, configur
     val reference  = generateReference()
     val expiration = Instant.now().plus(configuration.fileExpirationPeriod)
 
-    PreparedUpload(reference = reference, uploadRequest = generatePost(reference.value, expiration))
+    PreparedUpload(reference = reference, uploadRequest = generatePost(reference.value, expiration, settings))
   }
 
   private def generateReference(): Reference =
     Reference(UUID.randomUUID().toString)
 
-  private def generatePost(key: String, expiration: Instant): PostRequest = {
+  private def generatePost(key: String, expiration: Instant, settings: UploadSettings): PostRequest = {
     val uploadParameters = UploadParameters(
       expirationDateTime = expiration,
       bucketName         = configuration.transientBucketName,
       objectKey          = key,
       acl                = "private",
-      additionalMetadata = Map.empty
+      additionalMetadata = Map("callback-url" -> settings.callbackUrl)
     )
     val form = postSigner.generateFormFields(uploadParameters)
     PostRequest(postSigner.buildEndpoint(configuration.transientBucketName), form)

@@ -27,7 +27,8 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenTh
 
   val s3PostSigner = new UploadFormGenerator {
     override def generateFormFields(uploadParameters: UploadParameters) =
-      Map("bucket" -> uploadParameters.bucketName, "key" -> uploadParameters.objectKey)
+      Map("bucket" -> uploadParameters.bucketName, "key" -> uploadParameters.objectKey) ++
+        uploadParameters.additionalMetadata.map{case (k, v) => s"x-amz-meta-$k" -> v }
 
     override def buildEndpoint(bucketName: String): String = s"$bucketName.s3"
   }
@@ -40,7 +41,9 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenTh
 
       Given("there are have valid upload settings")
 
-      val uploadSettings = UploadSettings("http://www.callback.com")
+      val callbackUrl = "http://www.callback.com"
+
+      val uploadSettings = UploadSettings(callbackUrl)
 
       When("we setup the uploat")
 
@@ -51,7 +54,8 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenTh
       result.uploadRequest.href shouldBe s"${serviceConfiguration.transientBucketName}.s3"
       result.uploadRequest.fields shouldBe Map(
         "bucket" -> serviceConfiguration.transientBucketName,
-        "key"    -> result.reference.value
+        "key"    -> result.reference.value,
+        "x-amz-meta-callback-url" -> callbackUrl
       )
 
     }
