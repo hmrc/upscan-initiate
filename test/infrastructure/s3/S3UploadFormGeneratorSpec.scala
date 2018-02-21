@@ -31,12 +31,13 @@ class S3UploadFormGeneratorSpec extends WordSpec with GivenWhenThen with Matcher
       val expirationTimestamp = "1997-07-16T19:20:40Z"
       val uploadParameters =
         UploadParameters(
-          expirationDateTime = Instant.parse(expirationTimestamp),
-          bucketName         = "test-bucket",
-          objectKey          = "test-key",
-          acl                = "private",
-          additionalMetadata = Map("key1" -> "value1"),
-          contentLengthRange = ContentLengthRange(0, 1024)
+          expirationDateTime  = Instant.parse(expirationTimestamp),
+          bucketName          = "test-bucket",
+          objectKey           = "test-key",
+          acl                 = "private",
+          additionalMetadata  = Map("key1" -> "value1"),
+          contentLengthRange  = ContentLengthRange(0, 1024),
+          expectedContentType = Some("application/xml")
         )
 
       When("form fields are generated")
@@ -56,6 +57,7 @@ class S3UploadFormGeneratorSpec extends WordSpec with GivenWhenThen with Matcher
       ((policy \ "conditions").get \\ "x-amz-date").head.as[String]           shouldBe "19970716T192030Z"
       ((policy \ "conditions").get \\ "x-amz-security-token").head.as[String] shouldBe "session-token"
       ((policy \ "conditions").get \\ "x-amz-meta-key1").head.as[String]      shouldBe "value1"
+      ((policy \ "conditions").get \\ "Content-Type").head.as[String]         shouldBe "application/xml"
 
       val conditions                         = (policy \ "conditions").as[JsArray].value
       val arrayConditions: Seq[Seq[JsValue]] = conditions.flatMap(_.asOpt[JsArray].map(_.value))

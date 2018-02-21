@@ -1,6 +1,10 @@
 package domain
 
-case class UploadSettings(callbackUrl: String, minimumFileSize: Option[Int], maximumFileSize: Option[Int])
+case class UploadSettings(
+  callbackUrl: String,
+  minimumFileSize: Option[Int],
+  maximumFileSize: Option[Int],
+  expectedContentType: Option[String])
 
 case class UploadFormTemplate(href: String, fields: Map[String, String])
 

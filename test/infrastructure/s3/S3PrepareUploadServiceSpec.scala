@@ -35,7 +35,10 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenTh
         "minSize" -> uploadParameters.contentLengthRange.min.toString,
         "maxSize" -> uploadParameters.contentLengthRange.max.toString
       ) ++
-        uploadParameters.additionalMetadata.map { case (k, v) => s"x-amz-meta-$k" -> v }
+        uploadParameters.additionalMetadata.map { case (k, v) => s"x-amz-meta-$k" -> v } ++
+        uploadParameters.expectedContentType.map { contentType =>
+          "Content-Type" -> contentType
+        }
 
     override def buildEndpoint(bucketName: String): String = s"$bucketName.s3"
   }
@@ -50,7 +53,11 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenTh
 
       val callbackUrl = "http://www.callback.com"
 
-      val uploadSettings = UploadSettings(callbackUrl = callbackUrl, minimumFileSize = None, maximumFileSize = None)
+      val uploadSettings = UploadSettings(
+        callbackUrl         = callbackUrl,
+        minimumFileSize     = None,
+        maximumFileSize     = None,
+        expectedContentType = Some("application/xml"))
 
       When("we setup the upload")
 
@@ -64,7 +71,8 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenTh
         "key"                     -> result.reference.value,
         "x-amz-meta-callback-url" -> callbackUrl,
         "minSize"                 -> "0",
-        "maxSize"                 -> "1024"
+        "maxSize"                 -> "1024",
+        "Content-Type"            -> "application/xml"
       )
 
     }
@@ -76,7 +84,11 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenTh
       val callbackUrl = "http://www.callback.com"
 
       val uploadSettings =
-        UploadSettings(callbackUrl = callbackUrl, minimumFileSize = Some(100), maximumFileSize = Some(200))
+        UploadSettings(
+          callbackUrl         = callbackUrl,
+          minimumFileSize     = Some(100),
+          maximumFileSize     = Some(200),
+          expectedContentType = None)
 
       When("we setup the upload")
 
@@ -95,7 +107,11 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenTh
       val callbackUrl = "http://www.callback.com"
 
       val uploadSettings =
-        UploadSettings(callbackUrl = callbackUrl, minimumFileSize = Some(-1), maximumFileSize = Some(1024))
+        UploadSettings(
+          callbackUrl         = callbackUrl,
+          minimumFileSize     = Some(-1),
+          maximumFileSize     = Some(1024),
+          expectedContentType = None)
 
       When("we setup the upload")
       Then("an exception should be thrown")
@@ -111,7 +127,11 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenTh
       val callbackUrl = "http://www.callback.com"
 
       val uploadSettings =
-        UploadSettings(callbackUrl = callbackUrl, minimumFileSize = Some(0), maximumFileSize = Some(1025))
+        UploadSettings(
+          callbackUrl         = callbackUrl,
+          minimumFileSize     = Some(0),
+          maximumFileSize     = Some(1025),
+          expectedContentType = None)
 
       When("we setup the upload")
       Then("an exception should be thrown")
@@ -127,7 +147,11 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenTh
       val callbackUrl = "http://www.callback.com"
 
       val uploadSettings =
-        UploadSettings(callbackUrl = callbackUrl, minimumFileSize = Some(1024), maximumFileSize = Some(0))
+        UploadSettings(
+          callbackUrl         = callbackUrl,
+          minimumFileSize     = Some(1024),
+          maximumFileSize     = Some(0),
+          expectedContentType = None)
 
       When("we setup the upload")
       Then("an exception should be thrown")

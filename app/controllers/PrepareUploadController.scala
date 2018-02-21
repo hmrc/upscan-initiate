@@ -20,7 +20,8 @@ class PrepareUploadController @Inject()(prepareUploadService: PrepareUploadServi
   implicit val uploadSettingsReads: Reads[UploadSettings] = (
     (JsPath \ "callbackUrl").read[String] and
       (JsPath \ "minimumFileSize").readNullable[Int](min(0)) and
-      (JsPath \ "maximumFileSize").readNullable[Int](min(0) keepAnd max(prepareUploadService.globalFileSizeLimit + 1))
+      (JsPath \ "maximumFileSize").readNullable[Int](min(0) keepAnd max(prepareUploadService.globalFileSizeLimit + 1)) and
+      (JsPath \ "expectedContentType").readNullable[String]
   )(UploadSettings.apply _)
     .filter(ValidationError("Maximum file size must be equal or greater than minimum file size"))(
       settings =>

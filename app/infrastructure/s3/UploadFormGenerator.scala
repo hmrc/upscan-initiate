@@ -16,7 +16,8 @@ case class UploadParameters(
   objectKey: String,
   acl: String,
   additionalMetadata: Map[String, String],
-  contentLengthRange: ContentLengthRange
+  contentLengthRange: ContentLengthRange,
+  expectedContentType: Option[String]
 )
 
 final case class AwsCredentials(
