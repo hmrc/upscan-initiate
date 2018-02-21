@@ -28,6 +28,7 @@ Meaning of parameters:
 |minimumFileSize|Minimum file size, if not specified any file size is allowed|no|
 |maximumFileSize|Maximum file size, if not specified, global maximum file size will be applied (by default 100MB)|no|
 |expectedMimeType|Expected MIME type of uploaded file|no|
+
 The service replies with JSON containg reference of the upload and information about the POST form that has to be sent in order to upload the file:
 ```
 {
