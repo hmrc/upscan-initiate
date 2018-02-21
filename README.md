@@ -16,7 +16,8 @@ about content type and size, and callback URL which will be used to notify user.
 {
 	"callbackUrl": "http://myservice.com/callback?fileId=123",
 	"minimumFileSize" : 0,
-	"maximumFileSize" : 1024
+	"maximumFileSize" : 1024,
+	"expectedMimeType": "application/xml"
 }
 ```
 Meaning of parameters:
@@ -26,7 +27,7 @@ Meaning of parameters:
 |callbackUrl   |Url that will be called after file will be successfuly processed| yes|
 |minimumFileSize|Minimum file size, if not specified any file size is allowed|no|
 |maximumFileSize|Maximum file size, if not specified, global maximum file size will be applied (by default 100MB)|no|
-
+|expectedMimeType|Expected MIME type of uploaded file|no|
 The service replies with JSON containg reference of the upload and information about the POST form that has to be sent in order to upload the file:
 ```
 {
