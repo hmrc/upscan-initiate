@@ -20,9 +20,14 @@ class S3PrepareUploadService @Inject()(postSigner: UploadFormGenerator, configur
   private def generateReference(): Reference =
     Reference(UUID.randomUUID().toString)
 
-  private def generatePost(key: String, expiration: Instant, settings: UploadSettings): PostRequest = {
+  private def generatePost(key: String, expiration: Instant, settings: UploadSettings): UploadFormTemplate = {
 
-    val globalFileSizeLimit = configuration.globalFileSizeLimit
+    val minFileSize = settings.minimumFileSize.getOrElse(0)
+    val maxFileSize = settings.maximumFileSize.getOrElse(globalFileSizeLimit)
+
+    require(minFileSize >= 0, "Minimum file size is less than 0")
+    require(maxFileSize <= globalFileSizeLimit, "Maximum file size is greater than global file size")
+    require(minFileSize <= maxFileSize, "Maximum file size is greater than minimum file size")
 
     val uploadParameters = UploadParameters(
       expirationDateTime = expiration,
@@ -30,19 +35,14 @@ class S3PrepareUploadService @Inject()(postSigner: UploadFormGenerator, configur
       objectKey          = key,
       acl                = "private",
       additionalMetadata = Map("callback-url" -> settings.callbackUrl),
-      contentLengthRange = ContentLengthRange(
-        min = settings.minimumFileSize match {
-          case Some(value) if value > 0 => value
-          case _                        => 0
-        },
-        max = settings.maximumFileSize match {
-          case Some(value) if value <= globalFileSizeLimit => value
-          case _                                           => globalFileSizeLimit
-        }
-      )
+      contentLengthRange = ContentLengthRange(minFileSize, maxFileSize)
     )
-    val form = postSigner.generateFormFields(uploadParameters)
-    PostRequest(postSigner.buildEndpoint(configuration.transientBucketName), form)
+
+    val form     = postSigner.generateFormFields(uploadParameters)
+    val endpoint = postSigner.buildEndpoint(configuration.transientBucketName)
+
+    UploadFormTemplate(endpoint, form)
   }
 
+  override def globalFileSizeLimit: Int = configuration.globalFileSizeLimit
 }

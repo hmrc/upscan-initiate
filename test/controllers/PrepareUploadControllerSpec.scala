@@ -40,7 +40,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
       Then("service returns valid response with reference and template of upload form")
 
-      status(result) shouldBe 200
+      withClue(result) { status(result) shouldBe 200 }
       val json = Helpers.contentAsJson(result)
       json shouldBe Json.obj(
         "reference" -> "TEST",
@@ -58,7 +58,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
       Given("there is a valid upload request with minimal data")
 
       val request: FakeRequest[JsValue] = FakeRequest()
-        .withBody(Json.obj("id" -> "1", "callbackUrl" -> "http://www.example.com"))
+        .withBody(Json.obj("callbackUrl" -> "http://www.example.com"))
 
       When("upload initiation has been requested")
 
@@ -66,7 +66,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
       Then("service returns valid response with reference and template of upload form")
 
-      status(result) shouldBe 200
+      withClue(Helpers.contentAsString(result)) { status(result) shouldBe 200 }
       val json = Helpers.contentAsJson(result)
       json shouldBe Json.obj(
         "reference" -> "TEST",
@@ -76,7 +76,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
         ))
     }
 
-    "return a bad request error if invalid request" in {
+    "return a bad request error if invalid request - wrong structure" in {
 
       Given("there is an invalid upload request")
 
@@ -88,7 +88,27 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
       Then("service returns error response")
 
-      status(result) shouldBe 400
+      withClue(Helpers.contentAsString(result)) { status(result) shouldBe 400 }
+
+    }
+
+    "return a bad request error if invalid request - incorrect maximum file size " in {
+
+      Given("there is an invalid upload request")
+
+      val request: FakeRequest[JsValue] =
+        FakeRequest().withBody(Json.obj("callbackUrl" -> "http://www.example.com", "maximumFileSize" -> 2048))
+
+      When("upload initiation has been requested")
+
+      val result = controller.prepareUpload()(request)
+
+      Then("service returns error response")
+
+      withClue(Helpers.contentAsString(result)) {
+        status(result) shouldBe 400
+        println(Helpers.contentAsString(result))
+      }
 
     }
 
@@ -101,11 +121,13 @@ class StubPrepareUploadService extends PrepareUploadService {
   override def setupUpload(settings: UploadSettings) =
     PreparedUpload(
       Reference("TEST"),
-      PostRequest(
+      UploadFormTemplate(
         settings.callbackUrl,
         Map.empty ++
           settings.minimumFileSize.map(s => Map("minFileSize" -> s.toString).head) ++
           settings.maximumFileSize.map(s => Map("maxFileSize" -> s.toString).head)
       )
     )
+
+  override def globalFileSizeLimit = 1024
 }

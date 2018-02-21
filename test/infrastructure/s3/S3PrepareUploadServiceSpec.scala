@@ -88,23 +88,51 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenTh
       result.uploadRequest.fields("maxSize") shouldBe "200"
     }
 
-    "honour global file limit when taking in account size limits from request" in {
+    "fail when minimum file size is less than 0" in {
 
-      Given("there are have valid upload settings with size limits")
+      Given("there are upload settings with minimum file size less than zero")
 
       val callbackUrl = "http://www.callback.com"
 
       val uploadSettings =
-        UploadSettings(callbackUrl = callbackUrl, minimumFileSize = Some(-1), maximumFileSize = Some(2048))
+        UploadSettings(callbackUrl = callbackUrl, minimumFileSize = Some(-1), maximumFileSize = Some(1024))
 
       When("we setup the upload")
+      Then("an exception should be thrown")
 
-      val result = service.setupUpload(uploadSettings)
+      an[IllegalArgumentException] shouldBe thrownBy(service.setupUpload(uploadSettings))
 
-      Then("upload request should contain requested min/max size")
+    }
 
-      result.uploadRequest.fields("minSize") shouldBe "0"
-      result.uploadRequest.fields("maxSize") shouldBe "1024"
+    "fail when maximum file size is greater than global limit" in {
+
+      Given("there are upload settings with maximum file size greater than global limit")
+
+      val callbackUrl = "http://www.callback.com"
+
+      val uploadSettings =
+        UploadSettings(callbackUrl = callbackUrl, minimumFileSize = Some(0), maximumFileSize = Some(1025))
+
+      When("we setup the upload")
+      Then("an exception should be thrown")
+
+      an[IllegalArgumentException] shouldBe thrownBy(service.setupUpload(uploadSettings))
+
+    }
+
+    "fail when minimum file size is greater than minimum file size" in {
+
+      Given("there are upload settings with minimum file size greater than maximum size ")
+
+      val callbackUrl = "http://www.callback.com"
+
+      val uploadSettings =
+        UploadSettings(callbackUrl = callbackUrl, minimumFileSize = Some(1024), maximumFileSize = Some(0))
+
+      When("we setup the upload")
+      Then("an exception should be thrown")
+
+      an[IllegalArgumentException] shouldBe thrownBy(service.setupUpload(uploadSettings))
 
     }
 
