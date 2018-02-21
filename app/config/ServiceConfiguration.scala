@@ -14,6 +14,7 @@ trait ServiceConfiguration {
   def accessKeyId: String
   def secretAccessKey: String
   def fileExpirationPeriod: java.time.Duration
+  def globalFileSizeLimit: Int
 }
 
 class PlayBasedServiceConfiguration @Inject()(configuration: Configuration) extends ServiceConfiguration {
@@ -36,4 +37,6 @@ class PlayBasedServiceConfiguration @Inject()(configuration: Configuration) exte
     function(key).getOrElse(throw new IllegalStateException(s"$key missing"))
 
   override def sessionToken = configuration.getString("aws.s3.sessionToken")
+
+  override def globalFileSizeLimit = getRequired(configuration.getInt(_), "global.file.size.limit")
 }

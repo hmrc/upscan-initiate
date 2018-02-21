@@ -3,6 +3,7 @@ package infrastructure.s3
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatter.ISO_INSTANT
 import java.time.{Instant, ZoneOffset}
+
 import play.api.libs.json.{JsArray, Json}
 
 class S3UploadFormGenerator(
@@ -69,7 +70,9 @@ class S3UploadFormGenerator(
         case (metadataKey, value) => s"x-amz-meta-$metadataKey" -> value
       }
 
-    fields ++ sessionCredentials ++ metadataFields
+    val contentTypeField = uploadParameters.expectedContentType.map(contentType => "Content-Type" -> contentType)
+
+    fields ++ sessionCredentials ++ metadataFields ++ contentTypeField
 
   }
 
@@ -85,6 +88,9 @@ class S3UploadFormGenerator(
       case (k, v) => Json.obj(s"x-amz-meta-$k" -> v)
     }
 
+    val contentTypeConstraintJson =
+      uploadParameters.expectedContentType.map(contentType => Json.obj("Content-Type" -> contentType))
+
     val policyDocument = Json.obj(
       "expiration" -> ISO_INSTANT.format(uploadParameters.expirationDateTime),
       "conditions" -> JsArray(
@@ -94,10 +100,14 @@ class S3UploadFormGenerator(
           Json.obj("x-amz-credential" -> signingCredentials),
           Json.obj("x-amz-algorithm"  -> "AWS4-HMAC-SHA256"),
           Json.obj("key"              -> uploadParameters.objectKey),
-          Json.obj("x-amz-date"       -> timeStamp)
-        )
-          ++ securityTokenJson
+          Json.obj("x-amz-date"       -> timeStamp),
+          Json.arr(
+            "content-length-range",
+            uploadParameters.contentLengthRange.min,
+            uploadParameters.contentLengthRange.max)
+        ) ++ securityTokenJson
           ++ metadataJson
+          ++ contentTypeConstraintJson
       )
     )
 
