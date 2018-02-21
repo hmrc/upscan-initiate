@@ -57,6 +57,11 @@ In order to upload the file, initiating microservice or the client should send t
 </form>
 ```
 
+# Error handling
+
+In case of problems with uploading the file (file too small, too large, configuration problems), AWS
+will sent response that complies with this document: https://docs.aws.amazon.com/AmazonS3/latest/API/ErrorResponses.html
+
 # Additional notes
 
 The service is not implemented yet. Among others, storage of metadata, constraint validation, virus scanning and
