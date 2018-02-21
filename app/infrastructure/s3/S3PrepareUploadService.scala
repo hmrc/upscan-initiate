@@ -21,12 +21,25 @@ class S3PrepareUploadService @Inject()(postSigner: UploadFormGenerator, configur
     Reference(UUID.randomUUID().toString)
 
   private def generatePost(key: String, expiration: Instant, settings: UploadSettings): PostRequest = {
+
+    val globalFileSizeLimit = configuration.globalFileSizeLimit
+
     val uploadParameters = UploadParameters(
       expirationDateTime = expiration,
       bucketName         = configuration.transientBucketName,
       objectKey          = key,
       acl                = "private",
-      additionalMetadata = Map("callback-url" -> settings.callbackUrl)
+      additionalMetadata = Map("callback-url" -> settings.callbackUrl),
+      contentLengthRange = ContentLengthRange(
+        min = settings.minimumFileSize match {
+          case Some(value) if value > 0 => value
+          case _                        => 0
+        },
+        max = settings.maximumFileSize match {
+          case Some(value) if value <= globalFileSizeLimit => value
+          case _                                           => globalFileSizeLimit
+        }
+      )
     )
     val form = postSigner.generateFormFields(uploadParameters)
     PostRequest(postSigner.buildEndpoint(configuration.transientBucketName), form)

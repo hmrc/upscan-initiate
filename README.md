@@ -14,15 +14,25 @@ should contain details about expected upload, which include additional metadata,
 about content type and size, and callback URL which will be used to notify user. Here is an example of the request:
 ```
 {
-	"callbackUrl": "http://myservice.com/callback?fileId=123"
+	"callbackUrl": "http://myservice.com/callback?fileId=123",
+	"minimumFileSize" : 0,
+	"maximumFileSize" : 1024
 }
 ```
+Meaning of parameters:
+
+| Parameter name|Description|Required|
+|--------------|-----------|--------|
+|callbackUrl   |Url that will be called after file will be successfuly processed| yes|
+|minimumFileSize|Minimum file size, if not specified any file size is allowed|no|
+|maximumFileSize|Maximum file size, if not specified, global maximum file size will be applied (by default 100MB)|no|
+
 The service replies with JSON containg reference of the upload and information about the POST form that has to be sent in order to upload the file:
 ```
 {
     "reference": "11370e18-6e24-453e-b45a-76d3e32ea33d",
     "uploadRequest": {
-        "href": "https://bucketName.s3.eu-west-2.amazonaws.com",
+        "href": "https://bucketName.s3.eu-west-2.amazsonaws.com",
         "fields": {
             "X-Amz-Algorithm": "AWS4-HMAC-SHA256",
             "X-Amz-Expiration": "2018-02-09T12:35:45.297Z",

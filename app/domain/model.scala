@@ -1,6 +1,6 @@
 package domain
 
-case class UploadSettings(callbackUrl: String)
+case class UploadSettings(callbackUrl: String, minimumFileSize: Option[Int], maximumFileSize : Option[Int])
 
 case class Link(href: String, method: String)
 

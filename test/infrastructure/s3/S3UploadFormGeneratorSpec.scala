@@ -2,11 +2,12 @@ package infrastructure.s3
 
 import java.time.Instant
 import java.util.Base64
+
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{verify, when}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{GivenWhenThen, Matchers, WordSpec}
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{JsArray, JsValue, Json}
 
 class S3UploadFormGeneratorSpec extends WordSpec with GivenWhenThen with Matchers with MockitoSugar {
 
@@ -34,7 +35,8 @@ class S3UploadFormGeneratorSpec extends WordSpec with GivenWhenThen with Matcher
           bucketName         = "test-bucket",
           objectKey          = "test-key",
           acl                = "private",
-          additionalMetadata = Map("key1" -> "value1")
+          additionalMetadata = Map("key1" -> "value1"),
+          contentLengthRange = ContentLengthRange(0, 1024)
         )
 
       When("form fields are generated")
@@ -43,7 +45,10 @@ class S3UploadFormGeneratorSpec extends WordSpec with GivenWhenThen with Matcher
       Then("valid POST policy is produced")
       val policy = decodePolicyFormResult(result("policy"))
 
-      (policy \ "expiration").as[String]                                      shouldBe "1997-07-16T19:20:40Z"
+      (policy \ "expiration").as[String] shouldBe "1997-07-16T19:20:40Z"
+
+      And("policy contains proper conditions")
+
       ((policy \ "conditions").get \\ "acl").head.as[String]                  shouldBe "private"
       ((policy \ "conditions").get \\ "bucket").head.as[String]               shouldBe "test-bucket"
       ((policy \ "conditions").get \\ "key").head.as[String]                  shouldBe "test-key"
@@ -51,6 +56,14 @@ class S3UploadFormGeneratorSpec extends WordSpec with GivenWhenThen with Matcher
       ((policy \ "conditions").get \\ "x-amz-date").head.as[String]           shouldBe "19970716T192030Z"
       ((policy \ "conditions").get \\ "x-amz-security-token").head.as[String] shouldBe "session-token"
       ((policy \ "conditions").get \\ "x-amz-meta-key1").head.as[String]      shouldBe "value1"
+
+      val conditions                         = (policy \ "conditions").as[JsArray].value
+      val arrayConditions: Seq[Seq[JsValue]] = conditions.flatMap(_.asOpt[JsArray].map(_.value))
+
+      And("policy contains proper size constraints")
+      val fileSizeCondition = arrayConditions.find(_.headOption.map(_.as[String]).contains("content-length-range"))
+      fileSizeCondition.get(1).as[Int] shouldBe 0
+      fileSizeCondition.get(2).as[Int] shouldBe 1024
 
       And("policy's signature is correct")
       verify(policySigner).signPolicy(credentials, "19970716", regionName, result("policy"))

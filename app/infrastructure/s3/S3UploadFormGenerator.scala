@@ -94,9 +94,12 @@ class S3UploadFormGenerator(
           Json.obj("x-amz-credential" -> signingCredentials),
           Json.obj("x-amz-algorithm"  -> "AWS4-HMAC-SHA256"),
           Json.obj("key"              -> uploadParameters.objectKey),
-          Json.obj("x-amz-date"       -> timeStamp)
-        )
-          ++ securityTokenJson
+          Json.obj("x-amz-date"       -> timeStamp),
+          Json.arr(
+            "content-length-range",
+            uploadParameters.contentLengthRange.min,
+            uploadParameters.contentLengthRange.max)
+        ) ++ securityTokenJson
           ++ metadataJson
       )
     )

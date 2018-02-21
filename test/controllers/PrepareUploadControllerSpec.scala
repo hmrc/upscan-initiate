@@ -22,9 +22,40 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
     val controller = new PrepareUploadController(new StubPrepareUploadService())
 
-    "build and return upload URL if valid request" in {
+    "build and return upload URL if valid request with all data" in {
 
-      Given("there is a valid upload request")
+      Given("there is a valid upload request with all data")
+
+      val request: FakeRequest[JsValue] = FakeRequest()
+        .withBody(
+          Json.obj(
+            "id"              -> "1",
+            "callbackUrl"     -> "http://www.example.com",
+            "minimumFileSize" -> 0,
+            "maximumFileSize" -> 1024))
+
+      When("upload initiation has been requested")
+
+      val result = controller.prepareUpload()(request)
+
+      Then("service returns valid response with reference and template of upload form")
+
+      status(result) shouldBe 200
+      val json = Helpers.contentAsJson(result)
+      json shouldBe Json.obj(
+        "reference" -> "TEST",
+        "uploadRequest" -> Json.obj(
+          "href" -> "http://www.example.com",
+          "fields" -> Json.obj(
+            "minFileSize" -> "0",
+            "maxFileSize" -> "1024"
+          )
+        ))
+    }
+
+    "build and return upload URL if valid request with minimal data" in {
+
+      Given("there is a valid upload request with minimal data")
 
       val request: FakeRequest[JsValue] = FakeRequest()
         .withBody(Json.obj("id" -> "1", "callbackUrl" -> "http://www.example.com"))
@@ -40,11 +71,8 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
       json shouldBe Json.obj(
         "reference" -> "TEST",
         "uploadRequest" -> Json.obj(
-          "href" -> "http://test.com",
-          "fields" -> Json.obj(
-            "field1" -> "value1",
-            "field2" -> "value2"
-          )
+          "href"   -> "http://www.example.com",
+          "fields" -> Json.obj()
         ))
     }
 
@@ -73,6 +101,11 @@ class StubPrepareUploadService extends PrepareUploadService {
   override def setupUpload(settings: UploadSettings) =
     PreparedUpload(
       Reference("TEST"),
-      PostRequest("http://test.com", Map("field1" -> "value1", "field2" -> "value2"))
+      PostRequest(
+        settings.callbackUrl,
+        Map.empty ++
+          settings.minimumFileSize.map(s => Map("minFileSize" -> s.toString).head) ++
+          settings.maximumFileSize.map(s => Map("maxFileSize" -> s.toString).head)
+      )
     )
 }

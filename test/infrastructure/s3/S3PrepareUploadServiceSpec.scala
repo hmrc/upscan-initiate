@@ -23,12 +23,19 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenTh
     override def fileExpirationPeriod: time.Duration = time.Duration.ofDays(7)
 
     override def useInstanceProfileCredentials = ???
+
+    override def globalFileSizeLimit = 1024
   }
 
   val s3PostSigner = new UploadFormGenerator {
     override def generateFormFields(uploadParameters: UploadParameters) =
-      Map("bucket" -> uploadParameters.bucketName, "key" -> uploadParameters.objectKey) ++
-        uploadParameters.additionalMetadata.map{case (k, v) => s"x-amz-meta-$k" -> v }
+      Map(
+        "bucket"  -> uploadParameters.bucketName,
+        "key"     -> uploadParameters.objectKey,
+        "minSize" -> uploadParameters.contentLengthRange.min.toString,
+        "maxSize" -> uploadParameters.contentLengthRange.max.toString
+      ) ++
+        uploadParameters.additionalMetadata.map { case (k, v) => s"x-amz-meta-$k" -> v }
 
     override def buildEndpoint(bucketName: String): String = s"$bucketName.s3"
   }
@@ -43,9 +50,9 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenTh
 
       val callbackUrl = "http://www.callback.com"
 
-      val uploadSettings = UploadSettings(callbackUrl)
+      val uploadSettings = UploadSettings(callbackUrl = callbackUrl, minimumFileSize = None, maximumFileSize = None)
 
-      When("we setup the uploat")
+      When("we setup the upload")
 
       val result = service.setupUpload(uploadSettings)
 
@@ -53,12 +60,54 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenTh
 
       result.uploadRequest.href shouldBe s"${serviceConfiguration.transientBucketName}.s3"
       result.uploadRequest.fields shouldBe Map(
-        "bucket" -> serviceConfiguration.transientBucketName,
-        "key"    -> result.reference.value,
-        "x-amz-meta-callback-url" -> callbackUrl
+        "bucket"                  -> serviceConfiguration.transientBucketName,
+        "key"                     -> result.reference.value,
+        "x-amz-meta-callback-url" -> callbackUrl,
+        "minSize"                 -> "0",
+        "maxSize"                 -> "1024"
       )
 
     }
+
+    "take in account file size limits if provided in request" in {
+
+      Given("there are have valid upload settings with size limits")
+
+      val callbackUrl = "http://www.callback.com"
+
+      val uploadSettings =
+        UploadSettings(callbackUrl = callbackUrl, minimumFileSize = Some(100), maximumFileSize = Some(200))
+
+      When("we setup the upload")
+
+      val result = service.setupUpload(uploadSettings)
+
+      Then("upload request should contain requested min/max size")
+
+      result.uploadRequest.fields("minSize") shouldBe "100"
+      result.uploadRequest.fields("maxSize") shouldBe "200"
+    }
+
+    "honour global file limit when taking in account size limits from request" in {
+
+      Given("there are have valid upload settings with size limits")
+
+      val callbackUrl = "http://www.callback.com"
+
+      val uploadSettings =
+        UploadSettings(callbackUrl = callbackUrl, minimumFileSize = Some(-1), maximumFileSize = Some(2048))
+
+      When("we setup the upload")
+
+      val result = service.setupUpload(uploadSettings)
+
+      Then("upload request should contain requested min/max size")
+
+      result.uploadRequest.fields("minSize") shouldBe "0"
+      result.uploadRequest.fields("maxSize") shouldBe "1024"
+
+    }
+
   }
 
 }
