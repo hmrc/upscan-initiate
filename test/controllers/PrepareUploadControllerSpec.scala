@@ -40,7 +40,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
       Then("service returns valid response with reference and template of upload form")
 
-      withClue(result) { status(result) shouldBe 200 }
+      withClue(Helpers.contentAsString(result)) { status(result) shouldBe 200 }
       val json = Helpers.contentAsJson(result)
       json shouldBe Json.obj(
         "reference" -> "TEST",

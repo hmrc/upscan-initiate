@@ -116,7 +116,8 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenTh
       When("we setup the upload")
       Then("an exception should be thrown")
 
-      an[IllegalArgumentException] shouldBe thrownBy(service.setupUpload(uploadSettings))
+      val thrown = the[IllegalArgumentException] thrownBy service.setupUpload(uploadSettings)
+      thrown.getMessage should include("Minimum file size is less than 0")
 
     }
 
@@ -136,11 +137,11 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenTh
       When("we setup the upload")
       Then("an exception should be thrown")
 
-      an[IllegalArgumentException] shouldBe thrownBy(service.setupUpload(uploadSettings))
-
+      val thrown = the[IllegalArgumentException] thrownBy service.setupUpload(uploadSettings)
+      thrown.getMessage should include("Maximum file size is greater than global maximum file size")
     }
 
-    "fail when minimum file size is greater than minimum file size" in {
+    "fail when minimum file size is greater than maximum file size" in {
 
       Given("there are upload settings with minimum file size greater than maximum size ")
 
@@ -156,8 +157,8 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenTh
       When("we setup the upload")
       Then("an exception should be thrown")
 
-      an[IllegalArgumentException] shouldBe thrownBy(service.setupUpload(uploadSettings))
-
+      val thrown = the[IllegalArgumentException] thrownBy service.setupUpload(uploadSettings)
+      thrown.getMessage should include("Minimum file size is greater than maximum file size")
     }
 
   }

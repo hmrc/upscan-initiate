@@ -26,8 +26,8 @@ class S3PrepareUploadService @Inject()(postSigner: UploadFormGenerator, configur
     val maxFileSize = settings.maximumFileSize.getOrElse(globalFileSizeLimit)
 
     require(minFileSize >= 0, "Minimum file size is less than 0")
-    require(maxFileSize <= globalFileSizeLimit, "Maximum file size is greater than global file size")
-    require(minFileSize <= maxFileSize, "Maximum file size is greater than minimum file size")
+    require(maxFileSize <= globalFileSizeLimit, "Maximum file size is greater than global maximum file size")
+    require(minFileSize <= maxFileSize, "Minimum file size is greater than maximum file size")
 
     val uploadParameters = UploadParameters(
       expirationDateTime  = expiration,

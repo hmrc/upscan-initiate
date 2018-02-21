@@ -34,7 +34,7 @@ The service replies with JSON containg reference of the upload and information a
 {
     "reference": "11370e18-6e24-453e-b45a-76d3e32ea33d",
     "uploadRequest": {
-        "href": "https://bucketName.s3.eu-west-2.amazsonaws.com",
+        "href": "https://bucketName.s3.eu-west-2.amazonaws.com",
         "fields": {
             "X-Amz-Algorithm": "AWS4-HMAC-SHA256",
             "X-Amz-Expiration": "2018-02-09T12:35:45.297Z",
