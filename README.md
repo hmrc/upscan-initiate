@@ -40,7 +40,7 @@ The service replies with JSON containg reference of the upload and information a
             "X-Amz-Expiration": "2018-02-09T12:35:45.297Z",
             "X-Amz-Signature": "xxxx",
             "key": "xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-            "acl": "public-read",
+            "acl": "private",
             "X-Amz-Credential": "ASIAxxxxxxxxx/20180202/eu-west-2/s3/aws4_request",
             "policy": "xxxxxxxx=="
         }
