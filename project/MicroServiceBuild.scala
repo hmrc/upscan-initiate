@@ -21,7 +21,7 @@ private object AppDependencies {
   import play.core.PlayVersion
 
   val compile = Seq(
-    "uk.gov.hmrc"       %% "bootstrap-play-25" % "1.2.0",
+    "uk.gov.hmrc"       %% "bootstrap-play-25" % "1.4.0",
     "com.amazonaws"     % "aws-java-sdk-s3"    % "1.11.261",
     "com.typesafe.akka" %% "akka-stream"       % "2.5.6"
   )
