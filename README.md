@@ -116,11 +116,11 @@ sent:
 ## Error handling
 
 In case of problems with uploading the file (file too small, too large, configuration problems), AWS
-will sent response that complies with this document: https://docs.aws.amazon.com/AmazonS3/latest/API/ErrorResponses.html
+will send response that complies with this document: https://docs.aws.amazon.com/AmazonS3/latest/API/ErrorResponses.html
 
 ## Design considerations
 
-Service supports uploading single files only. If consuming service wants to upload multiple files during one users journey,
+Service supports uploading single files only. If consuming service wants to upload multiple files during one user's journey,
 it has to make multiple independent calls to upscan-initiate.
 
 Callback URL provided by the service will be send in plain text through the network and visible to the end user. Because of that
@@ -144,17 +144,17 @@ AWS futures that are used by the service are:
 * [Pre-signed URLs](https://docs.aws.amazon.com/AmazonS3/latest/dev/ShareObjectPreSignedURL.html) - to allow consuming service to download uploaded file directly from S3
 
 Upscan consists of the following components:
-* upscan-initiate service - standalone service running on MDTP platform which creates pre-signed POST
+* **upscan-initiate service** - standalone service running on MDTP platform which creates pre-signed POST
 forms that can be later used by consuming service to upload the file
-* inbound S3 bucket - AWS S3 bucket used by users to upload their files
-* inbound event queue - AWS SQS queue that contains events triggered by uploads to inbound S3 bucket
-* antivirus scanner - component running on AWS that fetches files form inbound S3 bucket, scans them and if these are clean, moves to outbound bucket
-* outbound S3 bucket - AWS S3 bucket containing files that have been verified by antivirus and are clean
-* outbound event queue - AWS SQS queue that contains events triggered by copying clean files to outbound S3 bucket
-* quarantine S3 bucket - whenever antivirus scanner detects virus in the file, it creates and object in this bucket that contains details of infected file
-* quarantine event queue - AWS SQS queue that contains events triggered by detecting viruses in files
-* upscan-notify service - standalone service running on MDTP platform which polls outbound and quarantine event queues for results
-of file verifications. This service makes calls to consuming services using callback url's provided at the beginning of the process
+* **inbound S3 bucket** - AWS S3 bucket used by users to upload their files
+* **inbound event queue** - AWS SQS queue that contains events triggered by uploads to inbound S3 bucket
+* **antivirus scanner** - component running on AWS that fetches files form inbound S3 bucket, scans them and if these are clean, moves to outbound bucket
+* **outbound S3 bucket** - AWS S3 bucket containing files that have been verified by antivirus and are clean
+* **outbound event queue** - AWS SQS queue that contains events triggered by copying clean files to outbound S3 bucket
+* **quarantine S3 bucket** - whenever antivirus scanner detects virus in the file, it creates and object in this bucket that contains details of infected file
+* **quarantine event queue** - AWS SQS queue that contains events triggered by detecting viruses in files
+* **upscan-notify service** - standalone service running on MDTP platform which polls outbound and quarantine event queues for results
+of file verification. This service makes calls to consuming services using callback url's provided at the beginning of the process
 
 # Running and maintenance of the service
 
