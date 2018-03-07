@@ -10,7 +10,7 @@ directly with the file transfer service.
 
 ## Introduction
 
-Upscan service allows consuming services to orchestrate the process of uploading files by the end users. Upscan providchrzies
+Upscan service allows consuming services to orchestrate the process of uploading files by the end users. Upscan provides
 temporary storage of uploaded file, ensures that the file isn't harmful (doesn't contain viruses) and fulfills
 some predefined preconditions (like maximum size).
 The process of uploading and verifying of uploaded file is performed asynchronously without involvement of consuming service.
@@ -18,7 +18,7 @@ The process of uploading and verifying of uploaded file is performed asynchronou
 ## File upload workflow
 
 * Consuming service requests upload of a single file. It makes a call to `/upscan/initiate` endpoint with details of
-requested upload, including size constraints and callback URL
+requested upload, including size constraints and callback URL 
 * Upscan service replies with template of the HTTP POST form that should be used to upload the file and with unique reference
 of the upload that can be later used by the consumer service to identify the file
 * Consuming service returns the form to the user, the form is being displayed in users browser.
@@ -218,3 +218,6 @@ Upscan service has end-to-end acceptance tests which can be found in https://git
 ### License
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html")
+
+### TO DO
+* Resolve file constraints (mimetypes)
