@@ -9,7 +9,7 @@ trait ServiceConfiguration {
 
   def useInstanceProfileCredentials: Boolean
   def region: String
-  def transientBucketName: String
+  def inboundBucketName: String
   def sessionToken: Option[String]
   def accessKeyId: String
   def secretAccessKey: String
@@ -24,7 +24,7 @@ class PlayBasedServiceConfiguration @Inject()(configuration: Configuration) exte
 
   override def region = getRequired(configuration.getString(_), "aws.s3.region")
 
-  override def transientBucketName = getRequired(configuration.getString(_), "aws.s3.bucket.transient")
+  override def inboundBucketName = getRequired(configuration.getString(_), "aws.s3.bucket.inbound")
 
   override def fileExpirationPeriod =
     Duration.ofMillis(getRequired(configuration.getMilliseconds, "aws.s3.upload.link.validity.duration"))

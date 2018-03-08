@@ -14,7 +14,7 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenTh
 
     override def secretAccessKey: String = ???
 
-    override def transientBucketName: String = "test-bucket"
+    override def inboundBucketName: String = "test-bucket"
 
     override def sessionToken: Option[String] = ???
 
@@ -65,9 +65,9 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenTh
 
       Then("proper upload request form definition should be returned")
 
-      result.uploadRequest.href shouldBe s"${serviceConfiguration.transientBucketName}.s3"
+      result.uploadRequest.href shouldBe s"${serviceConfiguration.inboundBucketName}.s3"
       result.uploadRequest.fields shouldBe Map(
-        "bucket"                  -> serviceConfiguration.transientBucketName,
+        "bucket"                  -> serviceConfiguration.inboundBucketName,
         "key"                     -> result.reference.value,
         "x-amz-meta-callback-url" -> callbackUrl,
         "minSize"                 -> "0",
