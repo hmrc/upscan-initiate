@@ -141,12 +141,12 @@ AWS futures that are used by the service are:
 * [Pre-signed URLs](https://docs.aws.amazon.com/AmazonS3/latest/dev/ShareObjectPreSignedURL.html) - to allow consuming service to download uploaded file directly from S3
 
 Upscan consists of the following components:
-* **MDTP microservices***
+* **MDTP microservices**
   * **upscan-initiate service** - standalone service running on MDTP platform which creates pre-signed POST
 forms that can be later used by consuming service to upload the file
   * **upscan-notify service** - standalone service running on MDTP platform which polls outbound and quarantine event queues for results
-of file verification. This service makes calls to consuming services using callback url's provided at the beginning of the process
-* **AWS Components**
+of file verification. This service makes calls to consuming services using callback urls provided at the beginning of the process
+* **AWS components**
   * **inbound S3 bucket** - AWS S3 bucket used by users to upload their files
   * **inbound event queue** - AWS SQS queue that contains events triggered by uploads to inbound S3 bucket
   * **outbound S3 bucket** - AWS S3 bucket containing files that have been verified by antivirus and are clean
