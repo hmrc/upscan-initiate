@@ -142,19 +142,19 @@ AWS futures that are used by the service are:
 
 Upscan consists of the following components:
 * **MDTP microservices***
-** **upscan-initiate service** - standalone service running on MDTP platform which creates pre-signed POST
+  * **upscan-initiate service** - standalone service running on MDTP platform which creates pre-signed POST
 forms that can be later used by consuming service to upload the file
-** **upscan-notify service** - standalone service running on MDTP platform which polls outbound and quarantine event queues for results
+  * **upscan-notify service** - standalone service running on MDTP platform which polls outbound and quarantine event queues for results
 of file verification. This service makes calls to consuming services using callback url's provided at the beginning of the process
 * **AWS Components**
-* **inbound S3 bucket** - AWS S3 bucket used by users to upload their files
-* **inbound event queue** - AWS SQS queue that contains events triggered by uploads to inbound S3 bucket
-* **outbound S3 bucket** - AWS S3 bucket containing files that have been verified by antivirus and are clean
-* **outbound event queue** - AWS SQS queue that contains events triggered by copying clean files to outbound S3 bucket
-* **quarantine S3 bucket** - whenever antivirus scanner detects virus in the file, it creates and object in this bucket that contains details of infected file
-* **quarantine event queue** - AWS SQS queue that contains events triggered by detecting viruses in files
+  * **inbound S3 bucket** - AWS S3 bucket used by users to upload their files
+  * **inbound event queue** - AWS SQS queue that contains events triggered by uploads to inbound S3 bucket
+  * **outbound S3 bucket** - AWS S3 bucket containing files that have been verified by antivirus and are clean
+  * **outbound event queue** - AWS SQS queue that contains events triggered by copying clean files to outbound S3 bucket
+  * **quarantine S3 bucket** - whenever antivirus scanner detects virus in the file, it creates and object in this bucket that contains details of infected file
+  * **quarantine event queue** - AWS SQS queue that contains events triggered by detecting viruses in files
 * **Other services**
-* **antivirus scanner** - component running on AWS that fetches files form inbound S3 bucket, scans them and if these are clean, moves to outbound bucket
+  * **antivirus scanner** - component running on AWS that fetches files form inbound S3 bucket, scans them and if these are clean, moves to outbound bucket
 
 # Running and maintenance of the service
 
