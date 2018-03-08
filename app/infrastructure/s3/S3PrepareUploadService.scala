@@ -31,7 +31,7 @@ class S3PrepareUploadService @Inject()(postSigner: UploadFormGenerator, configur
 
     val uploadParameters = UploadParameters(
       expirationDateTime  = expiration,
-      bucketName          = configuration.transientBucketName,
+      bucketName          = configuration.inboundBucketName,
       objectKey           = key,
       acl                 = "private",
       additionalMetadata  = Map("callback-url" -> settings.callbackUrl),
@@ -40,7 +40,7 @@ class S3PrepareUploadService @Inject()(postSigner: UploadFormGenerator, configur
     )
 
     val form     = postSigner.generateFormFields(uploadParameters)
-    val endpoint = postSigner.buildEndpoint(configuration.transientBucketName)
+    val endpoint = postSigner.buildEndpoint(configuration.inboundBucketName)
 
     UploadFormTemplate(endpoint, form)
   }
