@@ -23,6 +23,8 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenTh
     override def fileExpirationPeriod: time.Duration = time.Duration.ofDays(7)
 
     override def globalFileSizeLimit = 1024
+
+    override def allowedUserAgents: List[String] = ???
   }
 
   val s3PostSigner = new UploadFormGenerator {

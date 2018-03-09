@@ -2,20 +2,22 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 
+import config.ServiceConfiguration
 import domain._
 import play.api.data.validation.ValidationError
-import play.api.libs.json.{JsPath, Json, Writes}
+import play.api.libs.functional.syntax._
+import play.api.libs.json.Reads._
+import play.api.libs.json.{JsPath, Json, Writes, _}
 import play.api.mvc.Action
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
-import play.api.libs.json._
-import play.api.libs.functional.syntax._
-import Reads._
+import utils.UserAgentFilter
 
 import scala.concurrent.Future
 
 @Singleton
-class PrepareUploadController @Inject()(prepareUploadService: PrepareUploadService) extends BaseController {
+class PrepareUploadController @Inject()(prepareUploadService: PrepareUploadService,
+                                        override val configuration: ServiceConfiguration)
+  extends BaseController with UserAgentFilter {
 
   implicit val uploadSettingsReads: Reads[UploadSettings] = (
     (JsPath \ "callbackUrl").read[String] and
@@ -38,11 +40,12 @@ class PrepareUploadController @Inject()(prepareUploadService: PrepareUploadServi
     )
   }
 
-  def prepareUpload(): Action[JsValue] = Action.async(parse.json) { implicit request =>
-    withJsonBody[UploadSettings] { (fileUploadDetails: UploadSettings) =>
-      val result: PreparedUpload = prepareUploadService.setupUpload(fileUploadDetails)
-      Future.successful(Ok(Json.toJson(result)))
+  def prepareUpload(): Action[JsValue] = onlyAllowedServices {
+    Action.async(parse.json) { implicit request =>
+      withJsonBody[UploadSettings] { (fileUploadDetails: UploadSettings) =>
+        val result: PreparedUpload = prepareUploadService.setupUpload(fileUploadDetails)
+        Future.successful(Ok(Json.toJson(result)))
+      }
     }
   }
-
 }
