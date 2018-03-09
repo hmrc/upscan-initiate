@@ -200,7 +200,8 @@ sudo pip install awscli --ignore-installed six
 
 In order to run the app against lab environment it's necessary to run the following commands:
 ```
-export AWS_DEFAULT_PROFILE=name_of_proper_profile_in_dot_aws_credentials_file
+export AWS_S3_BUCKET_INBOUND=name of inbound s3 bucket you would like to use
+export AWS_DEFAULT_PROFILE=name of proper profile in ~/.aws/credentials file
 ./aws-profile sbt
 ```
 These commands will give you an access to SBT shell where you can run the service using 'run' or 'start' commands.
