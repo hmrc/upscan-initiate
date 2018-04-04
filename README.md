@@ -161,12 +161,12 @@ of file verification. This service makes calls to consuming services using callb
 ## Running locally
 
 In order to run the service against one of HMRC accounts (labs, live) it's necessary to have an AWS accounts with proper
-role. See [UpScan Accounts/roles](https://github.tools.tax.service.gov.uk/HMRC/aws-users/blob/master/AccountLinks.md)
+role. See [UpScan Accounts/roles](https://github.com/hmrc/aws-users/blob/master/AccountLinks.md)
 for proper details.
 
 Prerequisites:
 - AWS accounts with proper roles setup
-- Proper AWS credential configuration set up according to this document [aws-credential-configuration](https://github.tools.tax.service.gov.uk/HMRC/aws-users), with the credentials below:
+- Proper AWS credential configuration set up according to this document [aws-credential-configuration](https://github.com/hmrc/aws-users), with the credentials below:
 ```
 [upscan-service-prototypes-engineer]
 source_profile = webops-users
