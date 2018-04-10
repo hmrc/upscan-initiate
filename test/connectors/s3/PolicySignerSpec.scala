@@ -1,4 +1,4 @@
-package infrastructure.s3
+package connectors.s3
 
 import org.scalatest.{Matchers, WordSpec}
 

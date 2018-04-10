@@ -1,11 +1,14 @@
-package infrastructure.s3
+package connectors.s3
 
 import config.ServiceConfiguration
 import java.time.Instant
+
+import domain.UploadFormGenerator
 import javax.inject.{Inject, Provider, Singleton}
 
 @Singleton
-class S3PostSignerProvider @Inject()(configuration: ServiceConfiguration) extends Provider[UploadFormGenerator] {
+class S3UploadFormGeneratorProvider @Inject()(configuration: ServiceConfiguration)
+    extends Provider[UploadFormGenerator] {
 
   import configuration._
 
