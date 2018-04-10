@@ -1,12 +1,12 @@
-package infrastructure.s3
+package domain
+
+import java.time
 
 import config.ServiceConfiguration
-import domain.UploadSettings
-import java.time
 import org.scalatest.{GivenWhenThen, Matchers}
 import uk.gov.hmrc.play.test.UnitSpec
 
-class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen {
+class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen {
 
   val serviceConfiguration = new ServiceConfiguration {
 
@@ -45,7 +45,7 @@ class S3PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenTh
 
   "S3 Upload Service" should {
 
-    val service = new S3PrepareUploadService(s3PostSigner, serviceConfiguration)
+    val service = new PrepareUploadService(s3PostSigner, serviceConfiguration)
 
     "create post form that allows to upload the file" in {
 
