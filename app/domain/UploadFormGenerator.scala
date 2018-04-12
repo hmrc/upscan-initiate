@@ -1,4 +1,4 @@
-package infrastructure.s3
+package domain
 
 import java.time.Instant
 
@@ -18,10 +18,4 @@ case class UploadParameters(
   additionalMetadata: Map[String, String],
   contentLengthRange: ContentLengthRange,
   expectedContentType: Option[String]
-)
-
-final case class AwsCredentials(
-  accessKeyId: String,
-  secretKey: String,
-  sessionToken: Option[String]
 )

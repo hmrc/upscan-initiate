@@ -1,10 +1,17 @@
-package infrastructure.s3
+package connectors.s3
 
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatter.ISO_INSTANT
 import java.time.{Instant, ZoneOffset}
 
+import domain.{UploadFormGenerator, UploadParameters}
 import play.api.libs.json.{JsArray, Json}
+
+final case class AwsCredentials(
+  accessKeyId: String,
+  secretKey: String,
+  sessionToken: Option[String]
+)
 
 class S3UploadFormGenerator(
   credentials: AwsCredentials,

@@ -1,7 +1,8 @@
-package infrastructure.s3
+package connectors.s3
+
+import java.nio.charset.Charset
 
 import com.amazonaws.util.{BinaryUtils, StringUtils}
-import java.nio.charset.Charset
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 

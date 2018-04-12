@@ -1,8 +1,9 @@
-package infrastructure.s3
+package connectors.s3
 
 import java.time.Instant
 import java.util.Base64
 
+import domain.{ContentLengthRange, UploadParameters}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{verify, when}
 import org.scalatest.mockito.MockitoSugar
