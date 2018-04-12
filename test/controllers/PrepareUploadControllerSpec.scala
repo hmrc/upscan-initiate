@@ -5,6 +5,8 @@ import akka.stream.ActorMaterializer
 import config.ServiceConfiguration
 import domain._
 import org.mockito.Mockito
+import org.mockito.invocation.InvocationOnMock
+import org.mockito.stubbing.Answer
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{GivenWhenThen, Matchers}
 import play.api.libs.json.{JsValue, Json}
@@ -26,7 +28,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
     "build and return upload URL if valid request with all data" in {
       val config = mock[ServiceConfiguration]
       Mockito.when(config.allowedUserAgents).thenReturn(Nil)
-      val controller = new PrepareUploadController(new StubPrepareUploadService(), config)
+      val controller = new PrepareUploadController(prepareUploadService, config)
 
       Given("there is a valid upload request with all data")
 
@@ -60,7 +62,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
     "build and return upload URL if valid request with minimal data" in {
       val config = mock[ServiceConfiguration]
       Mockito.when(config.allowedUserAgents).thenReturn(Nil)
-      val controller = new PrepareUploadController(new StubPrepareUploadService(), config)
+      val controller = new PrepareUploadController(prepareUploadService, config)
 
       Given("there is a valid upload request with minimal data")
 
@@ -86,7 +88,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
     "return a bad request error if invalid request - wrong structure" in {
       val config = mock[ServiceConfiguration]
       Mockito.when(config.allowedUserAgents).thenReturn(Nil)
-      val controller = new PrepareUploadController(new StubPrepareUploadService(), config)
+      val controller = new PrepareUploadController(prepareUploadService, config)
 
       Given("there is an invalid upload request")
 
@@ -104,7 +106,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
     "return a bad request error if invalid request - incorrect maximum file size " in {
       val config = mock[ServiceConfiguration]
       Mockito.when(config.allowedUserAgents).thenReturn(Nil)
-      val controller = new PrepareUploadController(new StubPrepareUploadService(), config)
+      val controller = new PrepareUploadController(prepareUploadService, config)
 
       Given("there is an invalid upload request")
 
@@ -125,7 +127,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
     "return okay if service is allowed on whitelist " in {
       val config = mock[ServiceConfiguration]
       Mockito.when(config.allowedUserAgents).thenReturn(List("VALID-AGENT"))
-      val controller = new PrepareUploadController(new StubPrepareUploadService(), config)
+      val controller = new PrepareUploadController(prepareUploadService, config)
 
       Given("there is a valid upload request from a whitelisted service")
 
@@ -162,7 +164,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
     "return a forbidden error if service is not whitelisted " in {
       val config = mock[ServiceConfiguration]
       Mockito.when(config.allowedUserAgents).thenReturn(List("VALID-AGENT"))
-      val controller = new PrepareUploadController(new StubPrepareUploadService(), config)
+      val controller = new PrepareUploadController(prepareUploadService, config)
 
       Given("there is a valid upload request from a non-whitelisted service")
 
@@ -189,20 +191,27 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
     }
   }
 
-}
+  def prepareUploadService = {
+    val service = mock[PrepareUploadService]
+    Mockito.when(service.globalFileSizeLimit).thenReturn(1024)
+    Mockito
+      .when(service.setupUpload(org.mockito.ArgumentMatchers.any()))
+      .thenAnswer(new Answer[PreparedUpload]() {
+        override def answer(invocationOnMock: InvocationOnMock): PreparedUpload = {
+          val settings = invocationOnMock.getArgument[UploadSettings](0)
+          PreparedUpload(
+            Reference("TEST"),
+            UploadFormTemplate(
+              settings.callbackUrl,
+              Map.empty ++
+                settings.minimumFileSize.map(s => Map("minFileSize" -> s.toString).head) ++
+                settings.maximumFileSize.map(s => Map("maxFileSize" -> s.toString).head)
+            )
+          )
+        }
 
-class StubPrepareUploadService extends PrepareUploadService {
+      })
+    service
+  }
 
-  override def setupUpload(settings: UploadSettings) =
-    PreparedUpload(
-      Reference("TEST"),
-      UploadFormTemplate(
-        settings.callbackUrl,
-        Map.empty ++
-          settings.minimumFileSize.map(s => Map("minFileSize" -> s.toString).head) ++
-          settings.maximumFileSize.map(s => Map("maxFileSize" -> s.toString).head)
-      )
-    )
-
-  override def globalFileSizeLimit = 1024
 }
