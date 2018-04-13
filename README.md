@@ -168,21 +168,21 @@ Prerequisites:
 - AWS accounts with proper roles setup
 - Proper AWS credential configuration set up according to this document [aws-credential-configuration](https://github.com/hmrc/aws-users), with the credentials below:
 ```
-[upscan-service-prototypes-engineer]
-source_profile = webops-users
+[webops-users]
+mfa_serial = arn:aws:iam::638924580364:mfa/YOUR_AWS_USER_NAME
 aws_access_key_id = YOUR_ACCESS_KEY_HERE
 aws_secret_access_key = YOUR_SECRET_KEY_HERE
 output = json
 region = eu-west-2
-mfa_serial = arn:aws:iam::638924580364:mfa/your.username
-role_arn = arn:aws:iam::415042754718:role/RoleServicePrototypesEngineer
 
-[webops-users]
+[upscan-labs-engineer]
+source_profile = webops-users
+role_arn = arn:aws:iam::063874132475:role/RoleServiceUpscanEngineer
+mfa_serial = arn:aws:iam::638924580364:mfa/YOUR_AWS_USER_NAME
 aws_access_key_id = YOUR_ACCESS_KEY_HERE
 aws_secret_access_key = YOUR_SECRET_KEY_HERE
-mfa_serial = arn:aws:iam::638924580364:mfa/your.username
+output = json
 region = eu-west-2
-role_arn = arn:aws:iam::415042754718:role/RoleServicePrototypesEngineer
 ```
 - Working AWS MFA authentication
 - Have python 2.7 installed
@@ -209,9 +209,10 @@ These commands will give you an access to SBT shell where you can run the servic
 
 ## Related projects, useful links:
 
-* [upscan-notify](https://github.com/hmrc/upscan-notify) - service which is responsible for notifying consuming services about the status of file upload
+* [upscan-verify](https://github.com/hmrc/upscan-verify) - service responsible for verifying the health of uploaded files
+* [upscan-notify](https://github.com/hmrc/upscan-notify) - service responsible for notifying consuming services about the status of uploaded files
 * [upscan-infrastructue](https://github.com/hmrc/upscan-infrastructure) - AWS infrastructure provisioning scripts
-* [upscan-acceptance-tests](https://github.com/hmrc/upscan-acceptance-tests) - acceptance tests of the service
+* [upscan-acceptance-tests](https://github.com/hmrc/upscan-acceptance-tests) - end-to-end acceptance tests of the upscan ecosystem
 
 ### Tests
 
