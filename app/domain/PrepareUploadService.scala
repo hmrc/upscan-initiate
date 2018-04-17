@@ -3,16 +3,25 @@ package domain
 import java.time.Instant
 import java.util.UUID
 
+import com.kenshoo.play.metrics.Metrics
 import config.ServiceConfiguration
 import javax.inject.{Inject, Singleton}
 @Singleton
-class PrepareUploadService @Inject()(postSigner: UploadFormGenerator, configuration: ServiceConfiguration) {
+class PrepareUploadService @Inject()(
+  postSigner: UploadFormGenerator,
+  configuration: ServiceConfiguration,
+  metrics: Metrics) {
 
   def setupUpload(settings: UploadSettings): PreparedUpload = {
     val reference  = generateReference()
     val expiration = Instant.now().plus(configuration.fileExpirationPeriod)
 
-    PreparedUpload(reference = reference, uploadRequest = generatePost(reference.value, expiration, settings))
+    val result =
+      PreparedUpload(reference = reference, uploadRequest = generatePost(reference.value, expiration, settings))
+
+    metrics.defaultRegistry.counter("uploadInitiated").inc()
+
+    result
   }
 
   private def generateReference(): Reference =
