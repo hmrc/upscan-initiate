@@ -14,7 +14,7 @@ trait ServiceConfiguration {
   def secretAccessKey: String
   def fileExpirationPeriod: java.time.Duration
   def globalFileSizeLimit: Int
-  def allowedUserAgents: List[String]
+  def allowedUserAgents: Seq[String]
 }
 
 class PlayBasedServiceConfiguration @Inject()(configuration: Configuration) extends ServiceConfiguration {
@@ -37,10 +37,10 @@ class PlayBasedServiceConfiguration @Inject()(configuration: Configuration) exte
 
   override def globalFileSizeLimit = getRequired(configuration.getInt, "global.file.size.limit")
 
-  override def allowedUserAgents: List[String] =
+  override def allowedUserAgents: Seq[String] =
     configuration.getString("userAgentFilter.allowedUserAgents").map(_
         .split(",")
-        .toList
+        .toSeq
         .filterNot(_.isEmpty)
       ).getOrElse(Nil)
 
