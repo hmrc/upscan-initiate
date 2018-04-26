@@ -6,13 +6,14 @@ import java.util.UUID
 import com.kenshoo.play.metrics.Metrics
 import config.ServiceConfiguration
 import javax.inject.{Inject, Singleton}
+import play.api.Logger
 @Singleton
 class PrepareUploadService @Inject()(
   postSigner: UploadFormGenerator,
   configuration: ServiceConfiguration,
   metrics: Metrics) {
 
-  def setupUpload(settings: UploadSettings): PreparedUpload = {
+  def prepareUpload(settings: UploadSettings): PreparedUpload = {
     val reference  = generateReference()
     val expiration = Instant.now().plus(configuration.fileExpirationPeriod)
 
@@ -24,8 +25,7 @@ class PrepareUploadService @Inject()(
     result
   }
 
-  private def generateReference(): Reference =
-    Reference(UUID.randomUUID().toString)
+  private def generateReference() = Reference(UUID.randomUUID().toString)
 
   private def generatePost(key: String, expiration: Instant, settings: UploadSettings): UploadFormTemplate = {
 
