@@ -195,7 +195,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
     val service = mock[PrepareUploadService]
     Mockito.when(service.globalFileSizeLimit).thenReturn(1024)
     Mockito
-      .when(service.setupUpload(org.mockito.ArgumentMatchers.any()))
+      .when(service.prepareUpload(org.mockito.ArgumentMatchers.any()))
       .thenAnswer(new Answer[PreparedUpload]() {
         override def answer(invocationOnMock: InvocationOnMock): PreparedUpload = {
           val settings = invocationOnMock.getArgument[UploadSettings](0)

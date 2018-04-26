@@ -1,9 +1,9 @@
 package controllers
 
 import javax.inject.{Inject, Singleton}
-
 import config.ServiceConfiguration
 import domain._
+import play.api.Logger
 import play.api.data.validation.ValidationError
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
@@ -43,7 +43,9 @@ class PrepareUploadController @Inject()(prepareUploadService: PrepareUploadServi
   def prepareUpload(): Action[JsValue] = onlyAllowedServices {
     Action.async(parse.json) { implicit request =>
       withJsonBody[UploadSettings] { (fileUploadDetails: UploadSettings) =>
-        val result: PreparedUpload = prepareUploadService.setupUpload(fileUploadDetails)
+        Logger.debug(s"Processing request: [$fileUploadDetails].")
+        val result: PreparedUpload = prepareUploadService.prepareUpload(fileUploadDetails)
+        Logger.debug(s"Returning template containing upscan-reference: [${result.reference.value}].")
         Future.successful(Ok(Json.toJson(result)))
       }
     }
