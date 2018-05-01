@@ -45,7 +45,6 @@ class PrepareUploadController @Inject()(prepareUploadService: PrepareUploadServi
       withJsonBody[UploadSettings] { (fileUploadDetails: UploadSettings) =>
         Logger.debug(s"Processing request: [$fileUploadDetails].")
         val result: PreparedUpload = prepareUploadService.prepareUpload(fileUploadDetails)
-        Logger.debug(s"Returning template containing upscan-reference: [${result.reference.value}].")
         Future.successful(Ok(Json.toJson(result)))
       }
     }
