@@ -6,6 +6,7 @@ import java.util.UUID
 import com.kenshoo.play.metrics.Metrics
 import config.ServiceConfiguration
 import javax.inject.{Inject, Singleton}
+import org.slf4j.MDC
 import play.api.Logger
 @Singleton
 class PrepareUploadService @Inject()(
@@ -20,9 +21,16 @@ class PrepareUploadService @Inject()(
     val result =
       PreparedUpload(reference = reference, uploadRequest = generatePost(reference.value, expiration, settings))
 
-    metrics.defaultRegistry.counter("uploadInitiated").inc()
+    try {
+      MDC.put("file-reference", reference.value)
+      Logger.info(s"Generated file-reference: [${reference.value}], for settings: [$settings], with expiration at: [$expiration].")
 
-    result
+      metrics.defaultRegistry.counter("uploadInitiated").inc()
+
+      result
+    } finally {
+      MDC.remove("file-reference")
+    }
   }
 
   private def generateReference() = Reference(UUID.randomUUID().toString)
