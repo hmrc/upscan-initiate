@@ -42,17 +42,17 @@ about content type and size, and callback URL which will be used to notify user.
 	"callbackUrl": "http://myservice.com/callback",
 	"minimumFileSize" : 0,
 	"maximumFileSize" : 1024,
-	"expectedMimeType": "application/xml"
+	"expectedContentType": "application/xml"
 }
 ```
 Meaning of parameters:
 
 | Parameter name|Description|Required|
 |--------------|-----------|--------|
-|callbackUrl   |Url that will be called after file will be successfuly processed| yes|
+|callbackUrl   |Url that will be called after file will be successfully processed| yes|
 |minimumFileSize|Minimum file size, if not specified any file size is allowed|no|
 |maximumFileSize|Maximum file size, if not specified, global maximum file size will be applied (by default 100MB)|no|
-|expectedMimeType|Expected MIME type of uploaded file|no|
+|expectedContentType|Expected MIME type of uploaded file|no|
 
 The service replies with JSON containg reference of the upload and information about the POST form that has to be sent in order to upload the file:
 ```
@@ -61,13 +61,15 @@ The service replies with JSON containg reference of the upload and information a
     "uploadRequest": {
         "href": "https://bucketName.s3.eu-west-2.amazonaws.com",
         "fields": {
-            "X-Amz-Algorithm": "AWS4-HMAC-SHA256",
-            "X-Amz-Expiration": "2018-02-09T12:35:45.297Z",
-            "X-Amz-Signature": "xxxx",
-            "key": "xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+            "Content-Type": "application/xml",
             "acl": "private",
-            "X-Amz-Credential": "ASIAxxxxxxxxx/20180202/eu-west-2/s3/aws4_request",
-            "policy": "xxxxxxxx=="
+            "key": "xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+            "policy": "xxxxxxxx==",
+            "x-amz-algorithm": "AWS4-HMAC-SHA256",
+            "x-amz-credential": "ASIAxxxxxxxxx/20180202/eu-west-2/s3/aws4_request",
+            "x-amz-date": "yyyyMMddThhmmssZ",
+            "x-amz-meta-callback-url": "http://myservice.com/callback",
+            "x-amz-signature": "xxxx"
         }
     }
 }
@@ -75,7 +77,7 @@ The service replies with JSON containg reference of the upload and information a
 In order to upload the file, initiating microservice or the client should send the following form:
 ```
 <form method="POST" href="...value of the href from the response above...">
-    <input type="hidden" name="X-Amz-Algorithm" value="AWS4-HMAC-SHA256">
+    <input type="hidden" name="x-amz-algorithm" value="AWS4-HMAC-SHA256">
     ... all the fields returned in "fields" map in the response above ...
     <input type="file" name="file"/> <- form field representing the file to upload
     <input type="submit" value="OK"/>
@@ -212,11 +214,13 @@ These commands will give you an access to SBT shell where you can run the servic
 * [upscan-verify](https://github.com/hmrc/upscan-verify) - service responsible for verifying the health of uploaded files
 * [upscan-notify](https://github.com/hmrc/upscan-notify) - service responsible for notifying consuming services about the status of uploaded files
 * [upscan-infrastructue](https://github.com/hmrc/upscan-infrastructure) - AWS infrastructure provisioning scripts
+
+### Testing
+* [upscan-listener](https://github.com/hmrc/upscan-listener) - service used in testing to receive callbacks from `upscan-notify`
+* [upscan-stub](https://github.com/hmrc/upscan-stub) - service used locally (via `ServiceManager`) to stub `upscan-initiate`, `upscan-verify`, `upscan-notify` and uploads to AWS S3.
 * [upscan-acceptance-tests](https://github.com/hmrc/upscan-acceptance-tests) - end-to-end acceptance tests of the upscan ecosystem
+* [upscan-performance-tests](https://github.com/hmrc/upscan-performance-tests) - performance tests of the upscan ecosystem
 
-### Tests
-
-Upscan service has end-to-end acceptance tests which can be found in https://github.com/hmrc/upscan-acceptance-tests repository
 ### License
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html")
