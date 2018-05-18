@@ -34,7 +34,7 @@ after specified time (TODO agree on that).
 
 ## Service usage
 
-In order to initiate upload, consuming service have to make a POST request to `https://upscan.***REMOVED***/upscan/initiate` endpoint
+In order to initiate upload, consuming service have to make a POST request to `https://upscan-initiate.***REMOVED***/upscan/initiate` endpoint
 with details about expected upload, which include additional metadata, additional constraints
 about content type and size, and callback URL which will be used to notify user. Here is an example of the request:
 ```
