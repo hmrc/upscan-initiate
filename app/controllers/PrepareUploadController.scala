@@ -40,12 +40,15 @@ class PrepareUploadController @Inject()(prepareUploadService: PrepareUploadServi
     )
   }
 
-  def prepareUpload(): Action[JsValue] = onlyAllowedServices {
+  def prepareUpload(): Action[JsValue] = {
     Action.async(parse.json) { implicit request =>
-      withJsonBody[UploadSettings] { (fileUploadDetails: UploadSettings) =>
-        Logger.debug(s"Processing request: [$fileUploadDetails].")
-        val result: PreparedUpload = prepareUploadService.prepareUpload(fileUploadDetails)
-        Future.successful(Ok(Json.toJson(result)))
+      onlyAllowedServices[JsValue] { (_, consumingService) =>
+        withJsonBody[UploadSettings] { (fileUploadDetails: UploadSettings) =>
+          Logger.debug(s"Processing request: [$fileUploadDetails].")
+
+          val result: PreparedUpload = prepareUploadService.prepareUpload(fileUploadDetails, consumingService)
+          Future.successful(Ok(Json.toJson(result)))
+        }
       }
     }
   }
