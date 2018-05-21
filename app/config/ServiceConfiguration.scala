@@ -1,8 +1,9 @@
 package config
 
 import java.time.Duration
-import javax.inject.Inject
 
+import javax.inject.Inject
+import org.apache.commons.lang3.StringUtils.isNotBlank
 import play.api.Configuration
 
 trait ServiceConfiguration {
@@ -38,10 +39,8 @@ class PlayBasedServiceConfiguration @Inject()(configuration: Configuration) exte
   override def globalFileSizeLimit = getRequired(configuration.getInt, "global.file.size.limit")
 
   override def allowedUserAgents: Seq[String] =
-    configuration.getString("userAgentFilter.allowedUserAgents").map(_
-        .split(",")
-        .toSeq
-        .filterNot(_.isEmpty)
-      ).getOrElse(Nil)
+    configuration.getStringSeq("userAgentFilter.allowedUserAgents").map {_
+        .filter(isNotBlank)
+    }.getOrElse(Nil)
 
 }
