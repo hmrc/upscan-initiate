@@ -61,13 +61,14 @@ class S3UploadFormGenerator(
     policySignature: String) = {
 
     val fields = Map(
-      "x-amz-algorithm"  -> "AWS4-HMAC-SHA256",
-      "x-amz-credential" -> signingCredentials,
-      "x-amz-date"       -> timeStamp,
-      "policy"           -> encodedPolicy,
-      "x-amz-signature"  -> policySignature,
-      "acl"              -> uploadParameters.acl,
-      "key"              -> uploadParameters.objectKey
+      "x-amz-algorithm"              -> "AWS4-HMAC-SHA256",
+      "x-amz-credential"             -> signingCredentials,
+      "x-amz-date"                   -> timeStamp,
+      "policy"                       -> encodedPolicy,
+      "x-amz-signature"              -> policySignature,
+      "acl"                          -> uploadParameters.acl,
+      "key"                          -> uploadParameters.objectKey,
+      "x-amz-meta-original-filename" -> "${filename}"
     )
 
     val sessionCredentials = securityToken.map(t => Map("x-amz-security-token" -> t)).getOrElse(Map.empty)
@@ -93,7 +94,7 @@ class S3UploadFormGenerator(
 
     val metadataJson = uploadParameters.additionalMetadata.map {
       case (k, v) => Json.obj(s"x-amz-meta-$k" -> v)
-    }
+    }.toSeq :+ Json.arr("starts-with", "$x-amz-meta-original-filename", "")
 
     val contentTypeConstraintJson =
       uploadParameters.expectedContentType.map(contentType => Json.obj("Content-Type" -> contentType))

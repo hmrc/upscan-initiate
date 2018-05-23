@@ -10,6 +10,8 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{GivenWhenThen, Matchers, WordSpec}
 import play.api.libs.json.{JsArray, JsValue, Json}
 
+import scala.util.Try
+
 class S3UploadFormGeneratorSpec extends WordSpec with GivenWhenThen with Matchers with MockitoSugar {
 
   "S3UploadFormGenerator" should {
@@ -64,23 +66,29 @@ class S3UploadFormGeneratorSpec extends WordSpec with GivenWhenThen with Matcher
       val arrayConditions: Seq[Seq[JsValue]] = conditions.flatMap(_.asOpt[JsArray].map(_.value))
 
       And("policy contains proper size constraints")
-      val fileSizeCondition = arrayConditions.find(_.headOption.map(_.as[String]).contains("content-length-range"))
+      val fileSizeCondition = arrayConditions.find(_.toIndexedSeq(0).as[String] == "content-length-range")
       fileSizeCondition.get(1).as[Int] shouldBe 0
       fileSizeCondition.get(2).as[Int] shouldBe 1024
+
+      And("policy contains proper filename constraint")
+      val filenameMetadataCondition =
+        arrayConditions.toList.find(_.toIndexedSeq(1).asOpt[String].contains("$x-amz-meta-original-filename"))
+      filenameMetadataCondition.get(0).as[String] shouldBe "starts-with"
+      filenameMetadataCondition.get(2).as[String] shouldBe ""
 
       And("policy's signature is correct")
       verify(policySigner).signPolicy(credentials, "19970716", regionName, result("policy"))
       result("x-amz-signature") shouldBe testSignature
 
       And("all required fields are present and match the policy")
-      result("acl")                  shouldBe "private"
-      result("key")                  shouldBe "test-key"
-      result("x-amz-algorithm")      shouldBe "AWS4-HMAC-SHA256"
-      result("x-amz-credential")     shouldBe "accessKeyId/19970716/us-east-1/s3/aws4_request"
-      result("x-amz-date")           shouldBe "19970716T192030Z"
-      result("x-amz-meta-key1")      shouldBe "value1"
-      result("x-amz-security-token") shouldBe "session-token"
-
+      result("acl")                          shouldBe "private"
+      result("key")                          shouldBe "test-key"
+      result("x-amz-algorithm")              shouldBe "AWS4-HMAC-SHA256"
+      result("x-amz-credential")             shouldBe "accessKeyId/19970716/us-east-1/s3/aws4_request"
+      result("x-amz-date")                   shouldBe "19970716T192030Z"
+      result("x-amz-meta-key1")              shouldBe "value1"
+      result("x-amz-security-token")         shouldBe "session-token"
+      result("x-amz-meta-original-filename") shouldBe "${filename}"
     }
   }
 
