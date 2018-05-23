@@ -39,8 +39,10 @@ class PlayBasedServiceConfiguration @Inject()(configuration: Configuration) exte
   override def globalFileSizeLimit = getRequired(configuration.getInt, "global.file.size.limit")
 
   override def allowedUserAgents: Seq[String] =
-    configuration.getStringSeq("userAgentFilter.allowedUserAgents").map {_
-        .filter(isNotBlank)
+    configuration.getString("userAgentFilter.allowedUserAgents").map {_
+      .split(",")
+      .toSeq
+      .filter(isNotBlank)
     }.getOrElse(Nil)
 
 }
