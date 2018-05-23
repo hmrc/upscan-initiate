@@ -12,7 +12,7 @@ import uk.gov.hmrc.play.test.UnitSpec
 
 class PrepareUploadControllerISpec extends UnitSpec with GuiceOneAppPerSuite with GivenWhenThen {
   override implicit lazy val app: Application = new GuiceApplicationBuilder().configure(
-    "userAgentFilter.allowedUserAgents" -> Seq("PrepareUploadControllerISpec")
+    "userAgentFilter.allowedUserAgents" -> "PrepareUploadControllerISpec"
   ).build()
 
   "PrepareUploadController" should {
