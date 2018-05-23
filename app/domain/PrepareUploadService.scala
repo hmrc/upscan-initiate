@@ -19,11 +19,14 @@ class PrepareUploadService @Inject()(
     val expiration = Instant.now().plus(configuration.fileExpirationPeriod)
 
     val result =
-      PreparedUpload(reference = reference, uploadRequest = generatePost(reference.value, expiration, settings, consumingService))
+      PreparedUpload(
+        reference     = reference,
+        uploadRequest = generatePost(reference.value, expiration, settings, consumingService))
 
     try {
       MDC.put("file-reference", reference.value)
-      Logger.info(s"Generated file-reference: [${reference.value}], for settings: [$settings], with expiration at: [$expiration].")
+      Logger.info(
+        s"Generated file-reference: [${reference.value}], for settings: [$settings], with expiration at: [$expiration].")
 
       metrics.defaultRegistry.counter("uploadInitiated").inc()
 
@@ -35,7 +38,11 @@ class PrepareUploadService @Inject()(
 
   private def generateReference() = Reference(UUID.randomUUID().toString)
 
-  private def generatePost(key: String, expiration: Instant, settings: UploadSettings, consumingService: String): UploadFormTemplate = {
+  private def generatePost(
+    key: String,
+    expiration: Instant,
+    settings: UploadSettings,
+    consumingService: String): UploadFormTemplate = {
 
     val minFileSize = settings.minimumFileSize.getOrElse(0)
     val maxFileSize = settings.maximumFileSize.getOrElse(globalFileSizeLimit)
@@ -45,11 +52,11 @@ class PrepareUploadService @Inject()(
     require(minFileSize <= maxFileSize, "Minimum file size is greater than maximum file size")
 
     val uploadParameters = UploadParameters(
-      expirationDateTime  = expiration,
-      bucketName          = configuration.inboundBucketName,
-      objectKey           = key,
-      acl                 = "private",
-      additionalMetadata  = Map(
+      expirationDateTime = expiration,
+      bucketName         = configuration.inboundBucketName,
+      objectKey          = key,
+      acl                = "private",
+      additionalMetadata = Map(
         "callback-url"      -> settings.callbackUrl,
         "consuming-service" -> consumingService
       ),
