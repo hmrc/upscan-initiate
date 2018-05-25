@@ -114,6 +114,26 @@ sent to the callback URL:
     "details" : "The file has a virus"
 }
 ```
+## Whitelisting client services
+Upscan supports configuration of supported file types on a per-service basis.
+
+Calling services must therefore identify themselves in requests via the `User-Agent` header.
+If the supplied value is not in Upscan's list of allowed services then the `/initiate` call will fail with a `403` error.
+
+In addition to returning a `403` error, Upscan will log details of the Forbidden request. For example:
+
+```json
+{
+    "app":"upscan-initiate",
+    "message":"Invalid User-Agent: [Some(my-unknown-service-name)].",
+    "logger":"application",
+    "level":"WARN"
+}
+```
+
+To start the onboarding process for a new service, please contact the Upscan team via [#team-plat-services](https://hmrcdigital.slack.com/messages/C705QD804).
+
+
 ## Error handling
 
 In case of problems with uploading the file (file too small, too large, configuration problems), AWS
@@ -220,6 +240,10 @@ These commands will give you an access to SBT shell where you can run the servic
 * [upscan-stub](https://github.com/hmrc/upscan-stub) - service used locally (via `ServiceManager`) to stub `upscan-initiate`, `upscan-verify`, `upscan-notify` and uploads to AWS S3.
 * [upscan-acceptance-tests](https://github.com/hmrc/upscan-acceptance-tests) - end-to-end acceptance tests of the upscan ecosystem
 * [upscan-performance-tests](https://github.com/hmrc/upscan-performance-tests) - performance tests of the upscan ecosystem
+
+### Slack
+* [#team-plat-services](https://hmrcdigital.slack.com/messages/C705QD804/)
+* [#event-upscan](https://hmrcdigital.slack.com/messages/C8XPL559N)
 
 ### License
 
