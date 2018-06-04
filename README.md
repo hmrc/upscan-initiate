@@ -111,9 +111,29 @@ sent to the callback URL:
 {
     "reference" : "11370e18-6e24-453e-b45a-76d3e32ea33d",
     "fileStatus" : "FAILED",
-    "details" : "The file has a virus"
+    "failureDetails": {
+        "failureReason": "QUARANTINED",
+        "message": "This file has a virus"
+    }
 }
 ```
+
+```
+{
+    "reference" : "11370e18-6e24-453e-b45a-76d3e32ea33d",
+    "fileStatus" : "FAILED",
+    "failureDetails": {
+        "failureReason": "REJECTED",
+        "message": "MIME type $mime is not allowed for service $service-name"
+    }
+}
+```
+
+At the moment, the list of failure reasons is as follows, but additional ones may be added:
+- `QUARANTINED` if a file has a virus
+- `REJECTED` if a file is not of an allowed type for the service
+- `UNKNOWN` if an unexpected error has occurred
+
 ## Whitelisting client services
 Upscan supports configuration of supported file types on a per-service basis.
 
