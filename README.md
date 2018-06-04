@@ -151,6 +151,10 @@ In addition to returning a `403` error, Upscan will log details of the Forbidden
 }
 ```
 
+*Note:* If you are using [http-verbs](https://github.com/hmrc/http-verbs) to call Upscan, then the `User-Agent` header will be set automatically.
+(See: [HttpVerb.scala](https://github.com/hmrc/http-verbs/blob/2807dc65f64009bd7ce1f14b38b356e06dd23512/src/main/scala/uk/gov/hmrc/http/HttpVerb.scala#L53))
+
+
 To start the onboarding process for a new service, please contact the Upscan team via [#team-plat-services](https://hmrcdigital.slack.com/messages/C705QD804).
 
 
