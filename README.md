@@ -93,6 +93,10 @@ When form will be submitted succesfully, the service will return HTTP 204 respon
 the service will return proper HTTP error response (4xx, 5xx) with details of the problem encoded as XML document. See Error handling
 section for details.
 
+A successful upload response will contain a block entitled `uploadDetails`. This block contains the timestamp of the original file upload,
+and the SHA256 checksum of the uploaded file contents. This data should be send by the calling microservice to the
+non-repudiation service.
+
 When file is successfully uploaded by the user and checked by antivirus scanner, Upscan service
 will make a POST call to the URL specified as a 'callbackUrl' parameter with the following body:
 
@@ -100,7 +104,11 @@ will make a POST call to the URL specified as a 'callbackUrl' parameter with the
 {
     "reference" : "11370e18-6e24-453e-b45a-76d3e32ea33d",
     "fileStatus" : "READY",
-    "url" : "https://bucketName.s3.eu-west-2.amazonaws.com?1235676"
+    "url" : "https://bucketName.s3.eu-west-2.amazonaws.com?1235676",
+    "uploadDetails": {
+        "uploadTimestamp": "2018-04-24T09:30:00Z",
+        "checksum": 12735612735217635
+    }
 }
 ```
 
@@ -272,6 +280,3 @@ These commands will give you an access to SBT shell where you can run the servic
 ### License
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html")
-
-### TO DO
-* Resolve file constraints (mimetypes)
