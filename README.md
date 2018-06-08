@@ -1,8 +1,7 @@
 # upscan-initiate
 
-Microservice for initiating the upload of files created externally to HMRC estate, namely from members of the public.
-This is not intended to be used for transfer of files from one HMRC service to another, for this you need to intergrate
-directly with the file transfer service.
+Microservice for initiating the upload of files created externally to HMRC estate. These could be from members of the public or third-party services.
+This service is not for transfer of files from one HMRC service to another. See the Transmission Service for this use-case.
 
 [![Build Status](https://travis-ci.org/hmrc/upscan-initiate.svg)](https://travis-ci.org/hmrc/upscan-initiate) [ ![Download](https://api.bintray.com/packages/hmrc/releases/upscan-initiate/images/download.svg) ](https://bintray.com/hmrc/releases/upscan-initiate/_latestVersion)
 
@@ -10,10 +9,13 @@ directly with the file transfer service.
 
 ## Introduction
 
-Upscan service allows consuming services to orchestrate the process of uploading files by the end users. Upscan provides
-temporary storage of uploaded file, ensures that the file isn't harmful (doesn't contain viruses) and verifies
-against predefined preconditions (like maximum size).
-The process of uploading and verifying of uploaded file is performed asynchronously without involvement of the consuming service.
+Please also read the Upscan documentation in Confluence, this is in the Platform Services space.
+
+In this 'user manual' the collection of microservices that make up Upscan are discussed, not just upscan-initiate. This documentation is here as upscan-initiate is the microservice which developers will interact with directly.
+
+The Upscan service allows consuming services to orchestrate the uploading of files. Upscan provides
+temporary storage of the uploaded file, ensures that the file isn't harmful (doesn't contain viruses) and verifies against predefined retrictions provided by the consuming service (e.g. file type & file size).
+Once the upload URL has been requested, upload and verfication of a file is performed asynchronously without involvement of the consuming service.
 
 ## File upload workflow
 
