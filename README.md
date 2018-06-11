@@ -239,40 +239,19 @@ Upscan must not be used to route or transfer files between different services on
 
 # Architecture of the service
 
-![Architecture](architecture.png)
-
-The service heavily relies on Amazon Web Services to provide desired functionality. The most important
-AWS features that are used by the service are:
-* [Pre-signed POST requests](https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-UsingHTTPPOST.html) - to allow end users to upload file directly to S3
-* [Pre-signed URLs](https://docs.aws.amazon.com/AmazonS3/latest/dev/ShareObjectPreSignedURL.html) - to allow consuming service to download uploaded file directly from S3
-
-Upscan consists of the following components:
-* **MDTP microservices**
-  * **upscan-initiate service** - standalone service running on MDTP platform which creates pre-signed POST
-forms that can be later used by consuming service to upload the file
-  * **upscan-notify service** - standalone service running on MDTP platform which polls outbound and quarantine event queues for results
-of file verification. This service makes calls to consuming services using callback urls provided at the beginning of the process
-* **AWS components**
-  * **inbound S3 bucket** - AWS S3 bucket used by users to upload their files
-  * **inbound event queue** - AWS SQS queue that contains events triggered by uploads to inbound S3 bucket
-  * **outbound S3 bucket** - AWS S3 bucket containing files that have been verified by antivirus and are clean
-  * **outbound event queue** - AWS SQS queue that contains events triggered by copying clean files to outbound S3 bucket
-  * **quarantine S3 bucket** - whenever antivirus scanner detects virus in the file, it creates and object in this bucket that contains details of infected file
-  * **quarantine event queue** - AWS SQS queue that contains events triggered by detecting viruses in files
-* **Other services**
-  * **antivirus scanner** - component running on AWS that fetches files form inbound S3 bucket, scans them and if these are clean, moves to outbound bucket
+Please see the Upscan Confluence page for architecture overview and details.
 
 # Running and maintenance of the service
 
 ## Running locally
 
-In order to run the service against one of HMRC accounts (labs, live) it's necessary to have an AWS accounts with proper
-role. See [UpScan Accounts/roles](https://github.com/hmrc/aws-users/blob/master/AccountLinks.md)
-for proper details.
+In order to run the service against one of HMRC AWS accounts {labs, live} it's necessary to have an AWS user with the proper role. See [UpScan Accounts/roles](https://github.com/hmrc/aws-users/blob/master/AccountLinks.md) for proper details.
 
 Prerequisites:
-- AWS accounts with proper roles setup
-- Proper AWS credential configuration set up according to this document [aws-credential-configuration](https://github.com/hmrc/aws-users), with the credentials below:
+
+- AWS user with correct roles & MFA enabled
+- AWS credential configuration set up according to this document [aws-credential-configuration](https://github.com/hmrc/aws-users), with the credentials below:
+
 ```
 [webops-users]
 mfa_serial = arn:aws:iam::638924580364:mfa/YOUR_AWS_USER_NAME
@@ -290,21 +269,24 @@ aws_secret_access_key = YOUR_SECRET_KEY_HERE
 output = json
 region = eu-west-2
 ```
-- Working AWS MFA authentication
-- Have python 2.7 installed
-- Install botocore and awscli python modules locally:
-  - For Linux:
-```
-sudo pip install botocore
-sudo pip install awscli
-```
-  - For Mac (Mac has issues with pre-installed version of ```six``` as discussed [here](https://github.com/pypa/pip/issues/3165) ):
-```
-sudo pip install botocore --ignore-installed six
-sudo pip install awscli --ignore-installed six
-```
+- Python 2.7 installed
+- Botocore and awscli python modules installed locally:
+  - Linux:
 
-In order to run the app against lab environment it's necessary to run the following commands:
+		```
+		sudo pip install botocore
+		sudo pip install awscli
+		```
+
+  - Mac (Mac has issues with pre-installed version of ```six``` as discussed [here](https://github.com/pypa/pip/issues/3165) ):
+
+		```
+		sudo pip install botocore --ignore-installed six
+		sudo pip install awscli --ignore-installed six
+		```
+
+In order to run the app against the lab environment it's necessary to run the following commands:
+
 ```
 export AWS_S3_BUCKET_INBOUND=name of inbound s3 bucket you would like to use
 export AWS_DEFAULT_PROFILE=name of proper profile in ~/.aws/credentials file
