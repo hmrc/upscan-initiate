@@ -126,7 +126,7 @@ If the POST is successful, the service returns a HTTP 204 response with an empty
 
 #### Success
 
-When a file is successfully uploaded it is processed by `[upscan-verify](https://github.com/hmrc/upscan-verify)` to check for viruses & that it is of an allowed file type.
+When a file is successfully uploaded it is processed by [upscan-verify](https://github.com/hmrc/upscan-verify) to check for viruses & that it is of an allowed file type.
 
 If these checks pass, the file is made for available for retrieval & the Upscan service will make a POST request to the URL specified as the 'callbackUrl' by the consuming service with the following body:
 
@@ -297,15 +297,15 @@ These commands will give you an access to SBT shell where you can run the servic
 
 ## Related projects, useful links:
 
-* `[upscan-verify](https://github.com/hmrc/upscan-verify)` - service responsible for verifying the health of uploaded files
-* `[upscan-notify](https://github.com/hmrc/upscan-notify)` - service responsible for notifying consuming services about the status of uploaded files
-* `[upscan-infrastructue](https://github.com/hmrc/upscan-infrastructure)` - AWS infrastructure provisioning scripts
+* [upscan-verify](https://github.com/hmrc/upscan-verify) - service responsible for verifying the health of uploaded files
+* [upscan-notify](https://github.com/hmrc/upscan-notify) - service responsible for notifying consuming services about the status of uploaded files
+* [upscan-infrastructue](https://github.com/hmrc/upscan-infrastructure) - AWS infrastructure provisioning scripts
 
 ### Testing
-* `[upscan-listener](https://github.com/hmrc/upscan-listener)` - service used in testing to receive callbacks from `upscan-notify`
-* `[upscan-stub](https://github.com/hmrc/upscan-stub)` - service used locally (via `ServiceManager`) to stub `upscan-initiate`, `upscan-verify`, `upscan-notify` and uploads to AWS S3.
-* `[upscan-acceptance-tests](https://github.com/hmrc/upscan-acceptance-tests)` - end-to-end acceptance tests of the upscan ecosystem
-* `[upscan-performance-tests](https://github.com/hmrc/upscan-performance-tests)` - performance tests of the upscan ecosystem
+* [upscan-listener](https://github.com/hmrc/upscan-listener) - service used in testing to receive callbacks from `upscan-notify`
+* [upscan-stub](https://github.com/hmrc/upscan-stub) - service used locally (via `ServiceManager`) to stub `upscan-initiate`, `upscan-verify`, `upscan-notify` and uploads to AWS S3.
+* [upscan-acceptance-tests](https://github.com/hmrc/upscan-acceptance-tests) - end-to-end acceptance tests of the upscan ecosystem
+* [upscan-performance-tests](https://github.com/hmrc/upscan-performance-tests) - performance tests of the upscan ecosystem
 
 ### Slack
 * [#team-plat-services](https://hmrcdigital.slack.com/messages/C705QD804/)
