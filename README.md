@@ -1,7 +1,7 @@
 # upscan-initiate
 
 Microservice for initiating the upload of files created externally to HMRC estate. These could be from members of the public or third-party services.
-This service is not for transfer of files from one HMRC service to another. See the Transmission Service for this use-case.
+This service is not for transfer of files from one HMRC service to another. See the Transmission Service as documented in Confluence for this use-case.
 
 [![Build Status](https://travis-ci.org/hmrc/upscan-initiate.svg)](https://travis-ci.org/hmrc/upscan-initiate) [ ![Download](https://api.bintray.com/packages/hmrc/releases/upscan-initiate/images/download.svg) ](https://bintray.com/hmrc/releases/upscan-initiate/_latestVersion)
 
@@ -12,7 +12,7 @@ This service is not for transfer of files from one HMRC service to another. See 
 
 Please also read the Upscan documentation in Confluence, this is in the "Platform Services" space.
 
-In this "user manual" the collection of microservices that make up Upscan are discussed, not just upscan-initiate. This documentation is here as upscan-initiate is the microservice which developers will interact with directly.
+In this "user manual" the collection of microservices that make up Upscan are discussed, not just `upscan-initiate`. This documentation is here as `upscan-initiate` is the microservice which developers will interact with directly.
 
 The Upscan service allows consuming services to orchestrate the uploading of files. Upscan provides
 temporary storage of the uploaded file, ensures that the file isn't harmful (doesn't contain viruses) and verifies against predefined restrictions provided by the consuming service (e.g. file type & file size).
@@ -20,26 +20,26 @@ Once the upload URL has been requested, upload and verification of a file are pe
 
 ### Quick reference figures
 
-| Thing                                 | What           |
+| Metric                                | Value          |
 | -------------                         |:-------------: |
 | Lifetime of POST URL                  | Up to 7 days   |
 | Lifetime of GET URL                   | Up to 7 days   |
 | Callback request retry time           | 60 seconds     |
-| Maximum callback notification retries | 30     |
+| Maximum callback notification retries | 30             |
 
 
 ## File upload workflow
 
-* Consuming service requests upload of a single file. It makes a HTTP POST call to the `/upscan/initiate` endpoint with details of the requested upload (including file size constraints & a callback URL)
-* Upscan service replies with a template of the HTTP POST form that will be used to upload the file. A unique file reference is also provided to allow the consuming service to correlate the upload request with notifications to the callback URL provided.
-* Consuming service passes the form details to the end-user, either via a control on a webpage or to an internal/external service which will upload the file.
-* The end user uploads the file.
+* Consuming service requests upload of a single file. It makes a HTTP POST call to the `/upscan/initiate` endpoint with details of the requested upload (including a callback URL and optional file size constraints)
+* Upscan service replies with a template of the HTTP POST form that will be used to upload the file. A unique file reference is also provided to allow the consuming service to correlate the upload request with notifications to the callback URL provided
+* Consuming service passes the form details to the end-user, either via a control on a webpage or to an internal/external service which will upload the file
+* The end user uploads the file
 * Upscan service performs all checks on the uploaded file
-* If file the file passes all checks, a notification is sent to consuming service. This notification contains the URL to GET the file from.
-* Consuming service downloads the file using provided URL or passes this URL on to another service which will make use of the file location.
-* After specified time the file is automatically removed from the remote storage. Upscan does NOT keep files indefinitely.
-* If the file fails a check, a notification is sent to the consuming service containing information on the failed check. The file is unavailable for retrieval.
-* If the consuming service fails to respond to the callback request (e.g. the consuming service is down, the consuming service answered with an HTTP status code other than 2xx), the callback will be retried up to a maximum of 30 retries. The time interval between the retries is 60 seconds.
+* If file the file passes all checks, a notification is sent as a POST request to a consuming service. This notification contains the URL to GET the file from
+* Consuming service downloads the file using provided URL or passes this URL on to another service which will make use of the file location
+* After specified time, the file is automatically removed from the remote storage. Upscan does NOT keep files indefinitely
+* If the file fails a check, a notification is sent to the consuming service containing information on the failed check. The file is unavailable for retrieval
+* If the consuming service fails to respond to the callback request (e.g. the consuming service is down, the consuming service answered with an HTTP status code other than 2xx), the callback will be retried up to a maximum of 30 retries. The time interval between the retries is 60 seconds
 Configuration of these values is here (https://github.com/hmrc/upscan-infrastructure/blob/master/modules/sqs/main.tf)
 
 ## Service usage
@@ -50,14 +50,14 @@ In order to initiate an upload the consuming service must be whitelisted by upsc
 
 ### Requesting a URL to upload to
 
-Assuming the consuming service is whitelisted, it makes a POST request to the `https://upscan-initiate.***REMOVED***/upscan/initiate` endpoint. This request includes details about the expected upload - constraints on size and the callback URL.
+Assuming the consuming service is whitelisted, it makes a POST request to the `https://upscan-initiate.***REMOVED***/upscan/initiate` endpoint. This request includes details about the expected upload, specifically the callback URL and optional constraints on size.
 
 The callback will be made from inside the MDTP environment, bear that in mind when specifying the
 callback URL e.g. `myservice.***REMOVED***/upscan-callback` not `myservice.***REMOVED***/upscan-callback`.
 
 Here is an example of the request body:
 
-```
+```json
 {
     "callbackUrl": "http://myservice.com/callback",
     "minimumFileSize" : 0,
@@ -76,7 +76,7 @@ Meaning of parameters:
 The service replies with a pre-filled template for the upload of the file (described below).
 The JSON response also contains a globally unique file reference of the upload. This reference can be used by the Upscan service team to view the progress and result of the journey through the different Upscan components. The consuming service can use this reference to correlate the upload request with a successfully uploaded file.
 
-```
+```json
 {
     "reference": "11370e18-6e24-453e-b45a-76d3e32ea33d",
     "uploadRequest": {
@@ -113,7 +113,7 @@ This POST request can be sent programmatically from backend code, by making an a
 
 Whichever way the form is sent, remember:
 
-- You must use multipart encoding (`multipart/form-data`) NOT `application/x-www-form-urlencoded`. If you use application/x-www-form-urlencoded, AWS will return a response from which this error is not clear.
+- You must use multipart encoding (`multipart/form-data`) NOT `application/x-www-form-urlencoded`. If you use` application/x-www-form-urlencoded`, AWS will return a response from which this error is not clear.
 - The 'file' field must be the last field in the submitted form.
 
 ### File upload outcome
@@ -130,7 +130,7 @@ When a file is successfully uploaded it is processed by [upscan-verify](https://
 
 If these checks pass, the file is made for available for retrieval & the Upscan service will make a POST request to the URL specified as the 'callbackUrl' by the consuming service with the following body:
 
-```
+```json
 {
     "reference" : "11370e18-6e24-453e-b45a-76d3e32ea33d",
     "fileStatus" : "READY",
@@ -142,7 +142,7 @@ If these checks pass, the file is made for available for retrieval & the Upscan 
 }
 ```
 
-Note the block entitled `uploadDetails`, see the Confluence page 'Upscan & Non-Repudiation Service' in the Platform Services space usage of this information:
+Note the block entitled 'uploadDetails', see the Confluence page 'Upscan & Non-Repudiation Service' in the Platform Services space usage of this information:
 
 - `uploadTimestamp` - The timestamp of the file upload
 - `checksum` - The SHA256 hash of the uploaded file
@@ -159,7 +159,7 @@ The list of failure reasons is as follows:
 These reasons form one of the following JSON responses sent to the callback URL:
 
 
-```
+```json
 {
     "reference" : "11370e18-6e24-453e-b45a-76d3e32ea33d",
     "fileStatus" : "FAILED",
@@ -170,7 +170,7 @@ These reasons form one of the following JSON responses sent to the callback URL:
 }
 ```
 
-```
+```json
 {
     "reference" : "11370e18-6e24-453e-b45a-76d3e32ea33d",
     "fileStatus" : "FAILED",
@@ -181,7 +181,7 @@ These reasons form one of the following JSON responses sent to the callback URL:
 }
 ```
 
-```
+```json
 {
     "reference" : "11370e18-6e24-453e-b45a-76d3e32ea33d",
     "fileStatus" : "FAILED",
@@ -211,7 +211,7 @@ In addition to returning a `403` error, Upscan will log details of the Forbidden
 }
 ```
 
-*Note:* If you are using [http-verbs](https://github.com/hmrc/http-verbs) to call Upscan, then the `User-Agent` header will be set automatically.
+*Note:* If you are using `[http-verbs](https://github.com/hmrc/http-verbs)` to call Upscan, then the `User-Agent` header will be set automatically.
 (See: [HttpVerb.scala](https://github.com/hmrc/http-verbs/blob/2807dc65f64009bd7ce1f14b38b356e06dd23512/src/main/scala/uk/gov/hmrc/http/HttpVerb.scala#L53))
 
 ## Error handling
