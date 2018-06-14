@@ -134,7 +134,7 @@ If these checks pass, the file is made for available for retrieval & the Upscan 
 {
     "reference" : "11370e18-6e24-453e-b45a-76d3e32ea33d",
     "fileStatus" : "READY",
-    "url" : "https://bucketName.s3.eu-west-2.amazonaws.com?1235676",
+    "downloadUrl" : "https://bucketName.s3.eu-west-2.amazonaws.com?1235676",
     "uploadDetails": {
         "uploadTimestamp": "2018-04-24T09:30:00Z",
         "checksum": "396f101dd52e8b2ace0dcf5ed09b1d1f030e608938510ce46e7a5c7a4e775100"
