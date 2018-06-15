@@ -6,6 +6,7 @@ import java.util.UUID
 import com.kenshoo.play.metrics.Metrics
 import config.ServiceConfiguration
 import javax.inject.{Inject, Singleton}
+
 import org.slf4j.MDC
 import play.api.Logger
 @Singleton
@@ -14,14 +15,14 @@ class PrepareUploadService @Inject()(
   configuration: ServiceConfiguration,
   metrics: Metrics) {
 
-  def prepareUpload(settings: UploadSettings, consumingService: String): PreparedUpload = {
+  def prepareUpload(settings: UploadSettings, consumingService: String, sessionId: String): PreparedUpload = {
     val reference  = generateReference()
     val expiration = Instant.now().plus(configuration.fileExpirationPeriod)
 
     val result =
       PreparedUpload(
         reference     = reference,
-        uploadRequest = generatePost(reference.value, expiration, settings, consumingService))
+        uploadRequest = generatePost(reference.value, expiration, settings, consumingService, sessionId))
 
     try {
       MDC.put("file-reference", reference.value)
@@ -42,7 +43,8 @@ class PrepareUploadService @Inject()(
     key: String,
     expiration: Instant,
     settings: UploadSettings,
-    consumingService: String): UploadFormTemplate = {
+    consumingService: String,
+    sessionId: String): UploadFormTemplate = {
 
     val minFileSize = settings.minimumFileSize.getOrElse(0)
     val maxFileSize = settings.maximumFileSize.getOrElse(globalFileSizeLimit)
@@ -58,7 +60,8 @@ class PrepareUploadService @Inject()(
       acl                = "private",
       additionalMetadata = Map(
         "callback-url"      -> settings.callbackUrl,
-        "consuming-service" -> consumingService
+        "consuming-service" -> consumingService,
+        "session-id"        -> sessionId
       ),
       contentLengthRange  = ContentLengthRange(minFileSize, maxFileSize),
       expectedContentType = settings.expectedContentType

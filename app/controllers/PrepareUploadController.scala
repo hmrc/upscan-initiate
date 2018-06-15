@@ -1,6 +1,7 @@
 package controllers
 
 import javax.inject.{Inject, Singleton}
+
 import config.ServiceConfiguration
 import domain._
 import play.api.Logger
@@ -9,15 +10,18 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json.{JsPath, Json, Writes, _}
 import play.api.mvc.Action
+import uk.gov.hmrc.http.HeaderNames.xSessionId
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import utils.UserAgentFilter
 
 import scala.concurrent.Future
 
 @Singleton
-class PrepareUploadController @Inject()(prepareUploadService: PrepareUploadService,
-                                        override val configuration: ServiceConfiguration)
-  extends BaseController with UserAgentFilter {
+class PrepareUploadController @Inject()(
+  prepareUploadService: PrepareUploadService,
+  override val configuration: ServiceConfiguration)
+    extends BaseController
+    with UserAgentFilter {
 
   implicit val uploadSettingsReads: Reads[UploadSettings] = (
     (JsPath \ "callbackUrl").read[String] and
@@ -40,16 +44,16 @@ class PrepareUploadController @Inject()(prepareUploadService: PrepareUploadServi
     )
   }
 
-  def prepareUpload(): Action[JsValue] = {
+  def prepareUpload(): Action[JsValue] =
     Action.async(parse.json) { implicit request =>
       onlyAllowedServices[JsValue] { (_, consumingService) =>
         withJsonBody[UploadSettings] { (fileUploadDetails: UploadSettings) =>
           Logger.debug(s"Processing request: [$fileUploadDetails].")
-
-          val result: PreparedUpload = prepareUploadService.prepareUpload(fileUploadDetails, consumingService)
+          val sessionId = request.headers.get(xSessionId).getOrElse("n/a")
+          val result: PreparedUpload =
+            prepareUploadService.prepareUpload(fileUploadDetails, consumingService, sessionId)
           Future.successful(Ok(Json.toJson(result)))
         }
       }
     }
-  }
 }
