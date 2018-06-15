@@ -72,7 +72,7 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
       When("we setup the upload")
 
-      val result = service(metrics).prepareUpload(uploadSettings, "PrepareUploadServiceSpec")
+      val result = service(metrics).prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-session-id")
 
       Then("proper upload request form definition should be returned")
 
@@ -82,6 +82,7 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
         "key"                          -> result.reference.value,
         "x-amz-meta-callback-url"      -> callbackUrl,
         "x-amz-meta-consuming-service" -> "PrepareUploadServiceSpec",
+        "x-amz-meta-session-id"        -> "some-session-id",
         "minSize"                      -> "0",
         "maxSize"                      -> "1024",
         "Content-Type"                 -> "application/xml"
@@ -109,7 +110,7 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
       When("we setup the upload")
 
-      val result = service(metrics).prepareUpload(uploadSettings, "PrepareUploadServiceSpec")
+      val result = service(metrics).prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-session-id")
 
       Then("upload request should contain requested min/max size")
 
@@ -135,7 +136,8 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
       When("we setup the upload")
       Then("an exception should be thrown")
 
-      val thrown = the[IllegalArgumentException] thrownBy service(metrics).prepareUpload(uploadSettings, "PrepareUploadServiceSpec")
+      val thrown = the[IllegalArgumentException] thrownBy service(metrics)
+        .prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-session-id")
       thrown.getMessage should include("Minimum file size is less than 0")
 
       metrics.defaultRegistry.counter("uploadInitiated").getCount shouldBe 0
@@ -160,7 +162,8 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
       When("we setup the upload")
       Then("an exception should be thrown")
 
-      val thrown = the[IllegalArgumentException] thrownBy service(metrics).prepareUpload(uploadSettings, "PrepareUploadServiceSpec")
+      val thrown = the[IllegalArgumentException] thrownBy service(metrics)
+        .prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-session-id")
       thrown.getMessage should include("Maximum file size is greater than global maximum file size")
 
       metrics.defaultRegistry.counter("uploadInitiated").getCount shouldBe 0
@@ -184,7 +187,8 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
       When("we setup the upload")
       Then("an exception should be thrown")
 
-      val thrown = the[IllegalArgumentException] thrownBy service(metrics).prepareUpload(uploadSettings, "PrepareUploadServiceSpec")
+      val thrown = the[IllegalArgumentException] thrownBy service(metrics)
+        .prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-session-id")
       thrown.getMessage should include("Minimum file size is greater than maximum file size")
 
       metrics.defaultRegistry.counter("uploadInitiated").getCount shouldBe 0

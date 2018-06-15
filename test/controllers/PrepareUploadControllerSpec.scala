@@ -34,7 +34,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
       Given("there is a valid upload request with all data")
 
       val request: FakeRequest[JsValue] = FakeRequest()
-        .withHeaders(("User-Agent", "VALID-AGENT"))
+        .withHeaders(("User-Agent", "VALID-AGENT"), ("x-session-id", "some-session-id"))
         .withBody(
           Json.obj(
             "id"              -> "1",
@@ -67,7 +67,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
       Given("there is a valid upload request with minimal data")
 
       val request: FakeRequest[JsValue] = FakeRequest()
-        .withHeaders(("User-Agent", "VALID-AGENT"))
+        .withHeaders(("User-Agent", "VALID-AGENT"), ("x-session-id", "some-session-id"))
         .withBody(Json.obj("callbackUrl" -> "http://www.example.com"))
 
       When("upload initiation has been requested")
@@ -92,7 +92,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
       Given("there is an invalid upload request")
 
       val request: FakeRequest[JsValue] = FakeRequest()
-        .withHeaders(("User-Agent", "VALID-AGENT"))
+        .withHeaders(("User-Agent", "VALID-AGENT"), ("x-session-id", "some-session-id"))
         .withBody(Json.obj("invalid" -> "body"))
 
       When("upload initiation has been requested")
@@ -110,7 +110,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
       Given("there is an invalid upload request")
 
       val request: FakeRequest[JsValue] = FakeRequest()
-        .withHeaders(("User-Agent", "VALID-AGENT"))
+        .withHeaders(("User-Agent", "VALID-AGENT"), ("x-session-id", "some-session-id"))
         .withBody(Json.obj("callbackUrl" -> "http://www.example.com", "maximumFileSize" -> 2048))
 
       When("upload initiation has been requested")
@@ -129,10 +129,8 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
       Given("there is a valid upload request from a whitelisted service")
 
-      Given("there is a valid upload request with all data")
-
       val request: FakeRequest[JsValue] = FakeRequest()
-        .withHeaders(("User-Agent", "VALID-AGENT"))
+        .withHeaders(("User-Agent", "VALID-AGENT"), ("x-session-id", "some-session-id"))
         .withBody(
           Json.obj(
             "id"              -> "1",
@@ -164,10 +162,8 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
       Given("there is a valid upload request from a non-whitelisted service")
 
-      Given("there is a valid upload request with all data")
-
       val request: FakeRequest[JsValue] = FakeRequest()
-        .withHeaders(("User-Agent", "INVALID-AGENT"))
+        .withHeaders(("User-Agent", "INVALID-AGENT"), ("x-session-id", "some-session-id"))
         .withBody(
           Json.obj(
             "id"              -> "1",
@@ -191,7 +187,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
     val service = mock[PrepareUploadService]
     Mockito.when(service.globalFileSizeLimit).thenReturn(1024)
     Mockito
-      .when(service.prepareUpload(any(), any()))
+      .when(service.prepareUpload(any(), any(), any()))
       .thenAnswer(new Answer[PreparedUpload]() {
         override def answer(invocationOnMock: InvocationOnMock): PreparedUpload = {
           val settings = invocationOnMock.getArgument[UploadSettings](0)
