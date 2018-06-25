@@ -73,6 +73,7 @@ Meaning of parameters:
 |maximumFileSize|Maximum file size (in Bytes). Cannot be greater than 100MB. Default is 100MB.|no|
 
 The request has to include the following HTTP headers:
+
 | Header name|Description|Required|
 |--------------|-----------|--------|
 | User-Agent | Identifier of the service that calls upscan | yes |
