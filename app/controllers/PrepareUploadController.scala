@@ -1,7 +1,6 @@
 package controllers
 
 import javax.inject.{Inject, Singleton}
-
 import config.ServiceConfiguration
 import domain._
 import play.api.Logger
@@ -10,6 +9,7 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json.{JsPath, Json, Writes, _}
 import play.api.mvc.Action
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HeaderNames.xSessionId
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import utils.UserAgentFilter
@@ -47,11 +47,13 @@ class PrepareUploadController @Inject()(
   def prepareUpload(): Action[JsValue] =
     Action.async(parse.json) { implicit request =>
       onlyAllowedServices[JsValue] { (_, consumingService) =>
+
         withJsonBody[UploadSettings] { (fileUploadDetails: UploadSettings) =>
           Logger.debug(s"Processing request: [$fileUploadDetails].")
-          val sessionId = request.headers.get(xSessionId).getOrElse("n/a")
+          val sessionId = hc(request).sessionId.map(_.value).getOrElse("n/a")
+          val requestId = hc(request).requestId.map(_.value).getOrElse("n/a")
           val result: PreparedUpload =
-            prepareUploadService.prepareUpload(fileUploadDetails, consumingService, sessionId)
+            prepareUploadService.prepareUpload(fileUploadDetails, consumingService, requestId, sessionId)
           Future.successful(Ok(Json.toJson(result)))
         }
       }

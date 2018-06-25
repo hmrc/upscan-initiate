@@ -15,14 +15,14 @@ class PrepareUploadService @Inject()(
   configuration: ServiceConfiguration,
   metrics: Metrics) {
 
-  def prepareUpload(settings: UploadSettings, consumingService: String, sessionId: String): PreparedUpload = {
+  def prepareUpload(settings: UploadSettings, consumingService: String, requestId : String, sessionId: String): PreparedUpload = {
     val reference  = generateReference()
     val expiration = Instant.now().plus(configuration.fileExpirationPeriod)
 
     val result =
       PreparedUpload(
         reference     = reference,
-        uploadRequest = generatePost(reference.value, expiration, settings, consumingService, sessionId))
+        uploadRequest = generatePost(reference.value, expiration, settings, consumingService, requestId, sessionId))
 
     try {
       MDC.put("file-reference", reference.value)
@@ -44,6 +44,7 @@ class PrepareUploadService @Inject()(
     expiration: Instant,
     settings: UploadSettings,
     consumingService: String,
+    requestId: String,
     sessionId: String): UploadFormTemplate = {
 
     val minFileSize = settings.minimumFileSize.getOrElse(0)
@@ -61,7 +62,8 @@ class PrepareUploadService @Inject()(
       additionalMetadata = Map(
         "callback-url"      -> settings.callbackUrl,
         "consuming-service" -> consumingService,
-        "session-id"        -> sessionId
+        "session-id"        -> sessionId,
+        "request-id"        -> requestId
       ),
       contentLengthRange  = ContentLengthRange(minFileSize, maxFileSize),
       expectedContentType = settings.expectedContentType
