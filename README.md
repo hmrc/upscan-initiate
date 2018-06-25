@@ -77,10 +77,10 @@ The request has to include the following HTTP headers:
 | Header name|Description|Required|
 |--------------|-----------|--------|
 | User-Agent | Identifier of the service that calls upscan | yes |
-| x-Session-ID | Identifier of the user's session | no  |
-| x-Request-ID | Identifier of the user's request | yes |
+| X-Session-ID | Identifier of the user's session | no  |
+| X-Request-ID | Identifier of the user's request | no |
 
-Session-id / Request-id headers will be used to link the file with user's journey.
+Session-ID / Request-ID headers will be used to link the file with user's journey.
 
 *Note:* If you are using `[http-verbs](https://github.com/hmrc/http-verbs)` to call Upscan, all the headers will be set automatically
 (See: [HttpVerb.scala](https://github.com/hmrc/http-verbs/blob/2807dc65f64009bd7ce1f14b38b356e06dd23512/src/main/scala/uk/gov/hmrc/http/HttpVerb.scala#L53))
