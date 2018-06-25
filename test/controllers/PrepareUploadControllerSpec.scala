@@ -189,8 +189,8 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
           "fields" -> Json.obj(
             "minFileSize" -> "0",
             "maxFileSize" -> "1024",
-            "session-id" -> "some-session-id",
-            "request-id" -> "some-request-id"
+            "sessionId" -> "some-session-id",
+            "requestId" -> "some-request-id"
           )
         ))
     }
