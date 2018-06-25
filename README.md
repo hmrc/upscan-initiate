@@ -46,7 +46,7 @@ Configuration of these values is here (https://github.com/hmrc/upscan-infrastruc
 
 ### Whitelisting
 
-In order to initiate an upload the consuming service must be whitelisted by upscan-initiate. See the 'Whitelisting client services' section further down in this document. 
+In order to initiate an upload the consuming service must be whitelisted by upscan-initiate. See the 'Whitelisting client services' section further down in this document.
 
 ### Requesting a URL to upload to
 
@@ -71,6 +71,18 @@ Meaning of parameters:
 |callbackUrl   |Url that will be called to report the outcome of file checking and upload, including retrieval details if successful. Notification format is detailed further down in this file.| yes|
 |minimumFileSize|Minimum file size (in Bytes). Default is 0.|no|
 |maximumFileSize|Maximum file size (in Bytes). Cannot be greater than 100MB. Default is 100MB.|no|
+
+The request has to include the following HTTP headers:
+| Header name|Description|Required|
+|--------------|-----------|--------|
+| User-Agent | Identifier of the service that calls upscan | yes |
+| x-Session-ID | Identifier of the user's session | no  |
+| x-Request-ID | Identifier of the user's request | yes |
+
+Session-id / Request-id headers will be used to link the file with user's journey.
+
+*Note:* If you are using `[http-verbs](https://github.com/hmrc/http-verbs)` to call Upscan, all the headers will be set automatically
+(See: [HttpVerb.scala](https://github.com/hmrc/http-verbs/blob/2807dc65f64009bd7ce1f14b38b356e06dd23512/src/main/scala/uk/gov/hmrc/http/HttpVerb.scala#L53))
 
 The service replies with a pre-filled template for the upload of the file (described below).
 The JSON response also contains a globally unique file reference of the upload. This reference can be used by the Upscan service team to view the progress and result of the journey through the different Upscan components. The consuming service can use this reference to correlate the upload request with a successfully uploaded file.
@@ -292,7 +304,7 @@ export AWS_DEFAULT_PROFILE=name of proper profile in ~/.aws/credentials file
 ./aws-profile sbt
 ```
 These commands will give you an access to SBT shell where you can run the service using 'run' or 'start' commands.
- 
+
 
 ## Related projects, useful links:
 
