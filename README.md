@@ -50,10 +50,9 @@ In order to initiate an upload the consuming service must be whitelisted by upsc
 
 ### Requesting a URL to upload to
 
-Assuming the consuming service is whitelisted, it makes a POST request to the `https://upscan-initiate.***REMOVED***/upscan/initiate` endpoint. This request includes details about the expected upload, specifically the callback URL and optional constraints on size.
+Assuming the consuming service is whitelisted, it makes a POST request to the `/upscan/initiate` endpoint. This request includes details about the expected upload, specifically the callback URL and optional constraints on size.
 
-The callback will be made from inside the MDTP environment, bear that in mind when specifying the
-callback URL e.g. `myservice.***REMOVED***/upscan-callback` not `myservice.***REMOVED***/upscan-callback`.
+The callback will be made from inside the MDTP environment. Hence, the callback URL should comprise the MDTP internal callback address and not the public domain address.
 
 Here is an example of the request body:
 
