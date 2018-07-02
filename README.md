@@ -149,7 +149,9 @@ If these checks pass, the file is made for available for retrieval & the Upscan 
     "downloadUrl" : "https://bucketName.s3.eu-west-2.amazonaws.com?1235676",
     "uploadDetails": {
         "uploadTimestamp": "2018-04-24T09:30:00Z",
-        "checksum": "396f101dd52e8b2ace0dcf5ed09b1d1f030e608938510ce46e7a5c7a4e775100"
+        "checksum": "396f101dd52e8b2ace0dcf5ed09b1d1f030e608938510ce46e7a5c7a4e775100",
+        "fileName": "test.pdf",
+        "fileMimeType": "application/pdf"
     }
 }
 ```
@@ -158,6 +160,9 @@ Note the block entitled 'uploadDetails', see the Confluence page 'Upscan & Non-R
 
 - `uploadTimestamp` - The timestamp of the file upload
 - `checksum` - The SHA256 hash of the uploaded file
+- `fileName` - File name as it was provided by the user
+- `fileMimeType` - Detected MIME type of the file. Please note that this refers to actual contents  
+of the file, not to the name (if user uploads PDF document named `data.png`, it will be detected as a `application/pdf`) 
 
 
 #### Failure
