@@ -18,6 +18,8 @@ The Upscan service allows consuming services to orchestrate the uploading of fil
 temporary storage of the uploaded file, ensures that the file isn't harmful (doesn't contain viruses) and verifies against predefined restrictions provided by the consuming service (e.g. file type & file size).
 Once the upload URL has been requested, upload and verification of a file are performed asynchronously without the involvement of the consuming service.
 
+All calls to this end-point are over https, providiving security to the data in transit.
+
 ### Quick reference figures
 
 | Metric                                | Value          |
