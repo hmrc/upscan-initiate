@@ -21,7 +21,7 @@ class PrepareUploadControllerISpec extends UnitSpec with GuiceOneAppPerSuite wit
   "PrepareUploadController" should {
     val postBodyJson = Json.parse("""
         |{
-        |	"callbackUrl": "http://some-url/callback",
+        |	"callbackUrl": "https://some-url/callback",
         |	"minimumFileSize" : 0,
         |	"maximumFileSize" : 1024,
         |	"expectedMimeType": "application/xml"

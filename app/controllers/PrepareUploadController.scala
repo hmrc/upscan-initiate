@@ -8,7 +8,8 @@ import play.api.data.validation.ValidationError
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json.{JsPath, Json, Writes, _}
-import play.api.mvc.Action
+import play.api.mvc.Results.Forbidden
+import play.api.mvc.{Action, Request, Result}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HeaderNames.xSessionId
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
@@ -49,13 +50,29 @@ class PrepareUploadController @Inject()(
       onlyAllowedServices[JsValue] { (_, consumingService) =>
 
         withJsonBody[UploadSettings] { (fileUploadDetails: UploadSettings) =>
-          Logger.debug(s"Processing request: [$fileUploadDetails].")
-          val sessionId = hc(request).sessionId.map(_.value).getOrElse("n/a")
-          val requestId = hc(request).requestId.map(_.value).getOrElse("n/a")
-          val result: PreparedUpload =
-            prepareUploadService.prepareUpload(fileUploadDetails, consumingService, requestId, sessionId)
-          Future.successful(Ok(Json.toJson(result)))
+
+          withAllowedCallbackProtocol(fileUploadDetails.callbackUrl) {
+            Logger.debug(s"Processing request: [$fileUploadDetails].")
+
+            val sessionId = hc(request).sessionId.map(_.value).getOrElse("n/a")
+            val requestId = hc(request).requestId.map(_.value).getOrElse("n/a")
+            val result: PreparedUpload =
+              prepareUploadService.prepareUpload(fileUploadDetails, consumingService, requestId, sessionId)
+
+            Future.successful(Ok(Json.toJson(result)))
+          }
         }
       }
     }
+
+  private[controllers] def withAllowedCallbackProtocol[A](protocol: String)
+                                            (block: => Future[Result]): Future[Result]= {
+    if (protocol.startsWith("https")) {
+      block
+    } else {
+      Logger.warn(s"Invalid callback url: [${protocol}].")
+
+      Future.successful(Forbidden(s"Invalid callback url: [${protocol}]. Protocol must be https."))
+    }
+  }
 }

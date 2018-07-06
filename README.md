@@ -52,13 +52,13 @@ In order to initiate an upload the consuming service must be whitelisted by upsc
 
 Assuming the consuming service is whitelisted, it makes a POST request to the `/upscan/initiate` endpoint. This request includes details about the expected upload, specifically the callback URL and optional constraints on size.
 
-The callback will be made from inside the MDTP environment. Hence, the callback URL should comprise the MDTP internal callback address and not the public domain address.
+The callback will be made from inside the MDTP environment. Hence, the callback URL should comprise the MDTP internal callback address and not the public domain address. **Note:** The callback url must use the `https` protocol.
 
 Here is an example of the request body:
 
 ```json
 {
-    "callbackUrl": "http://myservice.com/callback",
+    "callbackUrl": "https://myservice.com/callback",
     "minimumFileSize" : 0,
     "maximumFileSize" : 1024
 }
@@ -68,7 +68,7 @@ Meaning of parameters:
 
 | Parameter name|Description|Required|
 |--------------|-----------|--------|
-|callbackUrl   |Url that will be called to report the outcome of file checking and upload, including retrieval details if successful. Notification format is detailed further down in this file.| yes|
+|callbackUrl   |Url that will be called to report the outcome of file checking and upload, including retrieval details if successful. Notification format is detailed further down in this file. Must be https.| yes|
 |minimumFileSize|Minimum file size (in Bytes). Default is 0.|no|
 |maximumFileSize|Maximum file size (in Bytes). Cannot be greater than 100MB. Default is 100MB.|no|
 
@@ -101,7 +101,7 @@ The JSON response also contains a globally unique file reference of the upload. 
             "x-amz-algorithm": "AWS4-HMAC-SHA256",
             "x-amz-credential": "ASIAxxxxxxxxx/20180202/eu-west-2/s3/aws4_request",
             "x-amz-date": "yyyyMMddThhmmssZ",
-            "x-amz-meta-callback-url": "http://myservice.com/callback",
+            "x-amz-meta-callback-url": "https://myservice.com/callback",
             "x-amz-signature": "xxxx"
         }
     }
