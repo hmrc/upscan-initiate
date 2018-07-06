@@ -242,7 +242,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
         Future.failed(new RuntimeException("This block should not have been invoked."))
       }
 
-      status(result) shouldBe 403
+      status(result) shouldBe 400
     }
   }
 

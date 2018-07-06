@@ -72,7 +72,7 @@ class PrepareUploadController @Inject()(
     } else {
       Logger.warn(s"Invalid callback url: [${protocol}].")
 
-      Future.successful(Forbidden(s"Invalid callback url: [${protocol}]. Protocol must be https."))
+      Future.successful(BadRequest(s"Invalid callback url: [${protocol}]. Protocol must be https."))
     }
   }
 }
