@@ -52,7 +52,11 @@ In order to initiate an upload the consuming service must be whitelisted by upsc
 
 Assuming the consuming service is whitelisted, it makes a POST request to the `/upscan/initiate` endpoint. This request includes details about the expected upload, specifically the callback URL and optional constraints on size.
 
-The callback will be made from inside the MDTP environment. Hence, the callback URL should comprise the MDTP internal callback address and not the public domain address. **Note:** The callback url must use the `https` protocol.
+The callback will be made from inside the MDTP environment. Hence, the callback URL should comprise the MDTP internal callback address and not the public domain address.
+
+**Note:** `callbackUrl` must use the `https` protocol.
+(Although this rule is relaxed when testing locally with [upscan-stub](https://github.com/hmrc/upscan-stub) rather than [upscan-initiate](https://github.com/hmrc/upscan-initiate).
+In this stubbed scenario a `callbackUrl` referring to localhost may still specific `http` as the protocol.)
 
 Here is an example of the request body:
 
