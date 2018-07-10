@@ -65,14 +65,14 @@ class PrepareUploadController @Inject()(
       }
     }
 
-  private[controllers] def withAllowedCallbackProtocol[A](protocol: String)
+  private[controllers] def withAllowedCallbackProtocol[A](callbackUrl: String)
                                             (block: => Future[Result]): Future[Result]= {
-    if (protocol.startsWith("https")) {
+    if (callbackUrl.startsWith("https")) {
       block
     } else {
-      Logger.warn(s"Invalid callback url: [${protocol}].")
+      Logger.warn(s"Invalid callback url: [${callbackUrl}].")
 
-      Future.successful(BadRequest(s"Invalid callback url: [${protocol}]. Protocol must be https."))
+      Future.successful(BadRequest(s"Invalid callback url: [${callbackUrl}]. Protocol must be https."))
     }
   }
 }
