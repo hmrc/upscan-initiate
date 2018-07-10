@@ -7,7 +7,7 @@ import sbt._
 trait MicroService {
 
   import uk.gov.hmrc._
-  import DefaultBuildSettings._
+  import uk.gov.hmrc.DefaultBuildSettings.{addTestReportOption, scalaSettings, defaultSettings, targetJvm}
   import TestPhases._
   import scoverage.ScoverageKeys
   import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
