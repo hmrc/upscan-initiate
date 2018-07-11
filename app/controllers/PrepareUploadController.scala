@@ -1,20 +1,20 @@
 package controllers
 
-import javax.inject.{Inject, Singleton}
 import config.ServiceConfiguration
 import domain._
+import javax.inject.{Inject, Singleton}
+import java.net.URL
 import play.api.Logger
 import play.api.data.validation.ValidationError
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json.{JsPath, Json, Writes, _}
-import play.api.mvc.Action
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HeaderNames.xSessionId
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
-import utils.UserAgentFilter
-
+import play.api.mvc.{Action, Result}
 import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
+import uk.gov.hmrc.play.bootstrap.controller.BaseController
+
+import utils.UserAgentFilter
 
 @Singleton
 class PrepareUploadController @Inject()(
@@ -49,13 +49,41 @@ class PrepareUploadController @Inject()(
       onlyAllowedServices[JsValue] { (_, consumingService) =>
 
         withJsonBody[UploadSettings] { (fileUploadDetails: UploadSettings) =>
-          Logger.debug(s"Processing request: [$fileUploadDetails].")
-          val sessionId = hc(request).sessionId.map(_.value).getOrElse("n/a")
-          val requestId = hc(request).requestId.map(_.value).getOrElse("n/a")
-          val result: PreparedUpload =
-            prepareUploadService.prepareUpload(fileUploadDetails, consumingService, requestId, sessionId)
-          Future.successful(Ok(Json.toJson(result)))
+
+          withAllowedCallbackProtocol(fileUploadDetails.callbackUrl) {
+            Logger.debug(s"Processing request: [$fileUploadDetails].")
+
+            val sessionId = hc(request).sessionId.map(_.value).getOrElse("n/a")
+            val requestId = hc(request).requestId.map(_.value).getOrElse("n/a")
+            val result: PreparedUpload =
+              prepareUploadService.prepareUpload(fileUploadDetails, consumingService, requestId, sessionId)
+
+            Future.successful(Ok(Json.toJson(result)))
+          }
         }
       }
     }
+
+  private[controllers] def withAllowedCallbackProtocol[A](callbackUrl: String)
+                                            (block: => Future[Result]): Future[Result]= {
+
+    val isHttps: Try[Boolean] = Try {
+      new URL(callbackUrl).getProtocol == "https"
+    }
+
+    isHttps match {
+      case Success(true) => block
+      case Success(false) => {
+        Logger.warn(s"Invalid callback url protocol: [$callbackUrl].")
+
+        Future.successful(BadRequest(s"Invalid callback url protocol: [$callbackUrl]. Protocol must be https."))
+      }
+      case Failure(e) => {
+        Logger.warn(s"Invalid callback url format: [$callbackUrl].")
+
+        Future.successful(BadRequest(s"Invalid callback url format: [$callbackUrl]. [${e.getMessage}]"))
+      }
+    }
+
+  }
 }

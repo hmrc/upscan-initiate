@@ -12,8 +12,11 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{GivenWhenThen, Matchers}
 import play.api.libs.json.{JsValue, Json}
 import play.api.test.{FakeRequest, Helpers}
+import play.api.test.Helpers.contentAsString
 import uk.gov.hmrc.play.test.UnitSpec
+import play.api.mvc.Results.Ok
 
+import scala.concurrent.Future
 import scala.concurrent.duration._
 
 class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenThen with MockitoSugar {
@@ -38,7 +41,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
         .withBody(
           Json.obj(
             "id"              -> "1",
-            "callbackUrl"     -> "http://www.example.com",
+            "callbackUrl"     -> "https://www.example.com",
             "minimumFileSize" -> 0,
             "maximumFileSize" -> 1024))
 
@@ -53,7 +56,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
       json shouldBe Json.obj(
         "reference" -> "TEST",
         "uploadRequest" -> Json.obj(
-          "href" -> "http://www.example.com",
+          "href" -> "https://www.example.com",
           "fields" -> Json.obj(
             "minFileSize" -> "0",
             "maxFileSize" -> "1024",
@@ -70,7 +73,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
       val request: FakeRequest[JsValue] = FakeRequest()
         .withHeaders(("User-Agent", "VALID-AGENT"), ("x-session-id", "some-session-id"), ("x-request-id", "some-request-id"))
-        .withBody(Json.obj("callbackUrl" -> "http://www.example.com"))
+        .withBody(Json.obj("callbackUrl" -> "https://www.example.com"))
 
       When("upload initiation has been requested")
 
@@ -83,7 +86,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
       json shouldBe Json.obj(
         "reference" -> "TEST",
         "uploadRequest" -> Json.obj(
-          "href"   -> "http://www.example.com",
+          "href"   -> "https://www.example.com",
           "fields" -> Json.obj(
             "sessionId" -> "some-session-id",
             "requestId" -> "some-request-id"
@@ -98,7 +101,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
       val request: FakeRequest[JsValue] = FakeRequest()
         .withHeaders(("User-Agent", "VALID-AGENT"))
-        .withBody(Json.obj("callbackUrl" -> "http://www.example.com"))
+        .withBody(Json.obj("callbackUrl" -> "https://www.example.com"))
 
       When("upload initiation has been requested")
 
@@ -111,7 +114,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
       json shouldBe Json.obj(
         "reference" -> "TEST",
         "uploadRequest" -> Json.obj(
-          "href"   -> "http://www.example.com",
+          "href"   -> "https://www.example.com",
           "fields" -> Json.obj(
             "sessionId" -> "n/a",
             "requestId" -> "n/a"
@@ -145,7 +148,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
       val request: FakeRequest[JsValue] = FakeRequest()
         .withHeaders(("User-Agent", "VALID-AGENT"), ("x-session-id", "some-session-id"))
-        .withBody(Json.obj("callbackUrl" -> "http://www.example.com", "maximumFileSize" -> 2048))
+        .withBody(Json.obj("callbackUrl" -> "https://www.example.com", "maximumFileSize" -> 2048))
 
       When("upload initiation has been requested")
 
@@ -168,7 +171,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
         .withBody(
           Json.obj(
             "id"              -> "1",
-            "callbackUrl"     -> "http://www.example.com",
+            "callbackUrl"     -> "https://www.example.com",
             "minimumFileSize" -> 0,
             "maximumFileSize" -> 1024,
             "session-id" -> "some-session-id",
@@ -185,7 +188,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
       json shouldBe Json.obj(
         "reference" -> "TEST",
         "uploadRequest" -> Json.obj(
-          "href" -> "http://www.example.com",
+          "href" -> "https://www.example.com",
           "fields" -> Json.obj(
             "minFileSize" -> "0",
             "maxFileSize" -> "1024",
@@ -221,6 +224,37 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
       withClue(Helpers.contentAsString(result)) {
         status(result) shouldBe 403
       }
+    }
+
+    "allow https callback urls" in {
+      val controller = new PrepareUploadController(prepareUploadService, config)
+
+      val result = controller.withAllowedCallbackProtocol("https://my.callback.url") {
+        Future.successful(Ok)
+      }
+
+      status(result) shouldBe 200
+    }
+
+    "disallow http callback urls" in {
+      val controller = new PrepareUploadController(prepareUploadService, config)
+
+      val result = controller.withAllowedCallbackProtocol("http://my.callback.url") {
+        Future.failed(new RuntimeException("This block should not have been invoked."))
+      }
+
+      status(result) shouldBe 400
+      contentAsString(result) should include("Invalid callback url protocol")
+    }
+
+    "disallow invalidly formatted callback urls" in {
+      val controller = new PrepareUploadController(prepareUploadService, config)
+
+      val result = controller.withAllowedCallbackProtocol("123") {
+        Future.failed(new RuntimeException("This block should not have been invoked."))
+      }
+      status(result) shouldBe 400
+      contentAsString(result) should include("Invalid callback url format")
     }
   }
 
