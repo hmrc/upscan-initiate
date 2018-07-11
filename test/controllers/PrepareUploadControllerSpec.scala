@@ -12,8 +12,9 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{GivenWhenThen, Matchers}
 import play.api.libs.json.{JsValue, Json}
 import play.api.test.{FakeRequest, Helpers}
+import play.api.test.Helpers.contentAsString
 import uk.gov.hmrc.play.test.UnitSpec
-import play.api.mvc.Results.{Forbidden, Ok}
+import play.api.mvc.Results.Ok
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -243,6 +244,17 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
       }
 
       status(result) shouldBe 400
+      contentAsString(result) should include("Invalid callback url protocol")
+    }
+
+    "disallow invalidly formatted callback urls" in {
+      val controller = new PrepareUploadController(prepareUploadService, config)
+
+      val result = controller.withAllowedCallbackProtocol("123") {
+        Future.failed(new RuntimeException("This block should not have been invoked."))
+      }
+      status(result) shouldBe 400
+      contentAsString(result) should include("Invalid callback url format")
     }
   }
 

@@ -1,21 +1,20 @@
 package controllers
 
-import javax.inject.{Inject, Singleton}
 import config.ServiceConfiguration
 import domain._
+import javax.inject.{Inject, Singleton}
+import java.net.URL
 import play.api.Logger
 import play.api.data.validation.ValidationError
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json.{JsPath, Json, Writes, _}
-import play.api.mvc.Results.Forbidden
-import play.api.mvc.{Action, Request, Result}
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HeaderNames.xSessionId
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
-import utils.UserAgentFilter
-
+import play.api.mvc.{Action, Result}
 import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
+import uk.gov.hmrc.play.bootstrap.controller.BaseController
+
+import utils.UserAgentFilter
 
 @Singleton
 class PrepareUploadController @Inject()(
@@ -67,12 +66,24 @@ class PrepareUploadController @Inject()(
 
   private[controllers] def withAllowedCallbackProtocol[A](callbackUrl: String)
                                             (block: => Future[Result]): Future[Result]= {
-    if (callbackUrl.startsWith("https")) {
-      block
-    } else {
-      Logger.warn(s"Invalid callback url: [${callbackUrl}].")
 
-      Future.successful(BadRequest(s"Invalid callback url: [${callbackUrl}]. Protocol must be https."))
+    val isHttps: Try[Boolean] = Try {
+      new URL(callbackUrl).getProtocol == "https"
     }
+
+    isHttps match {
+      case Success(true) => block
+      case Success(false) => {
+        Logger.warn(s"Invalid callback url protocol: [$callbackUrl].")
+
+        Future.successful(BadRequest(s"Invalid callback url protocol: [$callbackUrl]. Protocol must be https."))
+      }
+      case Failure(e) => {
+        Logger.warn(s"Invalid callback url format: [$callbackUrl].")
+
+        Future.successful(BadRequest(s"Invalid callback url format: [$callbackUrl]. [${e.getMessage}]"))
+      }
+    }
+
   }
 }
