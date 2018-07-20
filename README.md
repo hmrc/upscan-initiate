@@ -1,4 +1,4 @@
-# upscan-initiate
+# upscan-initiate <a name="top"></a>
 
 Microservice for initiating the upload of files created externally to HMRC estate. These could be from members of the public or third-party services.
 This service is not for transfer of files from one HMRC service to another. See the Transmission Service as documented in Confluence for this use-case.
@@ -8,7 +8,35 @@ This service is not for transfer of files from one HMRC service to another. See 
 
 # Upscan user manual
 
-## Introduction
+## Contents
+1. [Introduction](#introduction)
+2. [Onboarding requirements](#onboard)
+3. [File upload workflow](#workflow)
+4. [Service usage](#service)
+  a. [Requesting a URL to upload to](#service__request)
+  b. [The file upload](#service__upload)
+  c. [File upload outcome](#service__uoutcome)
+  d. [File processing outcome](#service__poutcome)
+    i. [Success](#service__poutcome__success)
+    ii. [Failure](#service__poutcome__failure)
+5. [Whitelisting client services](#whitelist)
+6. [Error handling](#error)
+7. [Design considerations](#design)
+  a. [Uploading multiple files](#design__multiple)
+  b. [Security](#design__security)
+  c. [File metadata](#design__metadata)
+8. [Architecture of the service](#architecture)
+9. [Running and maintenance of the service](#run)
+  a. [Running locally](#run__local)
+10. [Appendix](#appendix)
+  a. [Quick reference figures](#appendix__figures)
+  b. [Related projects, useful links](#appendix__links)
+    i. [Testing](#appendix__links__testing)
+    ii. [Slack](#appendix__links__slack)
+  c. [License](#appendix__license)
+    
+
+## Introduction <a name="introduction"></a>
 
 Please also read the Upscan documentation in Confluence, this is in the "Platform Services" space.
 
@@ -18,12 +46,16 @@ The Upscan service allows consuming services to orchestrate the uploading of fil
 temporary storage of the uploaded file, ensures that the file isn't harmful (doesn't contain viruses) and verifies against predefined restrictions provided by the consuming service (e.g. file type & file size).
 Once the upload URL has been requested, upload and verification of a file are performed asynchronously without the involvement of the consuming service.
 
-## Onboarding requirements
+[[Back to the top]](#top)
+
+## Onboarding requirements <a name="onboard"></a>
 To use Upscan, the consuming service must let Platform Services know :
-- the `User-Agent` request header of the service so it can be [whitelisted](#whitelisting)
+- the `User-Agent` request header of the service so it can be [whitelisted](#whitelist)
 - how long they would like download URLs for their files to be valid for \[max. 7 days]
 
-## File upload workflow
+[[Back to the top]](#top)
+
+## File upload workflow <a name="workflow"></a>
 
 * Consuming service requests upload of a single file. It makes a HTTP POST call to the `/upscan/initiate` endpoint with details of the requested upload (including a callback URL and optional file size constraints)
 * Upscan service replies with a template of the HTTP POST form that will be used to upload the file. A unique file reference is also provided to allow the consuming service to correlate the upload request with notifications to the callback URL provided
@@ -37,9 +69,11 @@ To use Upscan, the consuming service must let Platform Services know :
 * If the consuming service fails to respond to the callback request (e.g. the consuming service is down, the consuming service answered with an HTTP status code other than 2xx), the callback will be retried up to a maximum of 30 retries. The time interval between the retries is 60 seconds
 Configuration of these values is here (https://github.com/hmrc/upscan-infrastructure/blob/master/modules/sqs/main.tf)
 
-## Service usage
+[[Back to the top]](#top)
 
-### Requesting a URL to upload to
+## Service usage <a name="service"></a>
+
+### Requesting a URL to upload to <a name="service__request"></a>
 
 Assuming the consuming service is whitelisted, it makes a POST request to the `/upscan/initiate` endpoint. This request includes details about the expected upload, specifically the callback URL and optional constraints on size.
 
@@ -102,8 +136,9 @@ The JSON response also contains a globally unique file reference of the upload. 
     }
 }
 ```
+[[Back to the top]](#top)
 
-### The file upload
+### The file upload <a name="service__upload"></a>
 
 In order to upload the file, the following form is sent as the body of a POST request:
 
@@ -123,15 +158,19 @@ Whichever way the form is sent, remember:
 - You must use multipart encoding (`multipart/form-data`) NOT `application/x-www-form-urlencoded`. If you use` application/x-www-form-urlencoded`, AWS will return a response from which this error is not clear.
 - The 'file' field must be the last field in the submitted form.
 
-### File upload outcome
+[[Back to the top]](#top)
+
+### File upload outcome <a name="service__uoutcome"></a>
 
 If the POST is not successful, the service will return a HTTP error code (4xx, 5xx). The response body will contain XML encoded details of the problem. See the Error handling section for details.
 
 If the POST is successful, the service returns a HTTP 204 response with an empty body.
 
-### File processing outcome
+[[Back to the top]](#top)
 
-#### Success
+### File processing outcome <a name="service__poutcome"></a>
+
+#### Success <a name="service__poutcome__success"></a>
 
 When a file is successfully uploaded it is processed by [upscan-verify](https://github.com/hmrc/upscan-verify) to check for viruses & that it is of an allowed file type.
 
@@ -159,8 +198,9 @@ Note the block entitled 'uploadDetails', see the Confluence page 'Upscan & Non-R
 - `fileMimeType` - Detected MIME type of the file. Please note that this refers to actual contents  
 of the file, not to the name (if user uploads PDF document named `data.png`, it will be detected as a `application/pdf`) 
 
+[[Back to the top]](#top)
 
-#### Failure
+#### Failure <a name="service__poutcome__failure"></a>
 
 The list of failure reasons is as follows:
 
@@ -206,7 +246,9 @@ These reasons form one of the following JSON responses sent to the callback URL:
 
 You or the Upscan service team can use the unique file reference to find out more using the Upscan observability tools.
 
-## Whitelisting client services <a name="whitelisting"></a>
+[[Back to the top]](#top)
+
+## Whitelisting client services <a name="whitelist"></a>
 
 Any service using Upscan must be whitelisted. Please view the "Upscan & Consuming Services" page of the Upscan documentation in Confluence for the onboarding process. The team are also available on Slack [#team-plat-services](https://hmrcdigital.slack.com/messages/C705QD804).
 
@@ -226,36 +268,48 @@ In addition to returning a `403` error, Upscan will log details of the Forbidden
 *Note:* If you are using `[http-verbs](https://github.com/hmrc/http-verbs)` to call Upscan, then the `User-Agent` header will be set automatically.
 (See: [HttpVerb.scala](https://github.com/hmrc/http-verbs/blob/2807dc65f64009bd7ce1f14b38b356e06dd23512/src/main/scala/uk/gov/hmrc/http/HttpVerb.scala#L53))
 
-## Error handling
+[[Back to the top]](#top)
+
+## Error handling <a name="error"></a>
 
 This document indicates the responses from Upscan components, including error/failure cases.
 
 The actual file upload is to an AWS endpoint and the responses come straight from AWS. These responses are documented here: https://docs.aws.amazon.com/AmazonS3/latest/API/ErrorResponses.html
 
-## Design considerations
+[[Back to the top]](#top)
 
-### Uploading multiple files
+## Design considerations <a name="design"></a>
+
+### Uploading multiple files <a name="design__multiple"></a>
 Upscan supports single file uploads. If a consuming service needs to upload multiple files during one user's journey, it must make multiple independent calls to upscan-initiate.
 
-### Security
+[[Back to the top]](#top)
+
+### Security <a name="design__security"></a>
 The callback URL provided by the service will be sent in plain text through the network and will be visible to anyone receiving or inspecting the upload request details.
 
 Because of this, the URL must not:
 - Point to a host that is accessible from outside MDTP.
 - Contain sensitive data (e.g. user identifiers, session tokens, &c.)
 
-### File metadata
+[[Back to the top]](#top)
+
+### File metadata <a name="design__metadata"></a>
 Upscan intentionally doesn't allow consuming services to attach metadata or tags to the uploaded file. It is expected that the consuming service will use the globally unique file reference to correlate any file metadata to an successfully uploaded file when it is notified of the successful upload.
 
 Upscan must not be used to route or transfer files between different services on MDTP - it is for files to be uploaded into the HMRC estate.
 
-# Architecture of the service
+[[Back to the top]](#top)
+
+## Architecture of the service <a name="architecture"></a>
 
 Please see the Upscan Confluence page for architecture overview and details.
 
-# Running and maintenance of the service
+[[Back to the top]](#top)
 
-## Running locally
+## Running and maintenance of the service <a name="run"></a>
+
+### Running locally <a name="run__local"></a>
 
 In order to run the service against one of HMRC AWS accounts {labs, live} it's necessary to have an AWS user with the proper role. See [UpScan Accounts/roles](https://github.com/hmrc/aws-users/blob/master/AccountLinks.md) for proper details.
 
@@ -306,8 +360,10 @@ export AWS_DEFAULT_PROFILE=name of proper profile in ~/.aws/credentials file
 ```
 These commands will give you an access to SBT shell where you can run the service using 'run' or 'start' commands.
 
-# Appendix
-## Quick reference figures
+[[Back to the top]](#top)
+
+## Appendix <a name="appendix"></a>
+### Quick reference figures <a name="appendix__figures"></a>
 
 | Metric                                | Value          |
 | -------------                         |:-------------: |
@@ -315,22 +371,32 @@ These commands will give you an access to SBT shell where you can run the servic
 | Callback request retry time           | 60 seconds     |
 | Maximum callback notification retries | 30             |
 
-## Related projects, useful links:
+[[Back to the top]](#top)
+
+### Related projects, useful links: <a name="appendix__links"></a>
 
 * [upscan-verify](https://github.com/hmrc/upscan-verify) - service responsible for verifying the health of uploaded files
 * [upscan-notify](https://github.com/hmrc/upscan-notify) - service responsible for notifying consuming services about the status of uploaded files
 * [upscan-infrastructue](https://github.com/hmrc/upscan-infrastructure) - AWS infrastructure provisioning scripts
 
-### Testing
+[[Back to the top]](#top)
+
+#### Testing <a name="appendix__links__testing"></a>
 * [upscan-listener](https://github.com/hmrc/upscan-listener) - service used in testing to receive callbacks from `upscan-notify`
 * [upscan-stub](https://github.com/hmrc/upscan-stub) - service used locally (via `ServiceManager`) to stub `upscan-initiate`, `upscan-verify`, `upscan-notify` and uploads to AWS S3.
 * [upscan-acceptance-tests](https://github.com/hmrc/upscan-acceptance-tests) - end-to-end acceptance tests of the upscan ecosystem
 * [upscan-performance-tests](https://github.com/hmrc/upscan-performance-tests) - performance tests of the upscan ecosystem
 
-### Slack
+[[Back to the top]](#top)
+
+#### Slack <a name="appendix__links__slack"></a>
 * [#team-plat-services](https://hmrcdigital.slack.com/messages/C705QD804/)
 * [#event-upscan](https://hmrcdigital.slack.com/messages/C8XPL559N)
 
-## License
+[[Back to the top]](#top)
+
+### License <a name="appendix__license"></a>
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html")
+
+[[Back to the top]](#top)
