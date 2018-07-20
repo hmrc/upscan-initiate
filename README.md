@@ -18,15 +18,10 @@ The Upscan service allows consuming services to orchestrate the uploading of fil
 temporary storage of the uploaded file, ensures that the file isn't harmful (doesn't contain viruses) and verifies against predefined restrictions provided by the consuming service (e.g. file type & file size).
 Once the upload URL has been requested, upload and verification of a file are performed asynchronously without the involvement of the consuming service.
 
-### Quick reference figures
-
-| Metric                                | Value          |
-| -------------                         |:-------------: |
-| Lifetime of POST URL                  | Up to 7 days   |
-| Lifetime of GET URL                   | Up to 7 days   |
-| Callback request retry time           | 60 seconds     |
-| Maximum callback notification retries | 30             |
-
+## Onboarding requirements
+To use Upscan, the consuming service must let Platform Services know :
+- the `User-Agent` request header of the service so it can be [whitelisted](#whitelisting)
+- how long they would like download URLs for their files to be valid for \[max. 7 days]
 
 ## File upload workflow
 
@@ -43,10 +38,6 @@ Once the upload URL has been requested, upload and verification of a file are pe
 Configuration of these values is here (https://github.com/hmrc/upscan-infrastructure/blob/master/modules/sqs/main.tf)
 
 ## Service usage
-
-### Whitelisting
-
-In order to initiate an upload the consuming service must be whitelisted by upscan-initiate. See the 'Whitelisting client services' section further down in this document.
 
 ### Requesting a URL to upload to
 
@@ -215,7 +206,7 @@ These reasons form one of the following JSON responses sent to the callback URL:
 
 You or the Upscan service team can use the unique file reference to find out more using the Upscan observability tools.
 
-## Whitelisting client services
+## Whitelisting client services <a name="whitelisting"></a>
 
 Any service using Upscan must be whitelisted. Please view the "Upscan & Consuming Services" page of the Upscan documentation in Confluence for the onboarding process. The team are also available on Slack [#team-plat-services](https://hmrcdigital.slack.com/messages/C705QD804).
 
@@ -315,6 +306,14 @@ export AWS_DEFAULT_PROFILE=name of proper profile in ~/.aws/credentials file
 ```
 These commands will give you an access to SBT shell where you can run the service using 'run' or 'start' commands.
 
+# Appendix
+## Quick reference figures
+
+| Metric                                | Value          |
+| -------------                         |:-------------: |
+| Lifetime of POST URL                  | Up to 7 days   |
+| Callback request retry time           | 60 seconds     |
+| Maximum callback notification retries | 30             |
 
 ## Related projects, useful links:
 
@@ -332,6 +331,6 @@ These commands will give you an access to SBT shell where you can run the servic
 * [#team-plat-services](https://hmrcdigital.slack.com/messages/C705QD804/)
 * [#event-upscan](https://hmrcdigital.slack.com/messages/C8XPL559N)
 
-### License
+## License
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html")
