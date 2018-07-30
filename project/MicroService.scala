@@ -1,4 +1,5 @@
 import play.routes.compiler.{InjectedRoutesGenerator, StaticRoutesGenerator}
+import play.sbt.PlayImport.PlayKeys
 import play.sbt.routes.RoutesKeys.routesGenerator
 import sbt.Keys._
 import sbt.Tests.{Group, SubProcess}
@@ -41,6 +42,7 @@ trait MicroService {
     .settings(publishingSettings: _*)
     .settings(defaultSettings(): _*)
     .settings(
+      PlayKeys.playDefaultPort := 9571,
       targetJvm := "jvm-1.8",
       scalaVersion := "2.11.12",
       libraryDependencies ++= appDependencies,
