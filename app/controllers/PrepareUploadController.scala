@@ -68,7 +68,7 @@ class PrepareUploadController @Inject()(
                                             (block: => Future[Result]): Future[Result]= {
 
     val isHttps: Try[Boolean] = Try {
-      new URL(callbackUrl).getProtocol == "https"
+      new URL(callbackUrl).getProtocol == "https" || callbackUrl.startsWith("http://localhost")
     }
 
     isHttps match {
