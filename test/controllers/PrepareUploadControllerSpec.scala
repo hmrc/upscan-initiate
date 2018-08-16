@@ -30,6 +30,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
   "PrepareUploadController" should {
     val config = mock[ServiceConfiguration]
     Mockito.when(config.allowedUserAgents).thenReturn(List("VALID-AGENT"))
+    Mockito.when(config.allowedCallbackProtocols).thenReturn(List("https"))
 
     "build and return upload URL if valid request with all data" in {
       val controller = new PrepareUploadController(prepareUploadService, config)
