@@ -67,16 +67,18 @@ class PrepareUploadController @Inject()(
   private[controllers] def withAllowedCallbackProtocol[A](callbackUrl: String)
                                             (block: => Future[Result]): Future[Result]= {
 
-    val isHttps: Try[Boolean] = Try {
-      new URL(callbackUrl).getProtocol == "https"
+    val allowedCallbackProtocols: Seq[String] = configuration.allowedCallbackProtocols
+
+    val isAllowedCallbackProtocol: Try[Boolean] = Try {
+      allowedCallbackProtocols.contains(new URL(callbackUrl).getProtocol)
     }
 
-    isHttps match {
+    isAllowedCallbackProtocol match {
       case Success(true) => block
       case Success(false) => {
         Logger.warn(s"Invalid callback url protocol: [$callbackUrl].")
 
-        Future.successful(BadRequest(s"Invalid callback url protocol: [$callbackUrl]. Protocol must be https."))
+        Future.successful(BadRequest(s"Invalid callback url protocol: [$callbackUrl]. Protocol must be in: [${allowedCallbackProtocols.mkString(",")}]."))
       }
       case Failure(e) => {
         Logger.warn(s"Invalid callback url format: [$callbackUrl].")

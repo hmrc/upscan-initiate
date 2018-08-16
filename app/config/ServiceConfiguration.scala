@@ -15,7 +15,9 @@ trait ServiceConfiguration {
   def secretAccessKey: String
   def fileExpirationPeriod: java.time.Duration
   def globalFileSizeLimit: Int
+  def allowedCallbackProtocols: Seq[String]
   def allowedUserAgents: Seq[String]
+
 }
 
 class PlayBasedServiceConfiguration @Inject()(configuration: Configuration) extends ServiceConfiguration {
@@ -37,6 +39,15 @@ class PlayBasedServiceConfiguration @Inject()(configuration: Configuration) exte
   override def sessionToken = configuration.getString("aws.sessionToken")
 
   override def globalFileSizeLimit = getRequired(configuration.getInt, "global.file.size.limit")
+
+  override def allowedCallbackProtocols: Seq[String] =
+    configuration
+      .getString("callbackValidation.allowedProtocols")
+      .map {
+        _.split(",").toSeq
+          .filter(isNotBlank)
+      }
+      .getOrElse(Nil)
 
   override def allowedUserAgents: Seq[String] =
     configuration.getString("userAgentFilter.allowedUserAgents").map {_
