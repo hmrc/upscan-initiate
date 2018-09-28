@@ -4,6 +4,12 @@ import play.sbt.routes.RoutesKeys.routesGenerator
 import sbt.Keys._
 import sbt.Tests.{Group, SubProcess}
 import sbt._
+import uk.gov.hmrc.SbtArtifactory
+import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
+import uk.gov.hmrc.versioning.SbtGitVersioning
+import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
+import uk.gov.hmrc.versioning.SbtGitVersioning
+import uk.gov.hmrc.versioning.SbtGitVersioning.autoImport.majorVersion
 
 trait MicroService {
 
@@ -16,7 +22,9 @@ trait MicroService {
   val appName: String
 
   lazy val appDependencies: Seq[ModuleID] = ???
-  lazy val plugins: Seq[Plugins]          = Nil
+  lazy val plugins: Seq[Plugins] = Seq(
+    play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory
+  )
   lazy val playSettings: Seq[Setting[_]]  = Seq.empty
 
   routesGenerator := InjectedRoutesGenerator
@@ -36,11 +44,14 @@ trait MicroService {
   }
 
   lazy val microservice = Project(appName, file("."))
-    .enablePlugins(Seq(play.sbt.PlayScala) ++ plugins: _*)
+    .enablePlugins(plugins: _*)
     .settings(playSettings: _*)
-    .settings(scalaSettings ++ scoverageSettings: _*)
-    .settings(publishingSettings: _*)
+    .settings(scoverageSettings: _*)
+    .settings(playSettings: _*)
+    .settings(scalaSettings: _*)
     .settings(defaultSettings(): _*)
+    .settings(SbtDistributablesPlugin.publishingSettings: _*)
+    .settings(majorVersion := 0)
     .settings(
       PlayKeys.playDefaultPort := 9571,
       targetJvm := "jvm-1.8",
