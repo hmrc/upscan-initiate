@@ -12,7 +12,7 @@ private object AppDependencies {
   import play.core.PlayVersion
 
   val compile = Seq(
-    "uk.gov.hmrc"       %% "bootstrap-play-25" % "1.7.0",
+    "uk.gov.hmrc"       %% "bootstrap-play-25" % "3.13.0",
     "com.amazonaws"     % "aws-java-sdk-s3"    % "1.11.261",
     "com.typesafe.akka" %% "akka-stream"       % "2.5.6"
   )
@@ -23,8 +23,8 @@ private object AppDependencies {
   }
 
   private def commonTestDependencies(scope: String) = Seq(
-    "uk.gov.hmrc"            %% "hmrctest"                    % "3.0.0"             % scope,
-    "uk.gov.hmrc"            %% "http-verbs-test"             % "1.1.0"             % scope,
+    "uk.gov.hmrc"            %% "hmrctest"                    % "3.2.0"             % scope,
+    "uk.gov.hmrc"            %% "http-verbs-test"             % "1.2.0"             % scope,
     "org.scalatest"          %% "scalatest"                   % "2.2.6"             % scope,
     "org.pegdown"            % "pegdown"                      % "1.6.0"             % scope,
     "com.typesafe.play"      %% "play-test"                   % PlayVersion.current % scope,
