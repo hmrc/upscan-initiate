@@ -366,7 +366,7 @@ These commands will give you an access to SBT shell where you can run the servic
 ### Quick reference figures <a name="appendix__figures"></a>
 
 | Metric                                                  | Value          | Comments |
-| -------------                                           |:-------------: |          |
+| ------------------------------------------------------- | -------------- |----------|
 | Expiration of S3 upload pre-signed URL                  | Up to 7 days   | A relatively long period, since we can't control exactly when users will initiate the upload process |
 | Expiration of S3 download pre-signed URL (scanned docs) | Up to 1 day    | Upscan is not intended as a storage solution for services |
 | Callback request retry time                             | 60 seconds     |          |
