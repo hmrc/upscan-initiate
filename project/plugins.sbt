@@ -1,6 +1,6 @@
 import sbt._
 
-resolvers += Resolver.bintrayRepo("hmrc", "sbt-plugin-releases")
+resolvers += Resolver.bintrayIvyRepo("hmrc", "sbt-plugin-releases")
 resolvers += Resolver.bintrayRepo("hmrc", "releases")
 
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "0.8.5")
