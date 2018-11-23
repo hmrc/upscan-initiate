@@ -5,7 +5,7 @@ import java.time.format.DateTimeFormatter.ISO_INSTANT
 import java.time.{Instant, ZoneOffset}
 
 import domain.{UploadFormGenerator, UploadParameters}
-import play.api.libs.json.{JsArray, Json}
+import play.api.libs.json.{JsArray, JsValue, Json}
 
 final case class AwsCredentials(
   accessKeyId: String,
@@ -58,17 +58,18 @@ class S3UploadFormGenerator(
     timeStamp: String,
     signingCredentials: String,
     encodedPolicy: String,
-    policySignature: String) = {
+    policySignature: String): Map[String, String] = {
 
     val fields = Map(
-      "x-amz-algorithm"              -> "AWS4-HMAC-SHA256",
-      "x-amz-credential"             -> signingCredentials,
-      "x-amz-date"                   -> timeStamp,
-      "policy"                       -> encodedPolicy,
-      "x-amz-signature"              -> policySignature,
-      "acl"                          -> uploadParameters.acl,
-      "key"                          -> uploadParameters.objectKey,
-      "x-amz-meta-original-filename" -> "${filename}"
+      "x-amz-algorithm"                     -> "AWS4-HMAC-SHA256",
+      "x-amz-credential"                    -> signingCredentials,
+      "x-amz-date"                          -> timeStamp,
+      "policy"                              -> encodedPolicy,
+      "x-amz-signature"                     -> policySignature,
+      "acl"                                 -> uploadParameters.acl,
+      "key"                                 -> uploadParameters.objectKey,
+      "x-amz-meta-original-filename"        -> "${filename}",
+      "x-amz-meta-upscan-initiate-response" -> currentTime().toString
     )
 
     val sessionCredentials = securityToken.map(t => Map("x-amz-security-token" -> t)).getOrElse(Map.empty)
@@ -81,7 +82,6 @@ class S3UploadFormGenerator(
     val contentTypeField = uploadParameters.expectedContentType.map(contentType => "Content-Type" -> contentType)
 
     fields ++ sessionCredentials ++ metadataFields ++ contentTypeField
-
   }
 
   private def buildPolicy(
@@ -92,9 +92,11 @@ class S3UploadFormGenerator(
 
     val securityTokenJson = securityToken.map(t => Json.obj("x-amz-security-token" -> t)).toList
 
-    val metadataJson = uploadParameters.additionalMetadata.map {
+    val metadataJson: Seq[JsValue] = uploadParameters.additionalMetadata.map {
       case (k, v) => Json.obj(s"x-amz-meta-$k" -> v)
-    }.toSeq :+ Json.arr("starts-with", "$x-amz-meta-original-filename", "")
+    }.toSeq :+
+      Json.arr("starts-with", "$x-amz-meta-original-filename", "") :+
+      Json.arr("starts-with", "$x-amz-meta-upscan-initiate-response", "")
 
     val contentTypeConstraintJson =
       uploadParameters.expectedContentType.map(contentType => Json.obj("Content-Type" -> contentType))

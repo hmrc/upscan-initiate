@@ -1,5 +1,7 @@
 package controllers
 
+import java.time.Clock
+
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import config.ServiceConfiguration
@@ -27,13 +29,15 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
   implicit val timeout: akka.util.Timeout = 10 seconds
 
+  private val clock: Clock = Clock.systemDefaultZone()
+
   "PrepareUploadController" should {
     val config = mock[ServiceConfiguration]
     Mockito.when(config.allowedUserAgents).thenReturn(List("VALID-AGENT"))
     Mockito.when(config.allowedCallbackProtocols).thenReturn(List("https"))
 
     "build and return upload URL if valid request with all data" in {
-      val controller = new PrepareUploadController(prepareUploadService, config)
+      val controller = new PrepareUploadController(prepareUploadService, config, clock)
 
       Given("there is a valid upload request with all data")
 
@@ -68,7 +72,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
     }
 
     "build and return upload URL if valid request with minimal data including session id and request id" in {
-      val controller = new PrepareUploadController(prepareUploadService, config)
+      val controller = new PrepareUploadController(prepareUploadService, config, clock)
 
       Given("there is a valid upload request with minimal data")
 
@@ -96,7 +100,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
     }
 
     "build and return upload URL if valid request with minimal data excluding session id and request id" in {
-      val controller = new PrepareUploadController(prepareUploadService, config)
+      val controller = new PrepareUploadController(prepareUploadService, config, clock)
 
       Given("there is a valid upload request with minimal data")
 
@@ -125,7 +129,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
 
     "return a bad request error if invalid request - wrong structure" in {
-      val controller = new PrepareUploadController(prepareUploadService, config)
+      val controller = new PrepareUploadController(prepareUploadService, config, clock)
 
       Given("there is an invalid upload request")
 
@@ -143,7 +147,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
     }
 
     "return a bad request error if invalid request - incorrect maximum file size " in {
-      val controller = new PrepareUploadController(prepareUploadService, config)
+      val controller = new PrepareUploadController(prepareUploadService, config, clock)
 
       Given("there is an invalid upload request")
 
@@ -163,7 +167,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
     }
 
     "return okay if service is allowed on whitelist " in {
-      val controller = new PrepareUploadController(prepareUploadService, config)
+      val controller = new PrepareUploadController(prepareUploadService, config, clock)
 
       Given("there is a valid upload request from a whitelisted service")
 
@@ -200,7 +204,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
     }
 
     "return a forbidden error if service is not whitelisted " in {
-      val controller = new PrepareUploadController(prepareUploadService, config)
+      val controller = new PrepareUploadController(prepareUploadService, config, clock)
 
       Given("there is a valid upload request from a non-whitelisted service")
 
@@ -228,7 +232,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
     }
 
     "allow https callback urls" in {
-      val controller = new PrepareUploadController(prepareUploadService, config)
+      val controller = new PrepareUploadController(prepareUploadService, config, clock)
 
       val result = controller.withAllowedCallbackProtocol("https://my.callback.url") {
         Future.successful(Ok)
@@ -238,7 +242,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
     }
 
     "disallow http callback urls" in {
-      val controller = new PrepareUploadController(prepareUploadService, config)
+      val controller = new PrepareUploadController(prepareUploadService, config, clock)
 
       val result = controller.withAllowedCallbackProtocol("http://my.callback.url") {
         Future.failed(new RuntimeException("This block should not have been invoked."))
@@ -249,7 +253,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
     }
 
     "disallow invalidly formatted callback urls" in {
-      val controller = new PrepareUploadController(prepareUploadService, config)
+      val controller = new PrepareUploadController(prepareUploadService, config, clock)
 
       val result = controller.withAllowedCallbackProtocol("123") {
         Future.failed(new RuntimeException("This block should not have been invoked."))
@@ -263,7 +267,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
     val service = mock[PrepareUploadService]
     Mockito.when(service.globalFileSizeLimit).thenReturn(1024)
     Mockito
-      .when(service.prepareUpload(any(), any(), any(), any()))
+      .when(service.prepareUpload(any(), any(), any(), any(), any()))
       .thenAnswer(new Answer[PreparedUpload]() {
         override def answer(invocationOnMock: InvocationOnMock): PreparedUpload = {
           val settings = invocationOnMock.getArgument[UploadSettings](0)
