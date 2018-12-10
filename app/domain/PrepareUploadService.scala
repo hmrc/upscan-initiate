@@ -6,23 +6,23 @@ import java.util.UUID
 import com.kenshoo.play.metrics.Metrics
 import config.ServiceConfiguration
 import javax.inject.{Inject, Singleton}
-
 import org.slf4j.MDC
 import play.api.Logger
+
 @Singleton
 class PrepareUploadService @Inject()(
   postSigner: UploadFormGenerator,
   configuration: ServiceConfiguration,
   metrics: Metrics) {
 
-  def prepareUpload(settings: UploadSettings, consumingService: String, requestId : String, sessionId: String): PreparedUpload = {
+  def prepareUpload(settings: UploadSettings, consumingService: String, requestId : String, sessionId: String, receivedAt: Instant): PreparedUpload = {
     val reference  = generateReference()
-    val expiration = Instant.now().plus(configuration.fileExpirationPeriod)
+    val expiration = receivedAt.plus(configuration.fileExpirationPeriod)
 
     val result =
       PreparedUpload(
         reference     = reference,
-        uploadRequest = generatePost(reference.value, expiration, settings, consumingService, requestId, sessionId))
+        uploadRequest = generatePost(reference.value, expiration, settings, consumingService, requestId, sessionId, receivedAt))
 
     try {
       MDC.put("file-reference", reference.value)
@@ -45,7 +45,8 @@ class PrepareUploadService @Inject()(
     settings: UploadSettings,
     consumingService: String,
     requestId: String,
-    sessionId: String): UploadFormTemplate = {
+    sessionId: String,
+    receivedAt: Instant): UploadFormTemplate = {
 
     val minFileSize = settings.minimumFileSize.getOrElse(0)
     val maxFileSize = settings.maximumFileSize.getOrElse(globalFileSizeLimit)
@@ -63,7 +64,8 @@ class PrepareUploadService @Inject()(
         "callback-url"      -> settings.callbackUrl,
         "consuming-service" -> consumingService,
         "session-id"        -> sessionId,
-        "request-id"        -> requestId
+        "request-id"        -> requestId,
+        "upscan-initiate-received" -> receivedAt.toString
       ),
       contentLengthRange  = ContentLengthRange(minFileSize, maxFileSize),
       expectedContentType = settings.expectedContentType

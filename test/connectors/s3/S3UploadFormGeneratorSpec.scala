@@ -10,8 +10,6 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{GivenWhenThen, Matchers, WordSpec}
 import play.api.libs.json.{JsArray, JsValue, Json}
 
-import scala.util.Try
-
 class S3UploadFormGeneratorSpec extends WordSpec with GivenWhenThen with Matchers with MockitoSugar {
 
   "S3UploadFormGenerator" should {

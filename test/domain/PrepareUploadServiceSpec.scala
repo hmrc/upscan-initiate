@@ -1,6 +1,7 @@
 package domain
 
 import java.time
+import java.time.Instant
 
 import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
@@ -54,6 +55,8 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
     override def buildEndpoint(bucketName: String): String = s"$bucketName.s3"
   }
 
+  val receivedAt: Instant = Instant.now()
+
   "S3 Upload Service" should {
 
     def service(metrics: Metrics) = new PrepareUploadService(s3PostSigner, serviceConfiguration, metrics)
@@ -74,7 +77,7 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
       When("we setup the upload")
 
-      val result = service(metrics).prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-request-id", "some-session-id")
+      val result = service(metrics).prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-request-id", "some-session-id", receivedAt)
 
       Then("proper upload request form definition should be returned")
 
@@ -85,10 +88,11 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
         "x-amz-meta-callback-url"      -> callbackUrl,
         "x-amz-meta-consuming-service" -> "PrepareUploadServiceSpec",
         "x-amz-meta-session-id"        -> "some-session-id",
-        "x-amz-meta-request-id" -> "some-request-id",
+        "x-amz-meta-request-id"        -> "some-request-id",
         "minSize"                      -> "0",
         "maxSize"                      -> "1024",
-        "Content-Type"                 -> "application/xml"
+        "Content-Type"                 -> "application/xml",
+        "x-amz-meta-upscan-initiate-received" -> receivedAt.toString
       )
 
       And("uploadInitiated counter has been incremented")
@@ -113,7 +117,7 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
       When("we setup the upload")
 
-      val result = service(metrics).prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-request-id", "some-session-id")
+      val result = service(metrics).prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-request-id", "some-session-id", receivedAt)
 
       Then("upload request should contain requested min/max size")
 
@@ -140,7 +144,7 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
       Then("an exception should be thrown")
 
       val thrown = the[IllegalArgumentException] thrownBy service(metrics)
-        .prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-request-id", "some-session-id")
+        .prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-request-id", "some-session-id", receivedAt)
       thrown.getMessage should include("Minimum file size is less than 0")
 
       metrics.defaultRegistry.counter("uploadInitiated").getCount shouldBe 0
@@ -166,7 +170,7 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
       Then("an exception should be thrown")
 
       val thrown = the[IllegalArgumentException] thrownBy service(metrics)
-        .prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-request-id", "some-session-id")
+        .prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-request-id", "some-session-id", receivedAt)
       thrown.getMessage should include("Maximum file size is greater than global maximum file size")
 
       metrics.defaultRegistry.counter("uploadInitiated").getCount shouldBe 0
@@ -191,7 +195,7 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
       Then("an exception should be thrown")
 
       val thrown = the[IllegalArgumentException] thrownBy service(metrics)
-        .prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-request-id", "some-session-id")
+        .prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-request-id", "some-session-id", receivedAt)
       thrown.getMessage should include("Minimum file size is greater than maximum file size")
 
       metrics.defaultRegistry.counter("uploadInitiated").getCount shouldBe 0

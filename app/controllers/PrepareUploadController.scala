@@ -4,22 +4,25 @@ import config.ServiceConfiguration
 import domain._
 import javax.inject.{Inject, Singleton}
 import java.net.URL
+import java.time.{Clock, Instant}
+
 import play.api.Logger
 import play.api.data.validation.ValidationError
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json.{JsPath, Json, Writes, _}
 import play.api.mvc.{Action, Result}
+
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
-
 import utils.UserAgentFilter
 
 @Singleton
 class PrepareUploadController @Inject()(
   prepareUploadService: PrepareUploadService,
-  override val configuration: ServiceConfiguration)
+  override val configuration: ServiceConfiguration,
+  clock: Clock)
     extends BaseController
     with UserAgentFilter {
 
@@ -46,6 +49,8 @@ class PrepareUploadController @Inject()(
 
   def prepareUpload(): Action[JsValue] =
     Action.async(parse.json) { implicit request =>
+      val receivedAt = Instant.now(clock)
+
       onlyAllowedServices[JsValue] { (_, consumingService) =>
 
         withJsonBody[UploadSettings] { (fileUploadDetails: UploadSettings) =>
@@ -56,7 +61,7 @@ class PrepareUploadController @Inject()(
             val sessionId = hc(request).sessionId.map(_.value).getOrElse("n/a")
             val requestId = hc(request).requestId.map(_.value).getOrElse("n/a")
             val result: PreparedUpload =
-              prepareUploadService.prepareUpload(fileUploadDetails, consumingService, requestId, sessionId)
+              prepareUploadService.prepareUpload(fileUploadDetails, consumingService, requestId, sessionId, receivedAt)
 
             Future.successful(Ok(Json.toJson(result)))
           }
