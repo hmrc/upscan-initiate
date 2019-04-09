@@ -5,7 +5,7 @@ resolvers += Resolver.bintrayRepo("hmrc", "releases")
 
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "0.8.5")
 
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.5.12")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.5.19")
 
 addSbtPlugin("uk.gov.hmrc" % "sbt-auto-build" % "1.13.0")
 
