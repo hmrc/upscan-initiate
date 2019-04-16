@@ -17,5 +17,6 @@ case class UploadParameters(
   acl: String,
   additionalMetadata: Map[String, String],
   contentLengthRange: ContentLengthRange,
-  expectedContentType: Option[String]
+  expectedContentType: Option[String],
+  successRedirect: Option[String] = None
 )

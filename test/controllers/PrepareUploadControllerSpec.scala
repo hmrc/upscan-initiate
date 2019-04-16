@@ -71,6 +71,43 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
         ))
     }
 
+    "build and return upload URL if valid request with redirect on success url" in {
+      val controller = new PrepareUploadController(prepareUploadService, config, clock)
+
+      Given("there is a valid upload request with all data")
+
+      val request: FakeRequest[JsValue] = FakeRequest()
+        .withHeaders(("User-Agent", "VALID-AGENT"), ("x-session-id", "some-session-id"), ("x-request-id", "some-request-id"))
+        .withBody(
+          Json.obj(
+            "id"              -> "1",
+            "callbackUrl"     -> "https://www.example.com",
+            "successRedirect" -> "https://www.example.com/nextpage",
+            "minimumFileSize" -> 0,
+            "maximumFileSize" -> 1024))
+
+      When("upload initiation has been requested")
+
+      val result = controller.prepareUpload()(request)
+
+      Then("service returns valid response with reference and template of upload form")
+
+      withClue(Helpers.contentAsString(result)) { status(result) shouldBe 200 }
+      val json = Helpers.contentAsJson(result)
+      json shouldBe Json.obj(
+        "reference" -> "TEST",
+        "uploadRequest" -> Json.obj(
+          "href" -> "https://www.example.com",
+          "fields" -> Json.obj(
+            "minFileSize" -> "0",
+            "maxFileSize" -> "1024",
+            "sessionId" -> "some-session-id",
+            "requestId" -> "some-request-id",
+            "success_action_redirect" -> "https://www.example.com/nextpage"
+          )
+        ))
+    }
+
     "build and return upload URL if valid request with minimal data including session id and request id" in {
       val controller = new PrepareUploadController(prepareUploadService, config, clock)
 
@@ -281,7 +318,9 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
                 settings.minimumFileSize.map(s => Map("minFileSize" -> s.toString).head) ++
                 settings.maximumFileSize.map(s => Map("maxFileSize" -> s.toString).head) ++
                 Map("sessionId" -> sessionId) ++
-                Map("requestId" -> requestId)
+                Map("requestId" -> requestId) ++
+                settings.successRedirect.map(url =>  Map("success_action_redirect" -> url)).getOrElse(Map.empty)
+
             )
           )
         }

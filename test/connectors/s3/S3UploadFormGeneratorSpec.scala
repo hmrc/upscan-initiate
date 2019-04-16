@@ -88,6 +88,39 @@ class S3UploadFormGeneratorSpec extends WordSpec with GivenWhenThen with Matcher
       result("x-amz-security-token")         shouldBe "session-token"
       result("x-amz-meta-original-filename") shouldBe "${filename}"
     }
+
+    "generate a signed link with a redirect" in {
+
+      Given("there is a properly configured form generator with AWS credentials")
+      val credentials   = AwsCredentials("accessKeyId", "secretKey", Some("session-token"))
+      val regionName    = "us-east-1"
+      val currentTime   = () => Instant.parse("1997-07-16T19:20:30Z")
+      val policySigner  = mock[PolicySigner]
+      val testSignature = "test-signature"
+
+      when(policySigner.signPolicy(any(), any(), any(), any())).thenReturn(testSignature)
+
+      val generator = new S3UploadFormGenerator(credentials, regionName, currentTime, policySigner)
+
+      And("there are valid upload parameters")
+      val expirationTimestamp = "1997-07-16T19:20:40Z"
+      val uploadParameters =
+        UploadParameters(
+          expirationDateTime  = Instant.parse(expirationTimestamp),
+          bucketName          = "test-bucket",
+          objectKey           = "test-key",
+          acl                 = "private",
+          additionalMetadata  = Map("key1" -> "value1"),
+          contentLengthRange  = ContentLengthRange(0, 1024),
+          expectedContentType = Some("application/xml"),
+          successRedirect     = Some("http://test.server/success")
+        )
+
+      When("form fields are generated")
+      val result = generator.generateFormFields(uploadParameters)
+
+      result("success_action_redirect") shouldBe "http://test.server/success"
+    }
   }
 
   def decodePolicyFormResult(base64EncodedPolicy: String): JsValue = {

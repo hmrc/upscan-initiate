@@ -4,7 +4,8 @@ case class UploadSettings(
   callbackUrl: String,
   minimumFileSize: Option[Int],
   maximumFileSize: Option[Int],
-  expectedContentType: Option[String])
+  expectedContentType: Option[String],
+  successRedirect: Option[String] = None)
 
 case class UploadFormTemplate(href: String, fields: Map[String, String])
 

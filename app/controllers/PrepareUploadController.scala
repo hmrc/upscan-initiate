@@ -30,13 +30,14 @@ class PrepareUploadController @Inject()(
     (JsPath \ "callbackUrl").read[String] and
       (JsPath \ "minimumFileSize").readNullable[Int](min(0)) and
       (JsPath \ "maximumFileSize").readNullable[Int](min(0) keepAnd max(prepareUploadService.globalFileSizeLimit + 1)) and
-      (JsPath \ "expectedContentType").readNullable[String]
+      (JsPath \ "expectedContentType").readNullable[String] and
+      (JsPath \ "successRedirect").readNullable[String]
+
   )(UploadSettings.apply _)
     .filter(ValidationError("Maximum file size must be equal or greater than minimum file size"))(
       settings =>
         settings.minimumFileSize.getOrElse(0) <= settings.maximumFileSize.getOrElse(
-          prepareUploadService.globalFileSizeLimit)
-    )
+          prepareUploadService.globalFileSizeLimit))
 
   implicit val uploadFormTemplateWrites: Writes[UploadFormTemplate] = Json.writes[UploadFormTemplate]
 
@@ -53,15 +54,15 @@ class PrepareUploadController @Inject()(
 
       onlyAllowedServices[JsValue] { (_, consumingService) =>
 
-        withJsonBody[UploadSettings] { (fileUploadDetails: UploadSettings) =>
+        withJsonBody[UploadSettings] { (uploadSettings: UploadSettings) =>
 
-          withAllowedCallbackProtocol(fileUploadDetails.callbackUrl) {
-            Logger.debug(s"Processing request: [$fileUploadDetails].")
+          withAllowedCallbackProtocol(uploadSettings.callbackUrl) {
+            Logger.debug(s"Processing request: [$uploadSettings].")
 
             val sessionId = hc(request).sessionId.map(_.value).getOrElse("n/a")
             val requestId = hc(request).requestId.map(_.value).getOrElse("n/a")
             val result: PreparedUpload =
-              prepareUploadService.prepareUpload(fileUploadDetails, consumingService, requestId, sessionId, receivedAt)
+              prepareUploadService.prepareUpload(uploadSettings, consumingService, requestId, sessionId, receivedAt)
 
             Future.successful(Ok(Json.toJson(result)))
           }

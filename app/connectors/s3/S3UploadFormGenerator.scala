@@ -81,7 +81,9 @@ class S3UploadFormGenerator(
 
     val contentTypeField = uploadParameters.expectedContentType.map(contentType => "Content-Type" -> contentType)
 
-    fields ++ sessionCredentials ++ metadataFields ++ contentTypeField
+    val successRedirect = uploadParameters.successRedirect.map(url =>  Map("success_action_redirect" -> url)).getOrElse(Map.empty)
+
+    fields ++ sessionCredentials ++ metadataFields ++ contentTypeField ++ successRedirect
   }
 
   private def buildPolicy(
