@@ -132,6 +132,7 @@ The JSON response also contains a globally unique file reference of the upload. 
             "x-amz-date": "yyyyMMddThhmmssZ",
             "x-amz-meta-callback-url": "https://myservice.com/callback",
             "x-amz-signature": "xxxx"
+	    //there might be more fields here - service that uses upscan should expect that this list is dynamic
         }
     }
 }
@@ -156,6 +157,7 @@ This POST request can be sent programmatically from backend code, by making an a
 Whichever way the form is sent, remember:
 
 - You must use multipart encoding (`multipart/form-data`) NOT `application/x-www-form-urlencoded`. If you use` application/x-www-form-urlencoded`, AWS will return a response from which this error is not clear.
+- **Be aware that order, names and number of fields returned by upscan-initiate might change and your service shouldn't take any asumptions about that**
 - The 'file' field must be the last field in the submitted form.
 
 [[Back to the top]](#top)
