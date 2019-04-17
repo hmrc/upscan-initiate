@@ -204,7 +204,7 @@ of the file, not to the name (if user uploads PDF document named `data.png`, it 
 
 The list of failure reasons is as follows:
 
-- `QUARANTINED` - the file has failed virus scanning
+- `QUARANTINE` - the file has failed virus scanning
 - `REJECTED` - the file is not of an allowed file type
 - `UNKNOWN` - there is some other problem with the file
 
@@ -216,7 +216,7 @@ These reasons form one of the following JSON responses sent to the callback URL:
     "reference" : "11370e18-6e24-453e-b45a-76d3e32ea33d",
     "fileStatus" : "FAILED",
     "failureDetails": {
-        "failureReason": "QUARANTINED",
+        "failureReason": "QUARANTINE",
         "message": "e.g. This file has a virus"
     }
 }
