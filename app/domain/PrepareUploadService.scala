@@ -68,7 +68,8 @@ class PrepareUploadService @Inject()(
         "upscan-initiate-received" -> receivedAt.toString
       ),
       contentLengthRange  = ContentLengthRange(minFileSize, maxFileSize),
-      expectedContentType = settings.expectedContentType
+      expectedContentType = settings.expectedContentType,
+      successRedirect     = settings.successRedirect
     )
 
     val form     = postSigner.generateFormFields(uploadParameters)

@@ -38,7 +38,8 @@ class S3UploadFormGeneratorSpec extends WordSpec with GivenWhenThen with Matcher
           acl                 = "private",
           additionalMetadata  = Map("key1" -> "value1"),
           contentLengthRange  = ContentLengthRange(0, 1024),
-          expectedContentType = Some("application/xml")
+          expectedContentType = Some("application/xml"),
+          None
         )
 
       When("form fields are generated")
