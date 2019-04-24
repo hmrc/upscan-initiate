@@ -72,18 +72,16 @@ class S3UploadFormGenerator(
       "x-amz-meta-upscan-initiate-response" -> currentTime().toString
     )
 
-    val sessionCredentials = securityToken.map(t => Map("x-amz-security-token" -> t)).getOrElse(Map.empty)
-
     val metadataFields =
       uploadParameters.additionalMetadata.map {
         case (metadataKey, value) => s"x-amz-meta-$metadataKey" -> value
       }
 
-    val contentTypeField = uploadParameters.expectedContentType.map(contentType => "Content-Type" -> contentType)
+    val sessionCredentials = securityToken.map(v => Map("x-amz-security-token" -> v)).getOrElse(Map.empty)
+    val contentTypeField   = uploadParameters.expectedContentType.map(v => Map("Content-Type" -> v)).getOrElse(Map.empty)
+    val successRedirect    = uploadParameters.successRedirect.map(v => Map("success_action_redirect" -> v)).getOrElse(Map.empty)
 
-    val successRedirect = uploadParameters.successRedirect.map(url =>  Map("success_action_redirect" -> url)).getOrElse(Map.empty)
-
-    fields ++ sessionCredentials ++ metadataFields ++ contentTypeField ++ successRedirect
+    fields ++ metadataFields ++ sessionCredentials  ++ contentTypeField ++ successRedirect
   }
 
   private def buildPolicy(
