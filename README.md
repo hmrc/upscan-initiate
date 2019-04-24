@@ -100,7 +100,7 @@ Meaning of parameters:
 |callbackUrl   |Url that will be called to report the outcome of file checking and upload, including retrieval details if successful. Notification format is detailed further down in this file. Must be https.| yes|
 |minimumFileSize|Minimum file size (in Bytes). Default is 0.|no|
 |maximumFileSize|Maximum file size (in Bytes). Cannot be greater than 100MB. Default is 100MB.|no|
-
+|successRedirect|Url to redirect to after file has been successfully uploaded.|no|
 The request has to include the following HTTP headers:
 
 | Header name|Description|Required|
