@@ -39,7 +39,7 @@ class S3UploadFormGeneratorSpec extends WordSpec with GivenWhenThen with Matcher
           additionalMetadata  = Map("key1" -> "value1"),
           contentLengthRange  = ContentLengthRange(0, 1024),
           expectedContentType = Some("application/xml"),
-          None
+          successRedirect     = Some("http://test.com/abc")
         )
 
       When("form fields are generated")
@@ -52,14 +52,15 @@ class S3UploadFormGeneratorSpec extends WordSpec with GivenWhenThen with Matcher
 
       And("policy contains proper conditions")
 
-      ((policy \ "conditions").get \\ "acl").head.as[String]                  shouldBe "private"
-      ((policy \ "conditions").get \\ "bucket").head.as[String]               shouldBe "test-bucket"
-      ((policy \ "conditions").get \\ "key").head.as[String]                  shouldBe "test-key"
-      ((policy \ "conditions").get \\ "x-amz-algorithm").head.as[String]      shouldBe "AWS4-HMAC-SHA256"
-      ((policy \ "conditions").get \\ "x-amz-date").head.as[String]           shouldBe "19970716T192030Z"
-      ((policy \ "conditions").get \\ "x-amz-security-token").head.as[String] shouldBe "session-token"
-      ((policy \ "conditions").get \\ "x-amz-meta-key1").head.as[String]      shouldBe "value1"
-      ((policy \ "conditions").get \\ "Content-Type").head.as[String]         shouldBe "application/xml"
+      ((policy \ "conditions").get \\ "acl").head.as[String]                     shouldBe "private"
+      ((policy \ "conditions").get \\ "bucket").head.as[String]                  shouldBe "test-bucket"
+      ((policy \ "conditions").get \\ "key").head.as[String]                     shouldBe "test-key"
+      ((policy \ "conditions").get \\ "x-amz-algorithm").head.as[String]         shouldBe "AWS4-HMAC-SHA256"
+      ((policy \ "conditions").get \\ "x-amz-date").head.as[String]              shouldBe "19970716T192030Z"
+      ((policy \ "conditions").get \\ "x-amz-security-token").head.as[String]    shouldBe "session-token"
+      ((policy \ "conditions").get \\ "x-amz-meta-key1").head.as[String]         shouldBe "value1"
+      ((policy \ "conditions").get \\ "Content-Type").head.as[String]            shouldBe "application/xml"
+      ((policy \ "conditions").get \\ "success_action_redirect").head.as[String] shouldBe "http://test.com/abc"
 
       val conditions                         = (policy \ "conditions").as[JsArray].value
       val arrayConditions: Seq[Seq[JsValue]] = conditions.flatMap(_.asOpt[JsArray].map(_.value))
