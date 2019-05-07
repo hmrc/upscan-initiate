@@ -101,6 +101,8 @@ class S3UploadFormGenerator(
     val contentTypeConstraintJson =
       uploadParameters.expectedContentType.map(contentType => Json.obj("Content-Type" -> contentType))
 
+    val successRedirectConstraint = uploadParameters.successRedirect.map(redirect => Json.obj("success_action_redirect" -> redirect))
+
     val policyDocument = Json.obj(
       "expiration" -> ISO_INSTANT.format(uploadParameters.expirationDateTime),
       "conditions" -> JsArray(
@@ -118,6 +120,7 @@ class S3UploadFormGenerator(
         ) ++ securityTokenJson
           ++ metadataJson
           ++ contentTypeConstraintJson
+          ++ successRedirectConstraint
       )
     )
 
