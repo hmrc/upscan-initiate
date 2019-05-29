@@ -1,14 +1,5 @@
-package domain
-
+package connectors.model
 import java.time.Instant
-
-trait UploadFormGenerator {
-  def buildEndpoint(bucketName: String): String
-
-  def generateFormFields(uploadParameters: UploadParameters): Map[String, String]
-}
-
-case class ContentLengthRange(min: Int, max: Int)
 
 case class UploadParameters(
   expirationDateTime: Instant,
