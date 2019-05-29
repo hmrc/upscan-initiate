@@ -329,19 +329,19 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
       .when(service.prepareUpload(any(), any(), any(), any(), any()))
       .thenAnswer(new Answer[PreparedUploadResponse]() {
         override def answer(invocationOnMock: InvocationOnMock): PreparedUploadResponse = {
-          val settings  = invocationOnMock.getArgument[PrepareUploadRequestV1](0)
+          val request   = invocationOnMock.getArgument[PrepareUploadRequestV1](0)
           val requestId = invocationOnMock.getArgument[String](2)
           val sessionId = invocationOnMock.getArgument[String](3)
           PreparedUploadResponse(
             Reference("TEST"),
             UploadFormTemplate(
-              settings.callbackUrl,
+              request.callbackUrl,
               Map.empty ++
-                settings.minimumFileSize.map(s => Map("minFileSize" -> s.toString).head) ++
-                settings.maximumFileSize.map(s => Map("maxFileSize" -> s.toString).head) ++
+                request.minimumFileSize.map(s => Map("minFileSize" -> s.toString).head) ++
+                request.maximumFileSize.map(s => Map("maxFileSize" -> s.toString).head) ++
                 Map("sessionId" -> sessionId) ++
                 Map("requestId" -> requestId) ++
-                settings.successRedirect.map(url => Map("success_action_redirect" -> url)).getOrElse(Map.empty)
+                request.successRedirect.map(url => Map("success_action_redirect" -> url)).getOrElse(Map.empty)
             )
           )
         }

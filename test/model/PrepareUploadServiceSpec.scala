@@ -61,7 +61,7 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
   val receivedAt: Instant = Instant.now()
 
-  "S3 Upload Service" should {
+  "S3 Prepare Upload Service" should {
 
     def service(metrics: Metrics) = new PrepareUploadService(s3PostSigner, serviceConfiguration, metrics)
 
@@ -69,7 +69,7 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
       val metrics = metricsStub()
 
-      Given("there are have valid upload settings")
+      Given("there are valid upload settings")
 
       val callbackUrl = "http://www.callback.com"
 
@@ -109,7 +109,7 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
       val metrics = metricsStub()
 
-      Given("there are have valid upload settings with size limits")
+      Given("there are valid upload settings with size limits")
 
       val callbackUrl = "http://www.callback.com"
 
@@ -159,7 +159,7 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
     "fail when maximum file size is greater than global limit" in {
 
-      Given("there are upload settings with maximum file size greater than global limit")
+      Given("there upload settings with maximum file size greater than global limit")
 
       val metrics = metricsStub()
 
@@ -184,7 +184,7 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
     "fail when minimum file size is greater than maximum file size" in {
 
-      Given("there are upload settings with minimum file size greater than maximum size ")
+      Given("there are upload settings with minimum file size greater than maximum size")
 
       val metrics = metricsStub()
 
@@ -211,7 +211,7 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
       val metrics = metricsStub()
 
-      Given("there are have valid upload settings")
+      Given("there are valid upload settings")
 
       val callbackUrl = "http://www.callback.com"
 
