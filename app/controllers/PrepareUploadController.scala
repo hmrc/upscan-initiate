@@ -52,14 +52,15 @@ class PrepareUploadController @Inject()(
       val receivedAt = Instant.now(clock)
 
       onlyAllowedServices[JsValue] { (_, consumingService) =>
-        withJsonBody[PrepareUploadRequestV1] { uploadSettings: PrepareUploadRequestV1 =>
-          withAllowedCallbackProtocol(uploadSettings.callbackUrl) {
-            Logger.debug(s"Processing request: [$uploadSettings].")
+        withJsonBody[PrepareUploadRequestV1] { prepareUploadRequest: PrepareUploadRequestV1 =>
+          withAllowedCallbackProtocol(prepareUploadRequest.callbackUrl) {
+            Logger.debug(s"Processing request: [$prepareUploadRequest].")
 
             val sessionId = hc(request).sessionId.map(_.value).getOrElse("n/a")
             val requestId = hc(request).requestId.map(_.value).getOrElse("n/a")
             val result: PreparedUploadResponse =
-              prepareUploadService.prepareUpload(uploadSettings, consumingService, requestId, sessionId, receivedAt)
+              prepareUploadService
+                .prepareUpload(prepareUploadRequest, consumingService, requestId, sessionId, receivedAt)
 
             Future.successful(Ok(Json.toJson(result)))
           }

@@ -4,28 +4,28 @@ import play.sbt.routes.RoutesKeys.routesGenerator
 import sbt.Keys._
 import sbt.Tests.{Group, SubProcess}
 import sbt._
-import uk.gov.hmrc.SbtArtifactory
-import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
-import uk.gov.hmrc.versioning.SbtGitVersioning
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
 import uk.gov.hmrc.versioning.SbtGitVersioning
 import uk.gov.hmrc.versioning.SbtGitVersioning.autoImport.majorVersion
 
 trait MicroService {
 
-  import uk.gov.hmrc._
-  import uk.gov.hmrc.DefaultBuildSettings.{addTestReportOption, scalaSettings, defaultSettings, targetJvm}
   import TestPhases._
   import scoverage.ScoverageKeys
-  import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
+  import uk.gov.hmrc.DefaultBuildSettings.{addTestReportOption, defaultSettings, scalaSettings, targetJvm}
+  import uk.gov.hmrc._
 
   val appName: String
 
   lazy val appDependencies: Seq[ModuleID] = ???
   lazy val plugins: Seq[Plugins] = Seq(
-    play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory
+    play.sbt.PlayScala,
+    SbtAutoBuildPlugin,
+    SbtGitVersioning,
+    SbtDistributablesPlugin,
+    SbtArtifactory
   )
-  lazy val playSettings: Seq[Setting[_]]  = Seq.empty
+  lazy val playSettings: Seq[Setting[_]] = Seq.empty
 
   routesGenerator := InjectedRoutesGenerator
 
@@ -88,6 +88,6 @@ private object TestPhases {
 
   def oneForkedJvmPerTest(tests: Seq[TestDefinition]) =
     tests map { test =>
-      new Group(test.name, Seq(test), SubProcess(ForkOptions(runJVMOptions = Seq("-Dtest.name=" + test.name))))
+      Group(test.name, Seq(test), SubProcess(ForkOptions(runJVMOptions = Seq("-Dtest.name=" + test.name))))
     }
 }
