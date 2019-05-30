@@ -3,7 +3,7 @@ package connectors.s3
 import java.time.Instant
 import java.util.Base64
 
-import connectors.model.{ContentLengthRange, UploadParameters}
+import connectors.model.{AwsCredentials, ContentLengthRange, UploadParameters}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{verify, when}
 import org.scalatest.mockito.MockitoSugar
@@ -30,17 +30,17 @@ class S3UploadFormGeneratorSpec extends WordSpec with GivenWhenThen with Matcher
 
       And("there are valid upload parameters")
       val expirationTimestamp = "1997-07-16T19:20:40Z"
-      val uploadParameters =
-        UploadParameters(
-          expirationDateTime  = Instant.parse(expirationTimestamp),
-          bucketName          = "test-bucket",
-          objectKey           = "test-key",
-          acl                 = "private",
-          additionalMetadata  = Map("key1" -> "value1"),
-          contentLengthRange  = ContentLengthRange(0, 1024),
-          expectedContentType = Some("application/xml"),
-          successRedirect     = Some("http://test.com/abc")
-        )
+      val uploadParameters = UploadParameters(
+        expirationDateTime  = Instant.parse(expirationTimestamp),
+        bucketName          = "test-bucket",
+        objectKey           = "test-key",
+        acl                 = "private",
+        additionalMetadata  = Map("key1" -> "value1"),
+        contentLengthRange  = ContentLengthRange(0, 1024),
+        expectedContentType = Some("application/xml"),
+        successRedirect     = Some("http://test.com/abc"),
+        errorRedirect       = None
+      )
 
       When("form fields are generated")
       val result = generator.generateFormFields(uploadParameters)
@@ -106,17 +106,17 @@ class S3UploadFormGeneratorSpec extends WordSpec with GivenWhenThen with Matcher
 
       And("there are valid upload parameters")
       val expirationTimestamp = "1997-07-16T19:20:40Z"
-      val uploadParameters =
-        UploadParameters(
-          expirationDateTime  = Instant.parse(expirationTimestamp),
-          bucketName          = "test-bucket",
-          objectKey           = "test-key",
-          acl                 = "private",
-          additionalMetadata  = Map("key1" -> "value1"),
-          contentLengthRange  = ContentLengthRange(0, 1024),
-          expectedContentType = Some("application/xml"),
-          successRedirect     = Some("http://test.server/success")
-        )
+      val uploadParameters = UploadParameters(
+        expirationDateTime  = Instant.parse(expirationTimestamp),
+        bucketName          = "test-bucket",
+        objectKey           = "test-key",
+        acl                 = "private",
+        additionalMetadata  = Map("key1" -> "value1"),
+        contentLengthRange  = ContentLengthRange(0, 1024),
+        expectedContentType = Some("application/xml"),
+        successRedirect     = Some("http://test.server/success"),
+        errorRedirect       = None
+      )
 
       When("form fields are generated")
       val result = generator.generateFormFields(uploadParameters)

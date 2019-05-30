@@ -78,7 +78,8 @@ class PrepareUploadService @Inject()(
       ),
       contentLengthRange  = ContentLengthRange(minFileSize, maxFileSize),
       expectedContentType = settings.expectedContentType,
-      successRedirect     = settings.successRedirect
+      successRedirect     = settings.successRedirect,
+      errorRedirect       = settings.errorRedirect
     )
 
     val form     = postSigner.generateFormFields(uploadParameters)

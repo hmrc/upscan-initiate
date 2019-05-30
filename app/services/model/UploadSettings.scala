@@ -5,4 +5,5 @@ case class UploadSettings(
   minimumFileSize: Option[Int],
   maximumFileSize: Option[Int],
   expectedContentType: Option[String],
-  successRedirect: Option[String])
+  successRedirect: Option[String],
+  errorRedirect: Option[String])
