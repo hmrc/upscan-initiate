@@ -27,7 +27,7 @@ class PrepareUploadService @Inject()(
     val expiration = receivedAt.plus(configuration.fileExpirationPeriod)
 
     val result =
-      controllers.model.PreparedUploadResponse(
+      PreparedUploadResponse(
         reference = reference,
         uploadRequest =
           generatePost(reference.value, expiration, settings, consumingService, requestId, sessionId, receivedAt))
