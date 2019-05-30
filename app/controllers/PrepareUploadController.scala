@@ -4,7 +4,7 @@ import java.net.URL
 import java.time.{Clock, Instant}
 
 import config.ServiceConfiguration
-import controllers.model.{PrepareUploadRequestV1, PreparedUploadResponse}
+import controllers.model.{PrepareUpload, PrepareUploadRequestV1, PrepareUploadRequestV2, PreparedUploadResponse}
 import javax.inject.{Inject, Singleton}
 import play.api.Logger
 import play.api.libs.json.{Json, _}
@@ -27,12 +27,15 @@ class PrepareUploadController @Inject()(
   implicit val prepareUploadRequestReads: Reads[PrepareUploadRequestV1] =
     PrepareUploadRequestV1.reads(prepareUploadService.globalFileSizeLimit)
 
-  def prepareUpload(): Action[JsValue] =
+  implicit val prepareUploadRequestV2Reads: Reads[PrepareUploadRequestV2] =
+    PrepareUploadRequestV2.reads(prepareUploadService.globalFileSizeLimit)
+
+  private def prepareUpload[T <: PrepareUpload]()(implicit reads: Reads[T], manifest: Manifest[T]): Action[JsValue] =
     Action.async(parse.json) { implicit request =>
       val receivedAt = Instant.now(clock)
 
       onlyAllowedServices[JsValue] { (_, consumingService) =>
-        withJsonBody[PrepareUploadRequestV1] { prepareUploadRequest: PrepareUploadRequestV1 =>
+        withJsonBody[T] { prepareUploadRequest: T =>
           withAllowedCallbackProtocol(prepareUploadRequest.callbackUrl) {
             Logger.debug(s"Processing request: [$prepareUploadRequest].")
 
@@ -52,6 +55,12 @@ class PrepareUploadController @Inject()(
         }
       }
     }
+
+  def prepareUploadV1(): Action[JsValue] =
+    prepareUpload[PrepareUploadRequestV1]()
+
+  def prepareUploadV2(): Action[JsValue] =
+    prepareUpload[PrepareUploadRequestV2]()
 
   private[controllers] def withAllowedCallbackProtocol[A](callbackUrl: String)(
     block: => Future[Result]): Future[Result] = {
