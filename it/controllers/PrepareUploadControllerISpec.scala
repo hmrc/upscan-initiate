@@ -5,7 +5,7 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.http.HeaderNames.USER_AGENT
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.Json
+import play.api.libs.json.{JsValue, Json}
 import play.api.test.Helpers._
 import play.api.test.{FakeHeaders, FakeRequest}
 import uk.gov.hmrc.http.HeaderNames.xSessionId
@@ -18,7 +18,7 @@ class PrepareUploadControllerISpec extends UnitSpec with GuiceOneAppPerSuite wit
     )
     .build()
 
-  "PrepareUploadController" should {
+  "PrepareUploadController prepareUploadV1" should {
     val postBodyJson = Json.parse("""
         |{
         |	"callbackUrl": "https://some-url/callback",
@@ -28,11 +28,33 @@ class PrepareUploadControllerISpec extends UnitSpec with GuiceOneAppPerSuite wit
         |}
       """.stripMargin)
 
+    behave like prepareUploadTests(postBodyJson, "/upscan/initiate")
+  }
+
+  "PrepareUploadController prepareUploadV2" should {
+    val postBodyJson = Json.parse("""
+        |{
+        |	"callbackUrl": "https://some-url/callback",
+        |	"successRedirect": "https://some-url/success",
+        |	"errorRedirect": "https://some-url/error",
+        |	"minimumFileSize" : 0,
+        |	"maximumFileSize" : 1024,
+        |	"expectedMimeType": "application/xml"
+        |}
+      """.stripMargin)
+
+    behave like prepareUploadTests(postBodyJson, "/upscan/v2/initiate")
+  }
+
+  private def prepareUploadTests( // scalastyle:ignore
+    postBodyJson: JsValue,
+    uri: String): Unit = {
+
     "include x-amz-meta-consuming-service in the response" in {
       Given("a request containing a USER_AGENT header contained in the configuration of allowedUserAgents")
       val initiateRequest = FakeRequest(
         POST,
-        "/upscan/initiate",
+        uri,
         FakeHeaders(Seq((USER_AGENT, "PrepareUploadControllerISpec"), (xSessionId, "some-session-id"))),
         postBodyJson)
 
@@ -53,7 +75,7 @@ class PrepareUploadControllerISpec extends UnitSpec with GuiceOneAppPerSuite wit
       Given("a request containing a x-session-id header")
       val initiateRequest = FakeRequest(
         POST,
-        "/upscan/initiate",
+        uri,
         FakeHeaders(Seq((USER_AGENT, "PrepareUploadControllerISpec"), (xSessionId, "some-session-id"))),
         postBodyJson)
 
@@ -72,11 +94,8 @@ class PrepareUploadControllerISpec extends UnitSpec with GuiceOneAppPerSuite wit
 
     "set a default x-amz-meta-session-id in the response if no session id passed in" in {
       Given("a request containing a x-session-id header")
-      val initiateRequest = FakeRequest(
-        POST,
-        "/upscan/initiate",
-        FakeHeaders(Seq((USER_AGENT, "PrepareUploadControllerISpec"))),
-        postBodyJson)
+      val initiateRequest =
+        FakeRequest(POST, uri, FakeHeaders(Seq((USER_AGENT, "PrepareUploadControllerISpec"))), postBodyJson)
 
       When("a request is posted to the /initiate endpoint")
       val initiateResponse = route(app, initiateRequest).get
@@ -94,7 +113,7 @@ class PrepareUploadControllerISpec extends UnitSpec with GuiceOneAppPerSuite wit
     "reject requests which do not include a valid USER_AGENT header" in {
       Given("a request containing a USER_AGENT header not contained in the configuration of allowedUserAgents")
       val initiateRequest =
-        FakeRequest(POST, "/upscan/initiate", FakeHeaders(Seq((USER_AGENT, "SomeInvalidUserAgent"))), postBodyJson)
+        FakeRequest(POST, uri, FakeHeaders(Seq((USER_AGENT, "SomeInvalidUserAgent"))), postBodyJson)
 
       When("a request is posted to the /initiate endpoint")
       val initiateResponse = route(app, initiateRequest).get
@@ -106,7 +125,7 @@ class PrepareUploadControllerISpec extends UnitSpec with GuiceOneAppPerSuite wit
     "reject requests which do not include a USER_AGENT header" in {
       Given("a request not containing a USER_AGENT header")
       val initiateRequest =
-        FakeRequest(POST, "/upscan/initiate", FakeHeaders(Seq((xSessionId, "some-session-id"))), postBodyJson)
+        FakeRequest(POST, uri, FakeHeaders(Seq((xSessionId, "some-session-id"))), postBodyJson)
 
       When("a request is posted to the /initiate endpoint")
       val initiateResponse = route(app, initiateRequest).get
