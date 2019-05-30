@@ -40,7 +40,12 @@ class PrepareUploadController @Inject()(
             val requestId = hc(request).requestId.map(_.value).getOrElse("n/a")
             val result: PreparedUploadResponse =
               prepareUploadService
-                .prepareUpload(prepareUploadRequest, consumingService, requestId, sessionId, receivedAt)
+                .prepareUpload(
+                  prepareUploadRequest.toUploadSettings,
+                  consumingService,
+                  requestId,
+                  sessionId,
+                  receivedAt)
 
             Future.successful(Ok(Json.toJson(result)(PreparedUploadResponse.writes)))
           }

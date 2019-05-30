@@ -6,10 +6,11 @@ import java.util.UUID
 import com.kenshoo.play.metrics.Metrics
 import config.ServiceConfiguration
 import connectors.model.{ContentLengthRange, UploadFormGenerator, UploadParameters}
-import controllers.model.{PrepareUploadRequestV1, PreparedUploadResponse, Reference, UploadFormTemplate}
+import controllers.model.{PreparedUploadResponse, Reference, UploadFormTemplate}
 import javax.inject.{Inject, Singleton}
 import org.slf4j.MDC
 import play.api.Logger
+import services.model.UploadSettings
 
 @Singleton
 class PrepareUploadService @Inject()(
@@ -18,7 +19,7 @@ class PrepareUploadService @Inject()(
   metrics: Metrics) {
 
   def prepareUpload(
-    settings: PrepareUploadRequestV1,
+    settings: UploadSettings,
     consumingService: String,
     requestId: String,
     sessionId: String,
@@ -50,7 +51,7 @@ class PrepareUploadService @Inject()(
   private def generatePost(
     key: String,
     expiration: Instant,
-    settings: PrepareUploadRequestV1,
+    settings: UploadSettings,
     consumingService: String,
     requestId: String,
     sessionId: String,

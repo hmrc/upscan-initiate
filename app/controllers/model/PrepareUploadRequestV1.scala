@@ -3,15 +3,27 @@ import play.api.data.validation.ValidationError
 import play.api.libs.json.{JsPath, Reads}
 import play.api.libs.json.Reads.{max, min}
 import play.api.libs.functional.syntax._
+import services.model.UploadSettings
 
 case class PrepareUploadRequestV1(
   callbackUrl: String,
   minimumFileSize: Option[Int],
   maximumFileSize: Option[Int],
   expectedContentType: Option[String],
-  successRedirect: Option[String] = None)
+  successRedirect: Option[String])
 
 object PrepareUploadRequestV1 {
+
+  implicit class PrepareUploadRequestV1Ops(request: PrepareUploadRequestV1) {
+
+    def toUploadSettings: UploadSettings = UploadSettings(
+      callbackUrl         = request.callbackUrl,
+      minimumFileSize     = request.minimumFileSize,
+      maximumFileSize     = request.maximumFileSize,
+      expectedContentType = request.expectedContentType,
+      successRedirect     = request.successRedirect
+    )
+  }
 
   def reads(maxFileSize: Int): Reads[PrepareUploadRequestV1] =
     (

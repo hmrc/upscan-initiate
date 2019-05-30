@@ -7,9 +7,9 @@ import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
 import config.ServiceConfiguration
 import connectors.model.{UploadFormGenerator, UploadParameters}
-import controllers.model.PrepareUploadRequestV1
 import org.scalatest.{GivenWhenThen, Matchers}
 import services.PrepareUploadService
+import services.model.UploadSettings
 import uk.gov.hmrc.play.test.UnitSpec
 
 class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen {
@@ -73,11 +73,12 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
       val callbackUrl = "http://www.callback.com"
 
-      val uploadSettings = PrepareUploadRequestV1(
+      val uploadSettings = UploadSettings(
         callbackUrl         = callbackUrl,
         minimumFileSize     = None,
         maximumFileSize     = None,
-        expectedContentType = Some("application/xml"))
+        expectedContentType = Some("application/xml"),
+        successRedirect     = None)
 
       When("we setup the upload")
 
@@ -113,12 +114,12 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
       val callbackUrl = "http://www.callback.com"
 
-      val uploadSettings =
-        PrepareUploadRequestV1(
-          callbackUrl         = callbackUrl,
-          minimumFileSize     = Some(100),
-          maximumFileSize     = Some(200),
-          expectedContentType = None)
+      val uploadSettings = UploadSettings(
+        callbackUrl         = callbackUrl,
+        minimumFileSize     = Some(100),
+        maximumFileSize     = Some(200),
+        expectedContentType = None,
+        successRedirect     = None)
 
       When("we setup the upload")
 
@@ -139,12 +140,12 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
       val callbackUrl = "http://www.callback.com"
 
-      val uploadSettings =
-        PrepareUploadRequestV1(
-          callbackUrl         = callbackUrl,
-          minimumFileSize     = Some(-1),
-          maximumFileSize     = Some(1024),
-          expectedContentType = None)
+      val uploadSettings = UploadSettings(
+        callbackUrl         = callbackUrl,
+        minimumFileSize     = Some(-1),
+        maximumFileSize     = Some(1024),
+        expectedContentType = None,
+        successRedirect     = None)
 
       When("we setup the upload")
       Then("an exception should be thrown")
@@ -165,12 +166,12 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
       val callbackUrl = "http://www.callback.com"
 
-      val uploadSettings =
-        PrepareUploadRequestV1(
-          callbackUrl         = callbackUrl,
-          minimumFileSize     = Some(0),
-          maximumFileSize     = Some(1025),
-          expectedContentType = None)
+      val uploadSettings = UploadSettings(
+        callbackUrl         = callbackUrl,
+        minimumFileSize     = Some(0),
+        maximumFileSize     = Some(1025),
+        expectedContentType = None,
+        successRedirect     = None)
 
       When("we setup the upload")
       Then("an exception should be thrown")
@@ -190,12 +191,12 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
       val callbackUrl = "http://www.callback.com"
 
-      val uploadSettings =
-        PrepareUploadRequestV1(
-          callbackUrl         = callbackUrl,
-          minimumFileSize     = Some(1024),
-          maximumFileSize     = Some(0),
-          expectedContentType = None)
+      val uploadSettings = UploadSettings(
+        callbackUrl         = callbackUrl,
+        minimumFileSize     = Some(1024),
+        maximumFileSize     = Some(0),
+        expectedContentType = None,
+        successRedirect     = None)
 
       When("we setup the upload")
       Then("an exception should be thrown")
@@ -215,7 +216,7 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
       val callbackUrl = "http://www.callback.com"
 
-      val uploadSettings = PrepareUploadRequestV1(
+      val uploadSettings = UploadSettings(
         callbackUrl         = callbackUrl,
         minimumFileSize     = None,
         maximumFileSize     = None,
