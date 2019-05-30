@@ -5,7 +5,7 @@ import java.time.Clock
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import config.ServiceConfiguration
-import controllers.model.{PrepareUploadRequestV1, PreparedUploadResponse, Reference, UploadFormTemplate}
+import controllers.model.{PreparedUploadResponse, Reference, UploadFormTemplate}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
 import org.mockito.invocation.InvocationOnMock
@@ -58,7 +58,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
       When("upload initiation has been requested")
 
-      val result = controller.prepareUpload()(request)
+      val result = controller.prepareUploadV1()(request)
 
       Then("service returns valid response with reference and template of upload form")
 
@@ -98,7 +98,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
       When("upload initiation has been requested")
 
-      val result = controller.prepareUpload()(request)
+      val result = controller.prepareUploadV1()(request)
 
       Then("service returns valid response with reference and template of upload form")
 
@@ -133,7 +133,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
       When("upload initiation has been requested")
 
-      val result = controller.prepareUpload()(request)
+      val result = controller.prepareUploadV1()(request)
 
       Then("service returns valid response with reference and template of upload form")
 
@@ -162,7 +162,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
       When("upload initiation has been requested")
 
-      val result = controller.prepareUpload()(request)
+      val result = controller.prepareUploadV1()(request)
 
       Then("service returns valid response with reference and template of upload form")
 
@@ -193,7 +193,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
       When("upload initiation has been requested")
 
-      val result = controller.prepareUpload()(request)
+      val result = controller.prepareUploadV1()(request)
 
       Then("service returns error response")
 
@@ -211,7 +211,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
       When("upload initiation has been requested")
 
-      val result = controller.prepareUpload()(request)
+      val result = controller.prepareUploadV1()(request)
 
       Then("service returns error response")
 
@@ -241,7 +241,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
       When("upload initiation has been requested")
 
-      val result = controller.prepareUpload()(request)
+      val result = controller.prepareUploadV1()(request)
 
       Then("service returns error response")
 
@@ -282,7 +282,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
       When("upload initiation has been requested")
 
-      val result = controller.prepareUpload()(request)
+      val result = controller.prepareUploadV1()(request)
 
       Then("service returns error response")
 
