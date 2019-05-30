@@ -9,5 +9,6 @@ case class UploadParameters(
   additionalMetadata: Map[String, String],
   contentLengthRange: ContentLengthRange,
   expectedContentType: Option[String],
-  successRedirect: Option[String]
+  successRedirect: Option[String],
+  errorRedirect: Option[String]
 )

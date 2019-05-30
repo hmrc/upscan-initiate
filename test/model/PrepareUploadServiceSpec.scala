@@ -78,7 +78,8 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
         minimumFileSize     = None,
         maximumFileSize     = None,
         expectedContentType = Some("application/xml"),
-        successRedirect     = None)
+        successRedirect     = None,
+        errorRedirect       = None)
 
       When("we setup the upload")
 
@@ -119,7 +120,8 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
         minimumFileSize     = Some(100),
         maximumFileSize     = Some(200),
         expectedContentType = None,
-        successRedirect     = None)
+        successRedirect     = None,
+        errorRedirect       = None)
 
       When("we setup the upload")
 
@@ -145,7 +147,8 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
         minimumFileSize     = Some(-1),
         maximumFileSize     = Some(1024),
         expectedContentType = None,
-        successRedirect     = None)
+        successRedirect     = None,
+        errorRedirect       = None)
 
       When("we setup the upload")
       Then("an exception should be thrown")
@@ -171,7 +174,8 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
         minimumFileSize     = Some(0),
         maximumFileSize     = Some(1025),
         expectedContentType = None,
-        successRedirect     = None)
+        successRedirect     = None,
+        errorRedirect       = None)
 
       When("we setup the upload")
       Then("an exception should be thrown")
@@ -196,7 +200,8 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
         minimumFileSize     = Some(1024),
         maximumFileSize     = Some(0),
         expectedContentType = None,
-        successRedirect     = None)
+        successRedirect     = None,
+        errorRedirect       = None)
 
       When("we setup the upload")
       Then("an exception should be thrown")
@@ -221,7 +226,8 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
         minimumFileSize     = None,
         maximumFileSize     = None,
         expectedContentType = Some("application/xml"),
-        successRedirect     = Some("https://new.service/page1")
+        successRedirect     = Some("https://new.service/page1"),
+        errorRedirect       = None
       )
 
       When("we setup the upload")

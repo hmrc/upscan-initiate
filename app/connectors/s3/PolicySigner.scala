@@ -3,6 +3,7 @@ package connectors.s3
 import java.nio.charset.Charset
 
 import com.amazonaws.util.{BinaryUtils, StringUtils}
+import connectors.model.AwsCredentials
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 

@@ -21,7 +21,8 @@ object PrepareUploadRequestV1 {
       minimumFileSize     = request.minimumFileSize,
       maximumFileSize     = request.maximumFileSize,
       expectedContentType = request.expectedContentType,
-      successRedirect     = request.successRedirect
+      successRedirect     = request.successRedirect,
+      errorRedirect       = None
     )
   }
 

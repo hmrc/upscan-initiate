@@ -3,7 +3,7 @@ package connectors.s3
 import config.ServiceConfiguration
 import java.time.{Clock, Instant}
 
-import connectors.model.UploadFormGenerator
+import connectors.model.{AwsCredentials, UploadFormGenerator}
 import javax.inject.{Inject, Provider, Singleton}
 
 @Singleton

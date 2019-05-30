@@ -4,14 +4,8 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatter.ISO_INSTANT
 import java.time.{Instant, ZoneOffset}
 
-import connectors.model.{UploadFormGenerator, UploadParameters}
+import connectors.model.{AwsCredentials, UploadFormGenerator, UploadParameters}
 import play.api.libs.json.{JsArray, JsValue, Json}
-
-final case class AwsCredentials(
-  accessKeyId: String,
-  secretKey: String,
-  sessionToken: Option[String]
-)
 
 class S3UploadFormGenerator(
   credentials: AwsCredentials,
