@@ -17,6 +17,7 @@ import play.api.mvc.Results.Ok
 import play.api.test.Helpers.contentAsString
 import play.api.test.{FakeRequest, Helpers}
 import services.PrepareUploadService
+import services.model.UploadSettings
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.Future
@@ -329,19 +330,19 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
       .when(service.prepareUpload(any(), any(), any(), any(), any()))
       .thenAnswer(new Answer[PreparedUploadResponse]() {
         override def answer(invocationOnMock: InvocationOnMock): PreparedUploadResponse = {
-          val request   = invocationOnMock.getArgument[PrepareUploadRequestV1](0)
+          val settings  = invocationOnMock.getArgument[UploadSettings](0)
           val requestId = invocationOnMock.getArgument[String](2)
           val sessionId = invocationOnMock.getArgument[String](3)
           PreparedUploadResponse(
             Reference("TEST"),
             UploadFormTemplate(
-              request.callbackUrl,
+              settings.callbackUrl,
               Map.empty ++
-                request.minimumFileSize.map(s => Map("minFileSize" -> s.toString).head) ++
-                request.maximumFileSize.map(s => Map("maxFileSize" -> s.toString).head) ++
+                settings.minimumFileSize.map(s => Map("minFileSize" -> s.toString).head) ++
+                settings.maximumFileSize.map(s => Map("maxFileSize" -> s.toString).head) ++
                 Map("sessionId" -> sessionId) ++
                 Map("requestId" -> requestId) ++
-                request.successRedirect.map(url => Map("success_action_redirect" -> url)).getOrElse(Map.empty)
+                settings.successRedirect.map(url => Map("success_action_redirect" -> url)).getOrElse(Map.empty)
             )
           )
         }
