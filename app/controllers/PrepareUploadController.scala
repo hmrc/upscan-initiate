@@ -4,13 +4,10 @@ import java.net.URL
 import java.time.{Clock, Instant}
 
 import config.ServiceConfiguration
-import controllers.model.{PrepareUploadRequestV1, PreparedUploadResponse, UploadFormTemplate}
+import controllers.model.{PrepareUploadRequestV1, PreparedUploadResponse}
 import javax.inject.{Inject, Singleton}
 import play.api.Logger
-import play.api.data.validation.ValidationError
-import play.api.libs.functional.syntax._
-import play.api.libs.json.Reads._
-import play.api.libs.json.{JsPath, Json, Writes, _}
+import play.api.libs.json.{Json, _}
 import play.api.mvc.{Action, Result}
 import services.PrepareUploadService
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
@@ -27,25 +24,8 @@ class PrepareUploadController @Inject()(
     extends BaseController
     with UserAgentFilter {
 
-  implicit val uploadSettingsReads: Reads[PrepareUploadRequestV1] = (
-    (JsPath \ "callbackUrl").read[String] and
-      (JsPath \ "minimumFileSize").readNullable[Int](min(0)) and
-      (JsPath \ "maximumFileSize").readNullable[Int](min(0) keepAnd max(prepareUploadService.globalFileSizeLimit + 1)) and
-      (JsPath \ "expectedContentType").readNullable[String] and
-      (JsPath \ "successRedirect").readNullable[String]
-  )(PrepareUploadRequestV1.apply _)
-    .filter(ValidationError("Maximum file size must be equal or greater than minimum file size"))(settings =>
-      settings.minimumFileSize.getOrElse(0) <= settings.maximumFileSize.getOrElse(
-        prepareUploadService.globalFileSizeLimit))
-
-  implicit val uploadFormTemplateWrites: Writes[UploadFormTemplate] = Json.writes[UploadFormTemplate]
-
-  implicit val preparedUploadWrites: Writes[PreparedUploadResponse] = new Writes[PreparedUploadResponse] {
-    def writes(preparedUpload: PreparedUploadResponse): JsValue = Json.obj(
-      "reference"     -> preparedUpload.reference.value,
-      "uploadRequest" -> preparedUpload.uploadRequest
-    )
-  }
+  implicit val prepareUploadRequestReads: Reads[PrepareUploadRequestV1] =
+    PrepareUploadRequestV1.reads(prepareUploadService.globalFileSizeLimit)
 
   def prepareUpload(): Action[JsValue] =
     Action.async(parse.json) { implicit request =>
@@ -62,7 +42,7 @@ class PrepareUploadController @Inject()(
               prepareUploadService
                 .prepareUpload(prepareUploadRequest, consumingService, requestId, sessionId, receivedAt)
 
-            Future.successful(Ok(Json.toJson(result)))
+            Future.successful(Ok(Json.toJson(result)(PreparedUploadResponse.writes)))
           }
         }
       }
