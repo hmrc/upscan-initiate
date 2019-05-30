@@ -76,7 +76,10 @@ class S3UploadFormGenerator(
     val successRedirect =
       uploadParameters.successRedirect.map(v => Map("success_action_redirect" -> v)).getOrElse(Map.empty)
 
-    fields ++ metadataFields ++ sessionCredentials ++ contentTypeField ++ successRedirect
+    val errorRedirect =
+      uploadParameters.errorRedirect.map(v => Map("error_action_redirect" -> v)).getOrElse(Map.empty)
+
+    fields ++ metadataFields ++ sessionCredentials ++ contentTypeField ++ successRedirect ++ errorRedirect
   }
 
   private def buildPolicy(
@@ -99,6 +102,9 @@ class S3UploadFormGenerator(
     val successRedirectConstraint =
       uploadParameters.successRedirect.map(redirect => Json.obj("success_action_redirect" -> redirect))
 
+    val errorRedirectConstraint =
+      uploadParameters.errorRedirect.map(redirect => Json.obj("error_action_redirect" -> redirect))
+
     val policyDocument = Json.obj(
       "expiration" -> ISO_INSTANT.format(uploadParameters.expirationDateTime),
       "conditions" -> JsArray(
@@ -117,6 +123,7 @@ class S3UploadFormGenerator(
           ++ metadataJson
           ++ contentTypeConstraintJson
           ++ successRedirectConstraint
+          ++ errorRedirectConstraint
       )
     )
 
