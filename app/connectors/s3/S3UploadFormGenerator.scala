@@ -4,14 +4,8 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatter.ISO_INSTANT
 import java.time.{Instant, ZoneOffset}
 
-import domain.{UploadFormGenerator, UploadParameters}
+import connectors.model.{AwsCredentials, UploadFormGenerator, UploadParameters}
 import play.api.libs.json.{JsArray, JsValue, Json}
-
-final case class AwsCredentials(
-  accessKeyId: String,
-  secretKey: String,
-  sessionToken: Option[String]
-)
 
 class S3UploadFormGenerator(
   credentials: AwsCredentials,
@@ -77,11 +71,15 @@ class S3UploadFormGenerator(
         case (metadataKey, value) => s"x-amz-meta-$metadataKey" -> value
       }
 
-    val sessionCredentials = securityToken.map(v => Map("x-amz-security-token" -> v)).getOrElse(Map.empty)
+    val sessionCredentials = securityToken.map(v => Map("x-amz-security-token"                -> v)).getOrElse(Map.empty)
     val contentTypeField   = uploadParameters.expectedContentType.map(v => Map("Content-Type" -> v)).getOrElse(Map.empty)
-    val successRedirect    = uploadParameters.successRedirect.map(v => Map("success_action_redirect" -> v)).getOrElse(Map.empty)
+    val successRedirect =
+      uploadParameters.successRedirect.map(v => Map("success_action_redirect" -> v)).getOrElse(Map.empty)
 
-    fields ++ metadataFields ++ sessionCredentials  ++ contentTypeField ++ successRedirect
+    val errorRedirect =
+      uploadParameters.errorRedirect.map(v => Map("error_action_redirect" -> v)).getOrElse(Map.empty)
+
+    fields ++ metadataFields ++ sessionCredentials ++ contentTypeField ++ successRedirect ++ errorRedirect
   }
 
   private def buildPolicy(
@@ -101,6 +99,12 @@ class S3UploadFormGenerator(
     val contentTypeConstraintJson =
       uploadParameters.expectedContentType.map(contentType => Json.obj("Content-Type" -> contentType))
 
+    val successRedirectConstraint =
+      uploadParameters.successRedirect.map(redirect => Json.obj("success_action_redirect" -> redirect))
+
+    val errorRedirectConstraint =
+      uploadParameters.errorRedirect.map(redirect => Json.obj("error_action_redirect" -> redirect))
+
     val policyDocument = Json.obj(
       "expiration" -> ISO_INSTANT.format(uploadParameters.expirationDateTime),
       "conditions" -> JsArray(
@@ -118,6 +122,8 @@ class S3UploadFormGenerator(
         ) ++ securityTokenJson
           ++ metadataJson
           ++ contentTypeConstraintJson
+          ++ successRedirectConstraint
+          ++ errorRedirectConstraint
       )
     )
 

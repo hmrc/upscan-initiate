@@ -1,4 +1,4 @@
-package domain
+package model
 
 import java.time
 import java.time.Instant
@@ -6,7 +6,10 @@ import java.time.Instant
 import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
 import config.ServiceConfiguration
+import connectors.model.{UploadFormGenerator, UploadParameters}
 import org.scalatest.{GivenWhenThen, Matchers}
+import services.PrepareUploadService
+import services.model.UploadSettings
 import uk.gov.hmrc.play.test.UnitSpec
 
 class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen {
@@ -51,14 +54,15 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
         uploadParameters.expectedContentType.map { contentType =>
           "Content-Type" -> contentType
         } ++
-        uploadParameters.successRedirect.map { "success_redirect_url" -> _}
+        uploadParameters.successRedirect.map { "success_redirect_url" -> _ } ++
+        uploadParameters.errorRedirect.map { "error_redirect_url"     -> _ }
 
     override def buildEndpoint(bucketName: String): String = s"$bucketName.s3"
   }
 
   val receivedAt: Instant = Instant.now()
 
-  "S3 Upload Service" should {
+  "S3 Prepare Upload Service" should {
 
     def service(metrics: Metrics) = new PrepareUploadService(s3PostSigner, serviceConfiguration, metrics)
 
@@ -66,7 +70,7 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
       val metrics = metricsStub()
 
-      Given("there are have valid upload settings")
+      Given("there are valid upload settings")
 
       val callbackUrl = "http://www.callback.com"
 
@@ -74,25 +78,28 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
         callbackUrl         = callbackUrl,
         minimumFileSize     = None,
         maximumFileSize     = None,
-        expectedContentType = Some("application/xml"))
+        expectedContentType = Some("application/xml"),
+        successRedirect     = None,
+        errorRedirect       = None)
 
       When("we setup the upload")
 
-      val result = service(metrics).prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-request-id", "some-session-id", receivedAt)
+      val result = service(metrics)
+        .prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-request-id", "some-session-id", receivedAt)
 
       Then("proper upload request form definition should be returned")
 
       result.uploadRequest.href shouldBe s"${serviceConfiguration.inboundBucketName}.s3"
       result.uploadRequest.fields shouldBe Map(
-        "bucket"                       -> serviceConfiguration.inboundBucketName,
-        "key"                          -> result.reference.value,
-        "x-amz-meta-callback-url"      -> callbackUrl,
-        "x-amz-meta-consuming-service" -> "PrepareUploadServiceSpec",
-        "x-amz-meta-session-id"        -> "some-session-id",
-        "x-amz-meta-request-id"        -> "some-request-id",
-        "minSize"                      -> "0",
-        "maxSize"                      -> "1024",
-        "Content-Type"                 -> "application/xml",
+        "bucket"                              -> serviceConfiguration.inboundBucketName,
+        "key"                                 -> result.reference.value,
+        "x-amz-meta-callback-url"             -> callbackUrl,
+        "x-amz-meta-consuming-service"        -> "PrepareUploadServiceSpec",
+        "x-amz-meta-session-id"               -> "some-session-id",
+        "x-amz-meta-request-id"               -> "some-request-id",
+        "minSize"                             -> "0",
+        "maxSize"                             -> "1024",
+        "Content-Type"                        -> "application/xml",
         "x-amz-meta-upscan-initiate-received" -> receivedAt.toString
       )
 
@@ -105,20 +112,22 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
       val metrics = metricsStub()
 
-      Given("there are have valid upload settings with size limits")
+      Given("there are valid upload settings with size limits")
 
       val callbackUrl = "http://www.callback.com"
 
-      val uploadSettings =
-        UploadSettings(
-          callbackUrl         = callbackUrl,
-          minimumFileSize     = Some(100),
-          maximumFileSize     = Some(200),
-          expectedContentType = None)
+      val uploadSettings = UploadSettings(
+        callbackUrl         = callbackUrl,
+        minimumFileSize     = Some(100),
+        maximumFileSize     = Some(200),
+        expectedContentType = None,
+        successRedirect     = None,
+        errorRedirect       = None)
 
       When("we setup the upload")
 
-      val result = service(metrics).prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-request-id", "some-session-id", receivedAt)
+      val result = service(metrics)
+        .prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-request-id", "some-session-id", receivedAt)
 
       Then("upload request should contain requested min/max size")
 
@@ -134,12 +143,13 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
       val callbackUrl = "http://www.callback.com"
 
-      val uploadSettings =
-        UploadSettings(
-          callbackUrl         = callbackUrl,
-          minimumFileSize     = Some(-1),
-          maximumFileSize     = Some(1024),
-          expectedContentType = None)
+      val uploadSettings = UploadSettings(
+        callbackUrl         = callbackUrl,
+        minimumFileSize     = Some(-1),
+        maximumFileSize     = Some(1024),
+        expectedContentType = None,
+        successRedirect     = None,
+        errorRedirect       = None)
 
       When("we setup the upload")
       Then("an exception should be thrown")
@@ -154,18 +164,19 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
     "fail when maximum file size is greater than global limit" in {
 
-      Given("there are upload settings with maximum file size greater than global limit")
+      Given("there upload settings with maximum file size greater than global limit")
 
       val metrics = metricsStub()
 
       val callbackUrl = "http://www.callback.com"
 
-      val uploadSettings =
-        UploadSettings(
-          callbackUrl         = callbackUrl,
-          minimumFileSize     = Some(0),
-          maximumFileSize     = Some(1025),
-          expectedContentType = None)
+      val uploadSettings = UploadSettings(
+        callbackUrl         = callbackUrl,
+        minimumFileSize     = Some(0),
+        maximumFileSize     = Some(1025),
+        expectedContentType = None,
+        successRedirect     = None,
+        errorRedirect       = None)
 
       When("we setup the upload")
       Then("an exception should be thrown")
@@ -179,18 +190,19 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
     "fail when minimum file size is greater than maximum file size" in {
 
-      Given("there are upload settings with minimum file size greater than maximum size ")
+      Given("there are upload settings with minimum file size greater than maximum size")
 
       val metrics = metricsStub()
 
       val callbackUrl = "http://www.callback.com"
 
-      val uploadSettings =
-        UploadSettings(
-          callbackUrl         = callbackUrl,
-          minimumFileSize     = Some(1024),
-          maximumFileSize     = Some(0),
-          expectedContentType = None)
+      val uploadSettings = UploadSettings(
+        callbackUrl         = callbackUrl,
+        minimumFileSize     = Some(1024),
+        maximumFileSize     = Some(0),
+        expectedContentType = None,
+        successRedirect     = None,
+        errorRedirect       = None)
 
       When("we setup the upload")
       Then("an exception should be thrown")
@@ -206,7 +218,7 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
       val metrics = metricsStub()
 
-      Given("there are have valid upload settings")
+      Given("there are valid upload settings")
 
       val callbackUrl = "http://www.callback.com"
 
@@ -215,28 +227,74 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
         minimumFileSize     = None,
         maximumFileSize     = None,
         expectedContentType = Some("application/xml"),
-        successRedirect     = Some("https://new.service/page1")
+        successRedirect     = Some("https://new.service/page1"),
+        errorRedirect       = None
       )
 
       When("we setup the upload")
 
-      val result = service(metrics).prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-request-id", "some-session-id", receivedAt)
+      val result = service(metrics)
+        .prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-request-id", "some-session-id", receivedAt)
 
       Then("proper upload request form definition should be returned")
 
       result.uploadRequest.href shouldBe s"${serviceConfiguration.inboundBucketName}.s3"
       result.uploadRequest.fields shouldBe Map(
-        "bucket"                       -> serviceConfiguration.inboundBucketName,
-        "key"                          -> result.reference.value,
-        "x-amz-meta-callback-url"      -> callbackUrl,
-        "x-amz-meta-consuming-service" -> "PrepareUploadServiceSpec",
-        "x-amz-meta-session-id"        -> "some-session-id",
-        "x-amz-meta-request-id"        -> "some-request-id",
-        "minSize"                      -> "0",
-        "maxSize"                      -> "1024",
-        "Content-Type"                 -> "application/xml",
+        "bucket"                              -> serviceConfiguration.inboundBucketName,
+        "key"                                 -> result.reference.value,
+        "x-amz-meta-callback-url"             -> callbackUrl,
+        "x-amz-meta-consuming-service"        -> "PrepareUploadServiceSpec",
+        "x-amz-meta-session-id"               -> "some-session-id",
+        "x-amz-meta-request-id"               -> "some-request-id",
+        "minSize"                             -> "0",
+        "maxSize"                             -> "1024",
+        "Content-Type"                        -> "application/xml",
         "x-amz-meta-upscan-initiate-received" -> receivedAt.toString,
-        "success_redirect_url"         -> "https://new.service/page1"
+        "success_redirect_url"                -> "https://new.service/page1"
+      )
+
+      And("uploadInitiated counter has been incremented")
+      metrics.defaultRegistry.counter("uploadInitiated").getCount shouldBe 1
+
+    }
+
+    "create post form that allows to upload the file with redirect on error" in {
+
+      val metrics = metricsStub()
+
+      Given("there are valid upload settings")
+
+      val callbackUrl = "http://www.callback.com"
+
+      val uploadSettings = UploadSettings(
+        callbackUrl         = callbackUrl,
+        minimumFileSize     = None,
+        maximumFileSize     = None,
+        expectedContentType = Some("application/xml"),
+        successRedirect     = None,
+        errorRedirect       = Some("https://new.service/error")
+      )
+
+      When("we setup the upload")
+
+      val result = service(metrics)
+        .prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-request-id", "some-session-id", receivedAt)
+
+      Then("proper upload request form definition should be returned")
+
+      result.uploadRequest.href shouldBe s"${serviceConfiguration.inboundBucketName}.s3"
+      result.uploadRequest.fields shouldBe Map(
+        "bucket"                              -> serviceConfiguration.inboundBucketName,
+        "key"                                 -> result.reference.value,
+        "x-amz-meta-callback-url"             -> callbackUrl,
+        "x-amz-meta-consuming-service"        -> "PrepareUploadServiceSpec",
+        "x-amz-meta-session-id"               -> "some-session-id",
+        "x-amz-meta-request-id"               -> "some-request-id",
+        "minSize"                             -> "0",
+        "maxSize"                             -> "1024",
+        "Content-Type"                        -> "application/xml",
+        "x-amz-meta-upscan-initiate-received" -> receivedAt.toString,
+        "error_redirect_url"                  -> "https://new.service/error"
       )
 
       And("uploadInitiated counter has been incremented")

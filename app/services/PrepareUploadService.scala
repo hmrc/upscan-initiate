@@ -1,13 +1,16 @@
-package domain
+package services
 
 import java.time.Instant
 import java.util.UUID
 
 import com.kenshoo.play.metrics.Metrics
 import config.ServiceConfiguration
+import connectors.model.{ContentLengthRange, UploadFormGenerator, UploadParameters}
+import controllers.model.{PreparedUploadResponse, Reference, UploadFormTemplate}
 import javax.inject.{Inject, Singleton}
 import org.slf4j.MDC
 import play.api.Logger
+import services.model.UploadSettings
 
 @Singleton
 class PrepareUploadService @Inject()(
@@ -15,14 +18,20 @@ class PrepareUploadService @Inject()(
   configuration: ServiceConfiguration,
   metrics: Metrics) {
 
-  def prepareUpload(settings: UploadSettings, consumingService: String, requestId : String, sessionId: String, receivedAt: Instant): PreparedUpload = {
+  def prepareUpload(
+    settings: UploadSettings,
+    consumingService: String,
+    requestId: String,
+    sessionId: String,
+    receivedAt: Instant): PreparedUploadResponse = {
     val reference  = generateReference()
     val expiration = receivedAt.plus(configuration.fileExpirationPeriod)
 
     val result =
-      PreparedUpload(
-        reference     = reference,
-        uploadRequest = generatePost(reference.value, expiration, settings, consumingService, requestId, sessionId, receivedAt))
+      PreparedUploadResponse(
+        reference = reference,
+        uploadRequest =
+          generatePost(reference.value, expiration, settings, consumingService, requestId, sessionId, receivedAt))
 
     try {
       MDC.put("file-reference", reference.value)
@@ -61,15 +70,16 @@ class PrepareUploadService @Inject()(
       objectKey          = key,
       acl                = "private",
       additionalMetadata = Map(
-        "callback-url"      -> settings.callbackUrl,
-        "consuming-service" -> consumingService,
-        "session-id"        -> sessionId,
-        "request-id"        -> requestId,
+        "callback-url"             -> settings.callbackUrl,
+        "consuming-service"        -> consumingService,
+        "session-id"               -> sessionId,
+        "request-id"               -> requestId,
         "upscan-initiate-received" -> receivedAt.toString
       ),
       contentLengthRange  = ContentLengthRange(minFileSize, maxFileSize),
       expectedContentType = settings.expectedContentType,
-      successRedirect     = settings.successRedirect
+      successRedirect     = settings.successRedirect,
+      errorRedirect       = settings.errorRedirect
     )
 
     val form     = postSigner.generateFormFields(uploadParameters)

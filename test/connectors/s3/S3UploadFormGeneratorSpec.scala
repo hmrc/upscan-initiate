@@ -3,7 +3,7 @@ package connectors.s3
 import java.time.Instant
 import java.util.Base64
 
-import domain.{ContentLengthRange, UploadParameters}
+import connectors.model.{AwsCredentials, ContentLengthRange, UploadParameters}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{verify, when}
 import org.scalatest.mockito.MockitoSugar
@@ -30,17 +30,17 @@ class S3UploadFormGeneratorSpec extends WordSpec with GivenWhenThen with Matcher
 
       And("there are valid upload parameters")
       val expirationTimestamp = "1997-07-16T19:20:40Z"
-      val uploadParameters =
-        UploadParameters(
-          expirationDateTime  = Instant.parse(expirationTimestamp),
-          bucketName          = "test-bucket",
-          objectKey           = "test-key",
-          acl                 = "private",
-          additionalMetadata  = Map("key1" -> "value1"),
-          contentLengthRange  = ContentLengthRange(0, 1024),
-          expectedContentType = Some("application/xml"),
-          None
-        )
+      val uploadParameters = UploadParameters(
+        expirationDateTime  = Instant.parse(expirationTimestamp),
+        bucketName          = "test-bucket",
+        objectKey           = "test-key",
+        acl                 = "private",
+        additionalMetadata  = Map("key1" -> "value1"),
+        contentLengthRange  = ContentLengthRange(0, 1024),
+        expectedContentType = Some("application/xml"),
+        successRedirect     = Some("http://test.com/abc"),
+        errorRedirect       = Some("http://test.com/error")
+      )
 
       When("form fields are generated")
       val result = generator.generateFormFields(uploadParameters)
@@ -52,14 +52,16 @@ class S3UploadFormGeneratorSpec extends WordSpec with GivenWhenThen with Matcher
 
       And("policy contains proper conditions")
 
-      ((policy \ "conditions").get \\ "acl").head.as[String]                  shouldBe "private"
-      ((policy \ "conditions").get \\ "bucket").head.as[String]               shouldBe "test-bucket"
-      ((policy \ "conditions").get \\ "key").head.as[String]                  shouldBe "test-key"
-      ((policy \ "conditions").get \\ "x-amz-algorithm").head.as[String]      shouldBe "AWS4-HMAC-SHA256"
-      ((policy \ "conditions").get \\ "x-amz-date").head.as[String]           shouldBe "19970716T192030Z"
-      ((policy \ "conditions").get \\ "x-amz-security-token").head.as[String] shouldBe "session-token"
-      ((policy \ "conditions").get \\ "x-amz-meta-key1").head.as[String]      shouldBe "value1"
-      ((policy \ "conditions").get \\ "Content-Type").head.as[String]         shouldBe "application/xml"
+      ((policy \ "conditions").get \\ "acl").head.as[String]                     shouldBe "private"
+      ((policy \ "conditions").get \\ "bucket").head.as[String]                  shouldBe "test-bucket"
+      ((policy \ "conditions").get \\ "key").head.as[String]                     shouldBe "test-key"
+      ((policy \ "conditions").get \\ "x-amz-algorithm").head.as[String]         shouldBe "AWS4-HMAC-SHA256"
+      ((policy \ "conditions").get \\ "x-amz-date").head.as[String]              shouldBe "19970716T192030Z"
+      ((policy \ "conditions").get \\ "x-amz-security-token").head.as[String]    shouldBe "session-token"
+      ((policy \ "conditions").get \\ "x-amz-meta-key1").head.as[String]         shouldBe "value1"
+      ((policy \ "conditions").get \\ "Content-Type").head.as[String]            shouldBe "application/xml"
+      ((policy \ "conditions").get \\ "success_action_redirect").head.as[String] shouldBe "http://test.com/abc"
+      ((policy \ "conditions").get \\ "error_action_redirect").head.as[String]   shouldBe "http://test.com/error"
 
       val conditions                         = (policy \ "conditions").as[JsArray].value
       val arrayConditions: Seq[Seq[JsValue]] = conditions.flatMap(_.asOpt[JsArray].map(_.value))
@@ -72,8 +74,8 @@ class S3UploadFormGeneratorSpec extends WordSpec with GivenWhenThen with Matcher
       And("policy contains proper filename constraint")
       val filenameMetadataCondition =
         arrayConditions.toList.find(_.toIndexedSeq(1).asOpt[String].contains("$x-amz-meta-original-filename"))
-      filenameMetadataCondition.get(0).as[String] shouldBe "starts-with"
-      filenameMetadataCondition.get(2).as[String] shouldBe ""
+      filenameMetadataCondition.get.head.as[String] shouldBe "starts-with"
+      filenameMetadataCondition.get(2).as[String]   shouldBe ""
 
       And("policy's signature is correct")
       verify(policySigner).signPolicy(credentials, "19970716", regionName, result("policy"))
@@ -90,7 +92,7 @@ class S3UploadFormGeneratorSpec extends WordSpec with GivenWhenThen with Matcher
       result("x-amz-meta-original-filename") shouldBe "${filename}"
     }
 
-    "generate a signed link with a redirect" in {
+    "generate a signed link with a success redirect" in {
 
       Given("there is a properly configured form generator with AWS credentials")
       val credentials   = AwsCredentials("accessKeyId", "secretKey", Some("session-token"))
@@ -105,22 +107,55 @@ class S3UploadFormGeneratorSpec extends WordSpec with GivenWhenThen with Matcher
 
       And("there are valid upload parameters")
       val expirationTimestamp = "1997-07-16T19:20:40Z"
-      val uploadParameters =
-        UploadParameters(
-          expirationDateTime  = Instant.parse(expirationTimestamp),
-          bucketName          = "test-bucket",
-          objectKey           = "test-key",
-          acl                 = "private",
-          additionalMetadata  = Map("key1" -> "value1"),
-          contentLengthRange  = ContentLengthRange(0, 1024),
-          expectedContentType = Some("application/xml"),
-          successRedirect     = Some("http://test.server/success")
-        )
+      val uploadParameters = UploadParameters(
+        expirationDateTime  = Instant.parse(expirationTimestamp),
+        bucketName          = "test-bucket",
+        objectKey           = "test-key",
+        acl                 = "private",
+        additionalMetadata  = Map("key1" -> "value1"),
+        contentLengthRange  = ContentLengthRange(0, 1024),
+        expectedContentType = Some("application/xml"),
+        successRedirect     = Some("http://test.server/success"),
+        errorRedirect       = None
+      )
 
       When("form fields are generated")
       val result = generator.generateFormFields(uploadParameters)
 
       result("success_action_redirect") shouldBe "http://test.server/success"
+    }
+
+    "generate a signed link with a error redirect" in {
+
+      Given("there is a properly configured form generator with AWS credentials")
+      val credentials   = AwsCredentials("accessKeyId", "secretKey", Some("session-token"))
+      val regionName    = "us-east-1"
+      val currentTime   = () => Instant.parse("1997-07-16T19:20:30Z")
+      val policySigner  = mock[PolicySigner]
+      val testSignature = "test-signature"
+
+      when(policySigner.signPolicy(any(), any(), any(), any())).thenReturn(testSignature)
+
+      val generator = new S3UploadFormGenerator(credentials, regionName, currentTime, policySigner)
+
+      And("there are valid upload parameters")
+      val expirationTimestamp = "1997-07-16T19:20:40Z"
+      val uploadParameters = UploadParameters(
+        expirationDateTime  = Instant.parse(expirationTimestamp),
+        bucketName          = "test-bucket",
+        objectKey           = "test-key",
+        acl                 = "private",
+        additionalMetadata  = Map("key1" -> "value1"),
+        contentLengthRange  = ContentLengthRange(0, 1024),
+        expectedContentType = Some("application/xml"),
+        successRedirect     = None,
+        errorRedirect       = Some("http://test.server/error")
+      )
+
+      When("form fields are generated")
+      val result = generator.generateFormFields(uploadParameters)
+
+      result("error_action_redirect") shouldBe "http://test.server/error"
     }
   }
 

@@ -1,6 +1,6 @@
 package connectors.s3
 
-import domain.UploadFormGenerator
+import connectors.model.UploadFormGenerator
 import play.api.inject.{Binding, Module}
 import play.api.{Configuration, Environment}
 

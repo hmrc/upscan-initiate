@@ -75,15 +75,116 @@ Configuration of these values is here (https://github.com/hmrc/upscan-infrastruc
 
 ### Requesting a URL to upload to <a name="service__request"></a>
 
-Assuming the consuming service is whitelisted, it makes a POST request to the `/upscan/initiate` endpoint. This request includes details about the expected upload, specifically the callback URL and optional constraints on size.
-
-The callback will be made from inside the MDTP environment. Hence, the callback URL should comprise the MDTP internal callback address and not the public domain address.
+Assuming the consuming service is whitelisted, it makes a POST request to `/upscan/initiate` or `upscan/v2/initiate`. The service must provide a callbackUrl for asynchronous notification of the outcome of a upload. The callback will be made from inside the MDTP environment. Hence, the callback URL should comprise the MDTP internal callback address and not the public domain address. `upscan/v2/initiate` additionally requires a successRedirect and errorRedirect url. See next section for specifics. 
 
 **Note:** `callbackUrl` must use the `https` protocol.
 (Although this rule is relaxed when testing locally with [upscan-stub](https://github.com/hmrc/upscan-stub) rather than [upscan-initiate](https://github.com/hmrc/upscan-initiate).
 In this stubbed scenario a `callbackUrl` referring to localhost may still specific `http` as the protocol.)
 
-Here is an example of the request body:
+Session-ID / Request-ID headers will be used to link the file with user's journey.
+
+*Note:* If you are using `[http-verbs](https://github.com/hmrc/http-verbs)` to call Upscan, all the headers will be set automatically
+(See: [HttpVerb.scala](https://github.com/hmrc/http-verbs/blob/2807dc65f64009bd7ce1f14b38b356e06dd23512/src/main/scala/uk/gov/hmrc/http/HttpVerb.scala#L53))
+
+The service replies with a pre-filled template for the upload of the file.
+The JSON response also contains a globally unique file reference of the upload. This reference can be used by the Upscan service team to view the progress and result of the journey through the different Upscan components. The consuming service can use this reference to correlate the upload request with a successfully uploaded file.
+
+
+### POST upscan/v2/initiate
+
+The S3 rest api is able to redirect on successful uploads. It does not support redirects on errors however. Version 2 of `upscan/initiate` returns the url [upscan-upload-proxy](https://github.com/hmrc/upscan-upload-proxy) that sits in front of S3 to gracefully handle S3 errors.  
+
+Example `upscan/v2/initiate` request:
+
+```json
+{
+    "callbackUrl": "https://myservice.com/callback",
+    "successRedirect": "https://myservice.com/nextPage",
+    "errorRedirect": "https://myservice.com/errorPage",
+    "minimumFileSize" : 0,
+    "maximumFileSize" : 1024
+}
+```
+
+#### HTTP Headers:
+
+| Header name|Description|Required|
+|--------------|-----------|--------|
+| User-Agent | Identifier of the service that calls upscan | yes |
+| X-Session-ID | Identifier of the user's session | no  |
+| X-Request-ID | Identifier of the user's request | no |
+
+#### Body parameters:
+
+| Parameter name|Description|Required|
+|--------------|-----------|--------|
+|callbackUrl   |Url that will be called to report the outcome of file checking and upload, including retrieval details if successful. Notification format is detailed further down in this file. Must be https.| yes|
+|successRedirect|Url to redirect to after file has been successfully uploaded.|yes|
+|errorRedirect|Url to redirect to if error encountered during upload.|yes|
+|minimumFileSize|Minimum file size (in Bytes). Default is 0.|no|
+|maximumFileSize|Maximum file size (in Bytes). Cannot be greater than 100MB. Default is 100MB.|no|
+
+Example response
+
+```json
+{
+    "reference": "11370e18-6e24-453e-b45a-76d3e32ea33d",
+    "uploadRequest": {
+        "href": "https://xxxx/upscan-upload-proxy/bucketName",
+        "fields": {
+            "Content-Type": "application/xml",
+            "acl": "private",
+            "key": "xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+            "policy": "xxxxxxxx==",
+            "x-amz-algorithm": "AWS4-HMAC-SHA256",
+            "x-amz-credential": "ASIAxxxxxxxxx/20180202/eu-west-2/s3/aws4_request",
+            "x-amz-date": "yyyyMMddThhmmssZ",
+            "x-amz-meta-callback-url": "https://myservice.com/callback",
+            "x-amz-signature": "xxxx",
+            "success_action_redirect": "https://myservice.com/nextPage",
+            "error_action_redirect": "https://myservice.com/errorPage"
+        }
+    }
+}
+```
+
+*Note:* We recommend that the response fields are not hardcoded as these are subject to change 
+
+The `href` in the response is for a proxy that sits in front of S3 to handle error responses.
+
+S3 will return errors in `application/xml` in the following format:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Error>
+  <Code>NoSuchKey</Code>
+  <Message>The resource you requested does not exist</Message>
+  <Resource>/mybucket/myfoto.jpg</Resource> 
+  <RequestId>4442587FB7D0A2F9</RequestId>
+</Error>
+```
+
+Example [upscan-upload-proxy](https://github.com/hmrc/upscan-upload-proxy) error redirect response:
+
+Redirect Response:
+
+```
+HTTP Response Code: 303
+Header ("Location" ->  "https://myservice.com/errorPage?errorCode=NoSuchKey&errorMessage=The resource you requested does not exist&errorResource=/mybucket/myfoto.jpg$errorRequestId=4442587FB7D0A2F9")
+```
+
+Json Error Response (can not redirect):
+
+```json
+{"message":"Bad request"}
+```
+
+
+[[Back to the top]](#top)
+
+### POST upscan/initiate 
+
+Example request:
 
 ```json
 {
@@ -93,15 +194,7 @@ Here is an example of the request body:
 }
 ```
 
-Meaning of parameters:
-
-| Parameter name|Description|Required|
-|--------------|-----------|--------|
-|callbackUrl   |Url that will be called to report the outcome of file checking and upload, including retrieval details if successful. Notification format is detailed further down in this file. Must be https.| yes|
-|minimumFileSize|Minimum file size (in Bytes). Default is 0.|no|
-|maximumFileSize|Maximum file size (in Bytes). Cannot be greater than 100MB. Default is 100MB.|no|
-|successRedirect|Url to redirect to after file has been successfully uploaded.|no|
-The request has to include the following HTTP headers:
+#### HTTP Headers:
 
 | Header name|Description|Required|
 |--------------|-----------|--------|
@@ -109,13 +202,18 @@ The request has to include the following HTTP headers:
 | X-Session-ID | Identifier of the user's session | no  |
 | X-Request-ID | Identifier of the user's request | no |
 
-Session-ID / Request-ID headers will be used to link the file with user's journey.
+#### Body parameters:
 
-*Note:* If you are using `[http-verbs](https://github.com/hmrc/http-verbs)` to call Upscan, all the headers will be set automatically
-(See: [HttpVerb.scala](https://github.com/hmrc/http-verbs/blob/2807dc65f64009bd7ce1f14b38b356e06dd23512/src/main/scala/uk/gov/hmrc/http/HttpVerb.scala#L53))
+| Parameter name|Description|Required|
+|--------------|-----------|--------|
+|callbackUrl   |Url that will be called to report the outcome of file checking and upload, including retrieval details if successful. Notification format is detailed further down in this file. Must be https.| yes|
+|minimumFileSize|Minimum file size (in Bytes). Default is 0.|no|
+|maximumFileSize|Maximum file size (in Bytes). Cannot be greater than 100MB. Default is 100MB.|no|
+|successRedirect|Url to redirect to after file has been successfully uploaded.|no|
 
-The service replies with a pre-filled template for the upload of the file (described below).
-The JSON response also contains a globally unique file reference of the upload. This reference can be used by the Upscan service team to view the progress and result of the journey through the different Upscan components. The consuming service can use this reference to correlate the upload request with a successfully uploaded file.
+
+
+Example Response:
 
 ```json
 {
@@ -136,6 +234,7 @@ The JSON response also contains a globally unique file reference of the upload. 
     }
 }
 ```
+
 [[Back to the top]](#top)
 
 ### The file upload <a name="service__upload"></a>

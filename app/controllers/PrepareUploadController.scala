@@ -1,22 +1,20 @@
 package controllers
 
-import config.ServiceConfiguration
-import domain._
-import javax.inject.{Inject, Singleton}
 import java.net.URL
 import java.time.{Clock, Instant}
 
+import config.ServiceConfiguration
+import controllers.model.{PrepareUpload, PrepareUploadRequestV1, PrepareUploadRequestV2, PreparedUploadResponse}
+import javax.inject.{Inject, Singleton}
 import play.api.Logger
-import play.api.data.validation.ValidationError
-import play.api.libs.functional.syntax._
-import play.api.libs.json.Reads._
-import play.api.libs.json.{JsPath, Json, Writes, _}
+import play.api.libs.json.{Json, _}
 import play.api.mvc.{Action, Result}
+import services.PrepareUploadService
+import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import utils.UserAgentFilter
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
-import utils.UserAgentFilter
 
 @Singleton
 class PrepareUploadController @Inject()(
@@ -26,52 +24,46 @@ class PrepareUploadController @Inject()(
     extends BaseController
     with UserAgentFilter {
 
-  implicit val uploadSettingsReads: Reads[UploadSettings] = (
-    (JsPath \ "callbackUrl").read[String] and
-      (JsPath \ "minimumFileSize").readNullable[Int](min(0)) and
-      (JsPath \ "maximumFileSize").readNullable[Int](min(0) keepAnd max(prepareUploadService.globalFileSizeLimit + 1)) and
-      (JsPath \ "expectedContentType").readNullable[String] and
-      (JsPath \ "successRedirect").readNullable[String]
+  implicit val prepareUploadRequestReads: Reads[PrepareUploadRequestV1] =
+    PrepareUploadRequestV1.reads(prepareUploadService.globalFileSizeLimit)
 
-  )(UploadSettings.apply _)
-    .filter(ValidationError("Maximum file size must be equal or greater than minimum file size"))(
-      settings =>
-        settings.minimumFileSize.getOrElse(0) <= settings.maximumFileSize.getOrElse(
-          prepareUploadService.globalFileSizeLimit))
+  implicit val prepareUploadRequestV2Reads: Reads[PrepareUploadRequestV2] =
+    PrepareUploadRequestV2.reads(prepareUploadService.globalFileSizeLimit)
 
-  implicit val uploadFormTemplateWrites: Writes[UploadFormTemplate] = Json.writes[UploadFormTemplate]
-
-  implicit val preparedUploadWrites: Writes[PreparedUpload] = new Writes[PreparedUpload] {
-    def writes(preparedUpload: PreparedUpload) = Json.obj(
-      "reference"     -> preparedUpload.reference.value,
-      "uploadRequest" -> preparedUpload.uploadRequest
-    )
-  }
-
-  def prepareUpload(): Action[JsValue] =
+  private def prepareUpload[T <: PrepareUpload]()(implicit reads: Reads[T], manifest: Manifest[T]): Action[JsValue] =
     Action.async(parse.json) { implicit request =>
       val receivedAt = Instant.now(clock)
 
       onlyAllowedServices[JsValue] { (_, consumingService) =>
-
-        withJsonBody[UploadSettings] { (uploadSettings: UploadSettings) =>
-
-          withAllowedCallbackProtocol(uploadSettings.callbackUrl) {
-            Logger.debug(s"Processing request: [$uploadSettings].")
+        withJsonBody[T] { prepareUploadRequest: T =>
+          withAllowedCallbackProtocol(prepareUploadRequest.callbackUrl) {
+            Logger.debug(s"Processing request: [$prepareUploadRequest].")
 
             val sessionId = hc(request).sessionId.map(_.value).getOrElse("n/a")
             val requestId = hc(request).requestId.map(_.value).getOrElse("n/a")
-            val result: PreparedUpload =
-              prepareUploadService.prepareUpload(uploadSettings, consumingService, requestId, sessionId, receivedAt)
+            val result: PreparedUploadResponse =
+              prepareUploadService
+                .prepareUpload(
+                  prepareUploadRequest.toUploadSettings,
+                  consumingService,
+                  requestId,
+                  sessionId,
+                  receivedAt)
 
-            Future.successful(Ok(Json.toJson(result)))
+            Future.successful(Ok(Json.toJson(result)(PreparedUploadResponse.writes)))
           }
         }
       }
     }
 
-  private[controllers] def withAllowedCallbackProtocol[A](callbackUrl: String)
-                                            (block: => Future[Result]): Future[Result]= {
+  def prepareUploadV1(): Action[JsValue] =
+    prepareUpload[PrepareUploadRequestV1]()
+
+  def prepareUploadV2(): Action[JsValue] =
+    prepareUpload[PrepareUploadRequestV2]()
+
+  private[controllers] def withAllowedCallbackProtocol[A](callbackUrl: String)(
+    block: => Future[Result]): Future[Result] = {
 
     val allowedCallbackProtocols: Seq[String] = configuration.allowedCallbackProtocols
 
@@ -84,7 +76,8 @@ class PrepareUploadController @Inject()(
       case Success(false) => {
         Logger.warn(s"Invalid callback url protocol: [$callbackUrl].")
 
-        Future.successful(BadRequest(s"Invalid callback url protocol: [$callbackUrl]. Protocol must be in: [${allowedCallbackProtocols.mkString(",")}]."))
+        Future.successful(BadRequest(
+          s"Invalid callback url protocol: [$callbackUrl]. Protocol must be in: [${allowedCallbackProtocols.mkString(",")}]."))
       }
       case Failure(e) => {
         Logger.warn(s"Invalid callback url format: [$callbackUrl].")
