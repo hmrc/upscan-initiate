@@ -9,6 +9,7 @@ import play.api.Configuration
 trait ServiceConfiguration {
 
   def region: String
+  def uploadProxyUrl: String
   def inboundBucketName: String
   def sessionToken: Option[String]
   def accessKeyId: String
@@ -22,23 +23,25 @@ trait ServiceConfiguration {
 
 class PlayBasedServiceConfiguration @Inject()(configuration: Configuration) extends ServiceConfiguration {
 
-  override def region = getRequired(configuration.getString(_), "aws.s3.region")
+  override def region: String = getRequired(configuration.getString(_), "aws.s3.region")
 
-  override def inboundBucketName = getRequired(configuration.getString(_), "aws.s3.bucket.inbound")
+  override def uploadProxyUrl: String = getRequired(configuration.getString(_), "uploadProxy.url")
 
-  override def fileExpirationPeriod =
+  override def inboundBucketName: String = getRequired(configuration.getString(_), "aws.s3.bucket.inbound")
+
+  override def fileExpirationPeriod: Duration =
     Duration.ofMillis(getRequired(configuration.getMilliseconds, "aws.s3.upload.link.validity.duration"))
 
-  override def accessKeyId = getRequired(configuration.getString(_), "aws.accessKeyId")
+  override def accessKeyId: String = getRequired(configuration.getString(_), "aws.accessKeyId")
 
-  override def secretAccessKey = getRequired(configuration.getString(_), "aws.secretAccessKey")
+  override def secretAccessKey: String = getRequired(configuration.getString(_), "aws.secretAccessKey")
 
-  def getRequired[T](function: String => Option[T], key: String) =
+  def getRequired[T](function: String => Option[T], key: String): T =
     function(key).getOrElse(throw new IllegalStateException(s"$key missing"))
 
-  override def sessionToken = configuration.getString("aws.sessionToken")
+  override def sessionToken: Option[String] = configuration.getString("aws.sessionToken")
 
-  override def globalFileSizeLimit = getRequired(configuration.getInt, "global.file.size.limit")
+  override def globalFileSizeLimit: Int = getRequired(configuration.getInt, "global.file.size.limit")
 
   override def allowedCallbackProtocols: Seq[String] =
     configuration
@@ -50,10 +53,12 @@ class PlayBasedServiceConfiguration @Inject()(configuration: Configuration) exte
       .getOrElse(Nil)
 
   override def allowedUserAgents: Seq[String] =
-    configuration.getString("userAgentFilter.allowedUserAgents").map {_
-      .split(",")
-      .toSeq
-      .filter(isNotBlank)
-    }.getOrElse(Nil)
+    configuration
+      .getString("userAgentFilter.allowedUserAgents")
+      .map {
+        _.split(",").toSeq
+          .filter(isNotBlank)
+      }
+      .getOrElse(Nil)
 
 }

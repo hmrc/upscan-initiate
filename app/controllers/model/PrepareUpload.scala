@@ -3,5 +3,5 @@ import services.model.UploadSettings
 
 trait PrepareUpload {
   def callbackUrl: String
-  def toUploadSettings: UploadSettings
+  def toUploadSettings(uploadUrl: String): UploadSettings
 }

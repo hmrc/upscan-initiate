@@ -30,7 +30,18 @@ class PrepareUploadController @Inject()(
   implicit val prepareUploadRequestV2Reads: Reads[PrepareUploadRequestV2] =
     PrepareUploadRequestV2.reads(prepareUploadService.globalFileSizeLimit)
 
-  private def prepareUpload[T <: PrepareUpload]()(implicit reads: Reads[T], manifest: Manifest[T]): Action[JsValue] =
+  def prepareUploadV1(): Action[JsValue] = {
+    val uploadUrl = s"https://${configuration.inboundBucketName}.s3.amazonaws.com"
+    prepareUpload[PrepareUploadRequestV1](uploadUrl)
+  }
+
+  def prepareUploadV2(): Action[JsValue] = {
+    val uploadUrl = s"${configuration.uploadProxyUrl}/v1/uploads/${configuration.inboundBucketName}"
+    prepareUpload[PrepareUploadRequestV2](uploadUrl)
+  }
+
+  private def prepareUpload[T <: PrepareUpload](
+    uploadUrl: String)(implicit reads: Reads[T], manifest: Manifest[T]): Action[JsValue] =
     Action.async(parse.json) { implicit request =>
       val receivedAt = Instant.now(clock)
 
@@ -44,7 +55,7 @@ class PrepareUploadController @Inject()(
             val result: PreparedUploadResponse =
               prepareUploadService
                 .prepareUpload(
-                  prepareUploadRequest.toUploadSettings,
+                  prepareUploadRequest.toUploadSettings(uploadUrl),
                   consumingService,
                   requestId,
                   sessionId,
@@ -55,12 +66,6 @@ class PrepareUploadController @Inject()(
         }
       }
     }
-
-  def prepareUploadV1(): Action[JsValue] =
-    prepareUpload[PrepareUploadRequestV1]()
-
-  def prepareUploadV2(): Action[JsValue] =
-    prepareUpload[PrepareUploadRequestV2]()
 
   private[controllers] def withAllowedCallbackProtocol[A](callbackUrl: String)(
     block: => Future[Result]): Future[Result] = {
@@ -85,6 +90,5 @@ class PrepareUploadController @Inject()(
         Future.successful(BadRequest(s"Invalid callback url format: [$callbackUrl]. [${e.getMessage}]"))
       }
     }
-
   }
 }
