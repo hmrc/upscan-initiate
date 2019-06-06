@@ -14,7 +14,9 @@ import uk.gov.hmrc.play.test.UnitSpec
 class PrepareUploadControllerISpec extends UnitSpec with GuiceOneAppPerSuite with GivenWhenThen {
   override implicit lazy val app: Application = new GuiceApplicationBuilder()
     .configure(
-      "userAgentFilter.allowedUserAgents" -> "PrepareUploadControllerISpec"
+      "userAgentFilter.allowedUserAgents" -> "PrepareUploadControllerISpec",
+      "uploadProxy.url"                   -> "https://upload-proxy.tax.service.gov.uk",
+      "aws.s3.bucket.inbound"             -> "inbound-bucket"
     )
     .build()
 
@@ -28,7 +30,11 @@ class PrepareUploadControllerISpec extends UnitSpec with GuiceOneAppPerSuite wit
         |}
       """.stripMargin)
 
-    behave like prepareUploadTests(postBodyJson, "/upscan/initiate")
+    behave like prepareUploadTests(
+      postBodyJson = postBodyJson,
+      uri          = "/upscan/initiate",
+      href         = "https://inbound-bucket.s3.amazonaws.com"
+    )
   }
 
   "PrepareUploadController prepareUploadV2" should {
@@ -43,12 +49,17 @@ class PrepareUploadControllerISpec extends UnitSpec with GuiceOneAppPerSuite wit
         |}
       """.stripMargin)
 
-    behave like prepareUploadTests(postBodyJson, "/upscan/v2/initiate")
+    behave like prepareUploadTests(
+      postBodyJson = postBodyJson,
+      uri          = "/upscan/v2/initiate",
+      href         = "https://upload-proxy.tax.service.gov.uk/v1/uploads/inbound-bucket"
+    )
   }
 
   private def prepareUploadTests( // scalastyle:ignore
     postBodyJson: JsValue,
-    uri: String): Unit = {
+    uri: String,
+    href: String): Unit = {
 
     "include x-amz-meta-consuming-service in the response" in {
       Given("a request containing a USER_AGENT header contained in the configuration of allowedUserAgents")
@@ -69,6 +80,12 @@ class PrepareUploadControllerISpec extends UnitSpec with GuiceOneAppPerSuite wit
 
       (responseJson \ "uploadRequest" \ "fields" \ "x-amz-meta-consuming-service")
         .as[String] shouldBe "PrepareUploadControllerISpec"
+
+      And("the href should be the expected url for the upload")
+
+      (responseJson \ "uploadRequest" \ "href")
+        .as[String] shouldBe href
+
     }
 
     "include x-amz-meta-session-id in the response" in {
@@ -90,6 +107,11 @@ class PrepareUploadControllerISpec extends UnitSpec with GuiceOneAppPerSuite wit
 
       (responseJson \ "uploadRequest" \ "fields" \ "x-amz-meta-session-id")
         .as[String] shouldBe "some-session-id"
+
+      And("the href should be the expected url for the upload")
+
+      (responseJson \ "uploadRequest" \ "href")
+        .as[String] shouldBe href
     }
 
     "set a default x-amz-meta-session-id in the response if no session id passed in" in {
@@ -108,6 +130,11 @@ class PrepareUploadControllerISpec extends UnitSpec with GuiceOneAppPerSuite wit
 
       (responseJson \ "uploadRequest" \ "fields" \ "x-amz-meta-session-id")
         .as[String] shouldBe "n/a"
+
+      And("the href should be the expected url for the upload")
+
+      (responseJson \ "uploadRequest" \ "href")
+        .as[String] shouldBe href
     }
 
     "reject requests which do not include a valid USER_AGENT header" in {

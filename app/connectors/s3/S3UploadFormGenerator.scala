@@ -14,8 +14,6 @@ class S3UploadFormGenerator(
   policySigner: PolicySigner = PolicySigner)
     extends UploadFormGenerator {
 
-  def buildEndpoint(bucketName: String) = s"https://$bucketName.s3.amazonaws.com"
-
   def generateFormFields(uploadParameters: UploadParameters): Map[String, String] = {
     val timestamp            = currentTime()
     val formattedSigningDate = awsDate(timestamp)

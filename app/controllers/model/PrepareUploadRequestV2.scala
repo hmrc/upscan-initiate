@@ -14,7 +14,8 @@ case class PrepareUploadRequestV2(
   expectedContentType: Option[String])
     extends PrepareUpload {
 
-  def toUploadSettings: UploadSettings = UploadSettings(
+  def toUploadSettings(uploadUrl: String): UploadSettings = UploadSettings(
+    uploadUrl           = uploadUrl,
     callbackUrl         = callbackUrl,
     minimumFileSize     = minimumFileSize,
     maximumFileSize     = maximumFileSize,

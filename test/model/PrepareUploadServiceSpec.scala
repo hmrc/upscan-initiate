@@ -14,11 +14,13 @@ import uk.gov.hmrc.play.test.UnitSpec
 
 class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen {
 
-  val serviceConfiguration = new ServiceConfiguration {
+  private val serviceConfiguration = new ServiceConfiguration {
 
     override def accessKeyId: String = ???
 
     override def secretAccessKey: String = ???
+
+    override def uploadProxyUrl: String = ???
 
     override def inboundBucketName: String = "test-bucket"
 
@@ -35,15 +37,15 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
     override def allowedUserAgents: List[String] = ???
   }
 
-  def metricsStub() = new Metrics {
+  private def metricsStub() = new Metrics {
 
     override val defaultRegistry: MetricRegistry = new MetricRegistry
 
     override def toJson: String = ???
   }
 
-  val s3PostSigner = new UploadFormGenerator {
-    override def generateFormFields(uploadParameters: UploadParameters) =
+  private val s3PostSigner = new UploadFormGenerator {
+    override def generateFormFields(uploadParameters: UploadParameters): Map[String, String] =
       Map(
         "bucket"  -> uploadParameters.bucketName,
         "key"     -> uploadParameters.objectKey,
@@ -56,8 +58,6 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
         } ++
         uploadParameters.successRedirect.map { "success_redirect_url" -> _ } ++
         uploadParameters.errorRedirect.map { "error_redirect_url"     -> _ }
-
-    override def buildEndpoint(bucketName: String): String = s"$bucketName.s3"
   }
 
   val receivedAt: Instant = Instant.now()
@@ -72,15 +72,18 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
       Given("there are valid upload settings")
 
+      val uploadUrl   = s"http://upload-proxy.com"
       val callbackUrl = "http://www.callback.com"
 
       val uploadSettings = UploadSettings(
+        uploadUrl           = uploadUrl,
         callbackUrl         = callbackUrl,
         minimumFileSize     = None,
         maximumFileSize     = None,
         expectedContentType = Some("application/xml"),
         successRedirect     = None,
-        errorRedirect       = None)
+        errorRedirect       = None
+      )
 
       When("we setup the upload")
 
@@ -89,7 +92,7 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
       Then("proper upload request form definition should be returned")
 
-      result.uploadRequest.href shouldBe s"${serviceConfiguration.inboundBucketName}.s3"
+      result.uploadRequest.href shouldBe uploadUrl
       result.uploadRequest.fields shouldBe Map(
         "bucket"                              -> serviceConfiguration.inboundBucketName,
         "key"                                 -> result.reference.value,
@@ -114,15 +117,18 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
       Given("there are valid upload settings with size limits")
 
+      val uploadUrl   = s"http://upload-proxy.com"
       val callbackUrl = "http://www.callback.com"
 
       val uploadSettings = UploadSettings(
+        uploadUrl           = uploadUrl,
         callbackUrl         = callbackUrl,
         minimumFileSize     = Some(100),
         maximumFileSize     = Some(200),
         expectedContentType = None,
         successRedirect     = None,
-        errorRedirect       = None)
+        errorRedirect       = None
+      )
 
       When("we setup the upload")
 
@@ -141,15 +147,18 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
       val metrics = metricsStub()
 
+      val uploadUrl   = s"http://upload-proxy.com"
       val callbackUrl = "http://www.callback.com"
 
       val uploadSettings = UploadSettings(
+        uploadUrl           = uploadUrl,
         callbackUrl         = callbackUrl,
         minimumFileSize     = Some(-1),
         maximumFileSize     = Some(1024),
         expectedContentType = None,
         successRedirect     = None,
-        errorRedirect       = None)
+        errorRedirect       = None
+      )
 
       When("we setup the upload")
       Then("an exception should be thrown")
@@ -168,15 +177,18 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
       val metrics = metricsStub()
 
+      val uploadUrl   = s"http://upload-proxy.com"
       val callbackUrl = "http://www.callback.com"
 
       val uploadSettings = UploadSettings(
+        uploadUrl           = uploadUrl,
         callbackUrl         = callbackUrl,
         minimumFileSize     = Some(0),
         maximumFileSize     = Some(1025),
         expectedContentType = None,
         successRedirect     = None,
-        errorRedirect       = None)
+        errorRedirect       = None
+      )
 
       When("we setup the upload")
       Then("an exception should be thrown")
@@ -194,15 +206,18 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
       val metrics = metricsStub()
 
+      val uploadUrl   = s"http://upload-proxy.com"
       val callbackUrl = "http://www.callback.com"
 
       val uploadSettings = UploadSettings(
+        uploadUrl           = uploadUrl,
         callbackUrl         = callbackUrl,
         minimumFileSize     = Some(1024),
         maximumFileSize     = Some(0),
         expectedContentType = None,
         successRedirect     = None,
-        errorRedirect       = None)
+        errorRedirect       = None
+      )
 
       When("we setup the upload")
       Then("an exception should be thrown")
@@ -220,9 +235,11 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
       Given("there are valid upload settings")
 
+      val uploadUrl   = s"http://upload-proxy.com"
       val callbackUrl = "http://www.callback.com"
 
       val uploadSettings = UploadSettings(
+        uploadUrl           = uploadUrl,
         callbackUrl         = callbackUrl,
         minimumFileSize     = None,
         maximumFileSize     = None,
@@ -238,7 +255,7 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
       Then("proper upload request form definition should be returned")
 
-      result.uploadRequest.href shouldBe s"${serviceConfiguration.inboundBucketName}.s3"
+      result.uploadRequest.href shouldBe uploadUrl
       result.uploadRequest.fields shouldBe Map(
         "bucket"                              -> serviceConfiguration.inboundBucketName,
         "key"                                 -> result.reference.value,
@@ -264,9 +281,11 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
       Given("there are valid upload settings")
 
+      val uploadUrl   = s"http://upload-proxy.com"
       val callbackUrl = "http://www.callback.com"
 
       val uploadSettings = UploadSettings(
+        uploadUrl           = uploadUrl,
         callbackUrl         = callbackUrl,
         minimumFileSize     = None,
         maximumFileSize     = None,
@@ -282,7 +301,7 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
 
       Then("proper upload request form definition should be returned")
 
-      result.uploadRequest.href shouldBe s"${serviceConfiguration.inboundBucketName}.s3"
+      result.uploadRequest.href shouldBe uploadUrl
       result.uploadRequest.fields shouldBe Map(
         "bucket"                              -> serviceConfiguration.inboundBucketName,
         "key"                                 -> result.reference.value,

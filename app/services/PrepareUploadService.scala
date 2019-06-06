@@ -83,7 +83,7 @@ class PrepareUploadService @Inject()(
     )
 
     val form     = postSigner.generateFormFields(uploadParameters)
-    val endpoint = postSigner.buildEndpoint(configuration.inboundBucketName)
+    val endpoint = settings.uploadUrl
 
     UploadFormTemplate(endpoint, form)
   }
