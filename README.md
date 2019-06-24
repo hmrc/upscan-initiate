@@ -5,6 +5,11 @@ This service is not for transfer of files from one HMRC service to another. See 
 
 [![Build Status](https://travis-ci.org/hmrc/upscan-initiate.svg)](https://travis-ci.org/hmrc/upscan-initiate) [ ![Download](https://api.bintray.com/packages/hmrc/releases/upscan-initiate/images/download.svg) ](https://bintray.com/hmrc/releases/upscan-initiate/_latestVersion)
 
+# TLDR
+
+- *We strongly advise against hardcoding the "fields" in the response of `initiate` and `v2/initiate`. These are subject to change.*
+- *The file must be the last field in the actual upload request.*
+- *You must use multipart encoding (multipart/form-data) NOT application/x-www-form-urlencoded. The error message returned by AWS is obscure when the wrong content type is used.*
 
 # Upscan user manual
 
