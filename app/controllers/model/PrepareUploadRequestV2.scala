@@ -1,4 +1,5 @@
 package controllers.model
+
 import play.api.data.validation.ValidationError
 import play.api.libs.json.{JsPath, Reads}
 import play.api.libs.json.Reads.{max, min}

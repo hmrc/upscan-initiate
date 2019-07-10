@@ -89,7 +89,7 @@ class S3UploadFormGeneratorSpec extends WordSpec with GivenWhenThen with Matcher
       result("x-amz-date")                   shouldBe "19970716T192030Z"
       result("x-amz-meta-key1")              shouldBe "value1"
       result("x-amz-security-token")         shouldBe "session-token"
-      result("x-amz-meta-original-filename") shouldBe "${filename}"
+      result("x-amz-meta-original-filename") shouldBe s"$${filename}"
     }
 
     "generate a signed link with a success redirect" in {

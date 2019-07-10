@@ -18,7 +18,7 @@ class UserAgentFilterSpec extends UnitSpec with Matchers with GivenWhenThen with
   class UserAgentFilterImpl(override val configuration: ServiceConfiguration) extends UserAgentFilter
 
   "UserAgentFilter" should {
-    val block: (Request[_], String) => Future[Result] = (_,_) => Future.successful(Ok("This is a successful result"))
+    val block: (Request[_], String) => Future[Result] = (_, _) => Future.successful(Ok("This is a successful result"))
 
     implicit val timeout = Timeout(3.seconds)
 
@@ -32,7 +32,7 @@ class UserAgentFilterSpec extends UnitSpec with Matchers with GivenWhenThen with
       val result = filter.onlyAllowedServices(block)(FakeRequest().withHeaders(("User-Agent", "VALID-AGENT")))
 
       Then("the request should be passed through the filter")
-      status(result) shouldBe 200
+      status(result)                  shouldBe 200
       Helpers.contentAsString(result) shouldBe "This is a successful result"
     }
 

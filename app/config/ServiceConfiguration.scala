@@ -2,6 +2,7 @@ package config
 
 import java.time.Duration
 
+import com.typesafe.config.ConfigException
 import javax.inject.Inject
 import org.apache.commons.lang3.StringUtils.isNotBlank
 import play.api.Configuration
@@ -36,29 +37,20 @@ class PlayBasedServiceConfiguration @Inject()(configuration: Configuration) exte
 
   override def secretAccessKey: String = getRequired(configuration.getString(_), "aws.secretAccessKey")
 
-  def getRequired[T](function: String => Option[T], key: String): T =
-    function(key).getOrElse(throw new IllegalStateException(s"$key missing"))
-
   override def sessionToken: Option[String] = configuration.getString("aws.sessionToken")
 
   override def globalFileSizeLimit: Int = getRequired(configuration.getInt, "global.file.size.limit")
 
   override def allowedCallbackProtocols: Seq[String] =
-    configuration
-      .getString("callbackValidation.allowedProtocols")
-      .map {
-        _.split(",").toSeq
-          .filter(isNotBlank)
-      }
-      .getOrElse(Nil)
+    commaSeparatedList(configuration.getString("callbackValidation.allowedProtocols"))
 
   override def allowedUserAgents: Seq[String] =
-    configuration
-      .getString("userAgentFilter.allowedUserAgents")
-      .map {
-        _.split(",").toSeq
-          .filter(isNotBlank)
-      }
-      .getOrElse(Nil)
+    commaSeparatedList(configuration.getString("userAgentFilter.allowedUserAgents"))
+
+  private def getRequired[T](read: String => Option[T], path: String): T =
+    read(path).getOrElse(throw new ConfigException.Missing(path))
+
+  private def commaSeparatedList(maybeString: Option[String]): List[String] =
+    maybeString.fold(List.empty[String])(_.split(",").toList.filter(isNotBlank))
 
 }
