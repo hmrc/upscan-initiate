@@ -7,7 +7,7 @@ import config.ServiceConfiguration
 import controllers.model.{PrepareUpload, PrepareUploadRequestV1, PrepareUploadRequestV2, PreparedUploadResponse}
 import javax.inject.{Inject, Singleton}
 import play.api.Logger
-import play.api.libs.json.{Json, _}
+import play.api.libs.json._
 import play.api.mvc.{Action, Result}
 import services.PrepareUploadService
 import uk.gov.hmrc.play.bootstrap.controller.BaseController
@@ -55,11 +55,12 @@ class PrepareUploadController @Inject()(
             val result: PreparedUploadResponse =
               prepareUploadService
                 .prepareUpload(
-                  prepareUploadRequest.toUploadSettings(uploadUrl),
-                  consumingService,
-                  requestId,
-                  sessionId,
-                  receivedAt)
+                  settings         = prepareUploadRequest.toUploadSettings(uploadUrl),
+                  consumingService = consumingService,
+                  requestId        = requestId,
+                  sessionId        = sessionId,
+                  receivedAt       = receivedAt
+                )
 
             Future.successful(Ok(Json.toJson(result)(PreparedUploadResponse.writes)))
           }
@@ -78,17 +79,16 @@ class PrepareUploadController @Inject()(
 
     isAllowedCallbackProtocol match {
       case Success(true) => block
-      case Success(false) => {
+      case Success(false) =>
         Logger.warn(s"Invalid callback url protocol: [$callbackUrl].")
 
         Future.successful(BadRequest(
           s"Invalid callback url protocol: [$callbackUrl]. Protocol must be in: [${allowedCallbackProtocols.mkString(",")}]."))
-      }
-      case Failure(e) => {
+
+      case Failure(e) =>
         Logger.warn(s"Invalid callback url format: [$callbackUrl].")
 
         Future.successful(BadRequest(s"Invalid callback url format: [$callbackUrl]. [${e.getMessage}]"))
-      }
     }
   }
 }

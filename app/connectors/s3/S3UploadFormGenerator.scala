@@ -60,7 +60,7 @@ class S3UploadFormGenerator(
       "x-amz-signature"                     -> policySignature,
       "acl"                                 -> uploadParameters.acl,
       "key"                                 -> uploadParameters.objectKey,
-      "x-amz-meta-original-filename"        -> "${filename}",
+      "x-amz-meta-original-filename"        -> s"$${filename}",
       "x-amz-meta-upscan-initiate-response" -> currentTime().toString
     )
 

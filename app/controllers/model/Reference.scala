@@ -1,11 +1,18 @@
 package controllers.model
-import play.api.libs.json.{JsString, JsValue, Writes}
 
-case class Reference(value: String)
+import java.util.UUID.randomUUID
+
+import play.api.libs.functional.syntax._
+import play.api.libs.json.Writes
+
+case class Reference(value: String) extends AnyVal {
+  override def toString: String = value.toString
+}
 
 object Reference {
 
-  val writes: Writes[Reference] = new Writes[Reference] {
-    override def writes(o: Reference): JsValue = JsString(o.value)
-  }
+  val writes: Writes[Reference] = Writes.of[String].contramap(_.value)
+
+  def generate(): Reference = Reference(randomUUID().toString)
+
 }

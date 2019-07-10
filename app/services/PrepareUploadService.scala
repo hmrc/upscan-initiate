@@ -1,7 +1,6 @@
 package services
 
 import java.time.Instant
-import java.util.UUID
 
 import com.kenshoo.play.metrics.Metrics
 import config.ServiceConfiguration
@@ -24,19 +23,26 @@ class PrepareUploadService @Inject()(
     requestId: String,
     sessionId: String,
     receivedAt: Instant): PreparedUploadResponse = {
-    val reference  = generateReference()
+    val reference  = Reference.generate()
     val expiration = receivedAt.plus(configuration.fileExpirationPeriod)
 
     val result =
       PreparedUploadResponse(
         reference = reference,
-        uploadRequest =
-          generatePost(reference.value, expiration, settings, consumingService, requestId, sessionId, receivedAt))
+        uploadRequest = generatePost(
+          key              = reference,
+          expiration       = expiration,
+          settings         = settings,
+          consumingService = consumingService,
+          requestId        = requestId,
+          sessionId        = sessionId,
+          receivedAt       = receivedAt)
+      )
 
     try {
-      MDC.put("file-reference", reference.value)
+      MDC.put("file-reference", reference.toString)
       Logger.info(
-        s"Generated file-reference: [${reference.value}], for settings: [$settings], with expiration at: [$expiration].")
+        s"Generated file-reference: [$reference], for settings: [$settings], with expiration at: [$expiration].")
 
       metrics.defaultRegistry.counter("uploadInitiated").inc()
 
@@ -46,10 +52,8 @@ class PrepareUploadService @Inject()(
     }
   }
 
-  private def generateReference() = Reference(UUID.randomUUID().toString)
-
   private def generatePost(
-    key: String,
+    key: Reference,
     expiration: Instant,
     settings: UploadSettings,
     consumingService: String,
@@ -67,7 +71,7 @@ class PrepareUploadService @Inject()(
     val uploadParameters = UploadParameters(
       expirationDateTime = expiration,
       bucketName         = configuration.inboundBucketName,
-      objectKey          = key,
+      objectKey          = key.value,
       acl                = "private",
       additionalMetadata = Map(
         "callback-url"             -> settings.callbackUrl,

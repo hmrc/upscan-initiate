@@ -1,4 +1,5 @@
 package controllers.model
+
 import services.model.UploadSettings
 
 trait PrepareUpload {

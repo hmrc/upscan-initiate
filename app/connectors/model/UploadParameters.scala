@@ -1,4 +1,5 @@
 package connectors.model
+
 import java.time.Instant
 
 case class UploadParameters(

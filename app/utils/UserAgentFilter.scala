@@ -10,24 +10,23 @@ import scala.concurrent.Future
 
 trait UserAgentFilter {
 
-  protected val configuration : ServiceConfiguration
+  protected val configuration: ServiceConfiguration
 
   private val userAgents: Seq[String] = configuration.allowedUserAgents
 
-  def onlyAllowedServices[A](block: (Request[A], String) => Future[Result])
-                            (implicit request: Request[A]): Future[Result] = {
-
+  def onlyAllowedServices[A](block: (Request[A], String) => Future[Result])(
+    implicit request: Request[A]): Future[Result] =
     request.headers.get(HeaderNames.USER_AGENT) match {
       case Some(userAgent) if allowedUserAgent(userAgent) =>
         block(request, userAgent)
-      case _ => {
-        Logger.warn(s"Invalid User-Agent: [${request.headers.get(HeaderNames.USER_AGENT)}].")
+      case userAgent =>
+        Logger.warn(s"Invalid User-Agent: [$userAgent].")
 
-        Future.successful(Forbidden("This service is not allowed to use upscan-initiate. " +
-          "If you need to use this service, please contact Platform Services team."))
-      }
+        Future.successful(
+          Forbidden(
+            "This service is not allowed to use upscan-initiate. " +
+              "If you need to use this service, please contact Platform Services team."))
     }
-  }
 
   private def allowedUserAgent(userAgent: String): Boolean =
     userAgents.contains(userAgent)
