@@ -255,7 +255,7 @@ In order to upload the file, the following form is sent as the body of a POST re
 </form>
 ```
 
-This POST request can be sent programmatically from backend code, by making an async call using AJAX or the submit of a web form.
+This POST request can be sent programmatically from backend code or the submit of a web form.
 
 Whichever way the form is sent, remember:
 
