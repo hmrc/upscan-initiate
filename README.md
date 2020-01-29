@@ -43,8 +43,6 @@ This service is not for transfer of files from one HMRC service to another. See 
 
 ## Introduction <a name="introduction"></a>
 
-Please also read the Upscan documentation in Confluence, this is in the "Platform Services" space.
-
 In this "user manual" the collection of microservices that make up Upscan are discussed, not just `upscan-initiate`. This documentation is here as `upscan-initiate` is the microservice which developers will interact with directly.
 
 The Upscan service allows consuming services to orchestrate the uploading of files. Upscan provides
@@ -73,6 +71,8 @@ To use Upscan, the consuming service must let Platform Services know :
 * If the file fails a check, a notification is sent to the consuming service containing information on the failed check. The file is unavailable for retrieval
 * If the consuming service fails to respond to the callback request (e.g. the consuming service is down, the consuming service answered with an HTTP status code other than 2xx), the callback will be retried up to a maximum of 30 retries. The time interval between the retries is 60 seconds
 Configuration of these values is here (https://github.com/hmrc/upscan-infrastructure/blob/master/modules/sqs/main.tf)
+
+Please view the [Upscan Service & Flow Overview in Confluence](https://confluence.tools.tax.service.gov.uk/pages/viewpage.action?pageId=101663507) for a more visual representation.
 
 [[Back to the top]](#top)
 
@@ -354,7 +354,7 @@ You or the Upscan service team can use the unique file reference to find out mor
 
 ## Whitelisting client services <a name="whitelist"></a>
 
-Any service using Upscan must be whitelisted. Please view the "Upscan & Consuming Services" page of the Upscan documentation in Confluence for the onboarding process. The team are also available on Slack [#team-plat-services](https://hmrcdigital.slack.com/messages/C705QD804).
+Any service using Upscan must be whitelisted. Please view the "Upscan & Consuming Services" page of the Upscan documentation in Confluence for the onboarding process. The team are also available on Slack [#team-platops](https://hmrcdigital.slack.com/messages/T04RY81HB).
 
 Consuming services must identify themselves in requests via the `User-Agent` header. If the supplied value is not in Upscan's list of allowed services then the `/initiate` call will fail with a `403` error.
 
@@ -495,7 +495,7 @@ These commands will give you an access to SBT shell where you can run the servic
 [[Back to the top]](#top)
 
 #### Slack <a name="appendix__links__slack"></a>
-* [#team-plat-services](https://hmrcdigital.slack.com/messages/C705QD804/)
+* [#team-platops](https://hmrcdigital.slack.com/messages/T04RY81HB/)
 * [#event-upscan](https://hmrcdigital.slack.com/messages/C8XPL559N)
 
 [[Back to the top]](#top)
