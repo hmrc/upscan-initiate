@@ -92,7 +92,8 @@ Session-ID / Request-ID headers will be used to link the file with user's journe
 (See: [HttpVerb.scala](https://github.com/hmrc/http-verbs/blob/2807dc65f64009bd7ce1f14b38b356e06dd23512/src/main/scala/uk/gov/hmrc/http/HttpVerb.scala#L53))
 
 The service replies with a pre-filled template for the upload of the file.
-The JSON response also contains a globally unique file reference of the upload. This reference can be used by the Upscan service team to view the progress and result of the journey through the different Upscan components. The consuming service can use this reference to correlate the upload request with a successfully uploaded file.
+The JSON response also contains a globally unique file reference for the upload. This reference can be used by the Upscan service team to view the progress and result of the journey through the different Upscan components. The consuming service can use this reference to correlate the subsequent upload result with this upscan initiation.
+
 
 
 ### POST upscan/v2/initiate
@@ -175,8 +176,11 @@ Redirect Response:
 
 ```
 HTTP Response Code: 303
-Header ("Location" ->  "https://myservice.com/errorPage?errorCode=NoSuchKey&errorMessage=The resource you requested does not exist&errorResource=/mybucket/myfoto.jpg$errorRequestId=4442587FB7D0A2F9")
+Header ("Location" ->  "https://myservice.com/errorPage?key=11370e18-6e24-453e-b45a-76d3e32ea33d&errorCode=NoSuchKey&errorMessage=The+resource+you+requested+does+not+exist&errorResource=/mybucket/myfoto.jpg&errorRequestId=4442587FB7D0A2F9")
 ```
+
+
+Note that this Location header comprises the errorRedirect URL supplemented with additional information about the error by way of query parameters.  The query parameter named "key" contains the globally unique file reference that was allocated by the initiate request to identify the upload.
 
 Json Error Response (can not redirect):
 
@@ -482,6 +486,7 @@ These commands will give you an access to SBT shell where you can run the servic
 
 * [upscan-verify](https://github.com/hmrc/upscan-verify) - service responsible for verifying the health of uploaded files
 * [upscan-notify](https://github.com/hmrc/upscan-notify) - service responsible for notifying consuming services about the status of uploaded files
+* [upscan-upload-proxy](https://github.com/hmrc/upscan-upload-proxy) - service that sits in front of S3 to gracefully handle S3 errors (v2 flow only)  
 * [upscan-infrastructue](https://github.com/hmrc/upscan-infrastructure) - AWS infrastructure provisioning scripts
 
 [[Back to the top]](#top)
