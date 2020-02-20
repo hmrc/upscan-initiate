@@ -12,6 +12,8 @@ import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{GivenWhenThen, Matchers}
+import play.api.http.HeaderNames.USER_AGENT
+import play.api.http.Status.{BAD_REQUEST, OK}
 import play.api.libs.json.{JsObject, JsValue, Json}
 import play.api.mvc.Action
 import play.api.mvc.Results.Ok
@@ -37,7 +39,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
   "PaymentController prepareUploadV1" should {
 
-    behave like prapareUploadTests(_.prepareUploadV1())
+    behave like prepareUploadTests(_.prepareUploadV1())
   }
 
   "PaymentController prepareUploadV2" should {
@@ -49,16 +51,15 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
       "success_action_redirect" -> "https://www.example.com/nextpage",
       "error_action_redirect"   -> "https://www.example.com/error")
 
-    behave like prapareUploadTests(_.prepareUploadV2(), extraRequestFields, extraResponseFields)
+    behave like prepareUploadTests(_.prepareUploadV2(), extraRequestFields, extraResponseFields)
   }
 
-  private def prapareUploadTests( // scalastyle:ignore
+  private def prepareUploadTests( // scalastyle:ignore
     prepareUploadAction: PrepareUploadController => Action[JsValue],
     extraRequestFields: JsObject  = JsObject(Seq()),
     extraResponseFields: JsObject = JsObject(Seq())) {
 
     val config = mock[ServiceConfiguration]
-    Mockito.when(config.allowedUserAgents).thenReturn(List("VALID-AGENT"))
     Mockito.when(config.allowedCallbackProtocols).thenReturn(List("https"))
 
     "build and return upload URL if valid request with all data" in {
@@ -68,12 +69,12 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
       val request: FakeRequest[JsValue] = FakeRequest()
         .withHeaders(
-          ("User-Agent", "VALID-AGENT"),
+          (USER_AGENT, "SOME-USER-AGENT"),
           ("x-session-id", "some-session-id"),
           ("x-request-id", "some-request-id"))
         .withBody(
           Json.obj(
-            "id"              -> "1",
+            "id"      -> "1",
             "callbackUrl"     -> "https://www.example.com",
             "minimumFileSize" -> 0,
             "maximumFileSize" -> 1024) ++ extraRequestFields)
@@ -84,7 +85,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
       Then("service returns valid response with reference and template of upload form")
 
-      withClue(Helpers.contentAsString(result)) { status(result) shouldBe 200 }
+      withClue(Helpers.contentAsString(result)) { status(result) shouldBe OK }
       val json = Helpers.contentAsJson(result)
       json shouldBe Json.obj(
         "reference" -> "TEST",
@@ -106,12 +107,12 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
       val request: FakeRequest[JsValue] = FakeRequest()
         .withHeaders(
-          ("User-Agent", "VALID-AGENT"),
+          (USER_AGENT, "SOME-USER-AGENT"),
           ("x-session-id", "some-session-id"),
           ("x-request-id", "some-request-id"))
         .withBody(
           Json.obj(
-            "id"              -> "1",
+            "id"      -> "1",
             "callbackUrl"     -> "https://www.example.com",
             "successRedirect" -> "https://www.example.com/nextpage",
             "minimumFileSize" -> 0,
@@ -123,14 +124,14 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
       Then("service returns valid response with reference and template of upload form")
 
-      withClue(Helpers.contentAsString(result)) { status(result) shouldBe 200 }
+      withClue(Helpers.contentAsString(result)) { status(result) shouldBe OK }
       val json = Helpers.contentAsJson(result)
       json shouldBe Json.obj(
         "reference" -> "TEST",
         "uploadRequest" -> Json.obj(
           "href" -> "https://www.example.com",
           "fields" -> (Json.obj(
-            "minFileSize"             -> "0",
+            "minFileSize"     -> "0",
             "maxFileSize"             -> "1024",
             "sessionId"               -> "some-session-id",
             "requestId"               -> "some-request-id",
@@ -147,7 +148,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
       val request: FakeRequest[JsValue] = FakeRequest()
         .withHeaders(
-          ("User-Agent", "VALID-AGENT"),
+          (USER_AGENT, "SOME-USER-AGENT"),
           ("x-session-id", "some-session-id"),
           ("x-request-id", "some-request-id"))
         .withBody(Json.obj("callbackUrl" -> "https://www.example.com") ++ extraRequestFields)
@@ -158,7 +159,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
       Then("service returns valid response with reference and template of upload form")
 
-      withClue(Helpers.contentAsString(result)) { status(result) shouldBe 200 }
+      withClue(Helpers.contentAsString(result)) { status(result) shouldBe OK }
       val json = Helpers.contentAsJson(result)
       json shouldBe Json.obj(
         "reference" -> "TEST",
@@ -176,7 +177,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
       Given("there is a valid upload request with minimal data")
 
       val request: FakeRequest[JsValue] = FakeRequest()
-        .withHeaders(("User-Agent", "VALID-AGENT"))
+        .withHeaders((USER_AGENT, "SOME-USER-AGENT"))
         .withBody(Json.obj("callbackUrl" -> "https://www.example.com") ++ extraRequestFields)
 
       When("upload initiation has been requested")
@@ -185,12 +186,12 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
       Then("service returns valid response with reference and template of upload form")
 
-      withClue(Helpers.contentAsString(result)) { status(result) shouldBe 200 }
+      withClue(Helpers.contentAsString(result)) { status(result) shouldBe OK }
       val json = Helpers.contentAsJson(result)
       json shouldBe Json.obj(
         "reference" -> "TEST",
         "uploadRequest" -> Json.obj(
-          "href"   -> "https://www.example.com",
+          "href" -> "https://www.example.com",
           "fields" -> (Json.obj("sessionId" -> "n/a", "requestId" -> "n/a") ++ extraResponseFields)
         )
       )
@@ -203,7 +204,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
       val request: FakeRequest[JsValue] = FakeRequest()
         .withHeaders(
-          ("User-Agent", "VALID-AGENT"),
+          (USER_AGENT, "SOME-USER-AGENT"),
           ("x-session-id", "some-session-id"),
           ("x-request-id", "some-request-id"))
         .withBody(Json.obj("invalid" -> "body"))
@@ -214,7 +215,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
 
       Then("service returns error response")
 
-      withClue(Helpers.contentAsString(result)) { status(result) shouldBe 400 }
+      withClue(Helpers.contentAsString(result)) { status(result) shouldBe BAD_REQUEST }
     }
 
     "return a bad request error if invalid request - incorrect maximum file size " in {
@@ -223,7 +224,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
       Given("there is an invalid upload request")
 
       val request: FakeRequest[JsValue] = FakeRequest()
-        .withHeaders(("User-Agent", "VALID-AGENT"), ("x-session-id", "some-session-id"))
+        .withHeaders((USER_AGENT, "SOME-USER-AGENT"), ("x-session-id", "some-session-id"))
         .withBody(Json.obj("callbackUrl" -> "https://www.example.com", "maximumFileSize" -> 2048))
 
       When("upload initiation has been requested")
@@ -233,77 +234,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
       Then("service returns error response")
 
       withClue(Helpers.contentAsString(result)) {
-        status(result) shouldBe 400
-      }
-    }
-
-    "return okay if service is allowed on whitelist " in {
-      val controller = new PrepareUploadController(prepareUploadService, config, clock)
-
-      Given("there is a valid upload request from a whitelisted service")
-
-      val request: FakeRequest[JsValue] = FakeRequest()
-        .withHeaders(
-          ("User-Agent", "VALID-AGENT"),
-          ("x-session-id", "some-session-id"),
-          ("x-request-id", "some-request-id"))
-        .withBody(Json.obj(
-          "id"              -> "1",
-          "callbackUrl"     -> "https://www.example.com",
-          "minimumFileSize" -> 0,
-          "maximumFileSize" -> 1024,
-          "session-id"      -> "some-session-id",
-          "request-id"      -> "some-request-id"
-        ) ++ extraRequestFields)
-
-      When("upload initiation has been requested")
-
-      val result = prepareUploadAction(controller)(request)
-
-      Then("service returns error response")
-
-      withClue(Helpers.contentAsString(result)) { status(result) shouldBe 200 }
-      val json = Helpers.contentAsJson(result)
-      json shouldBe Json.obj(
-        "reference" -> "TEST",
-        "uploadRequest" -> Json.obj(
-          "href" -> "https://www.example.com",
-          "fields" -> (Json.obj(
-            "minFileSize" -> "0",
-            "maxFileSize" -> "1024",
-            "sessionId"   -> "some-session-id",
-            "requestId"   -> "some-request-id") ++ extraResponseFields)
-        )
-      )
-    }
-
-    "return a forbidden error if service is not whitelisted " in {
-      val controller = new PrepareUploadController(prepareUploadService, config, clock)
-
-      Given("there is a valid upload request from a non-whitelisted service")
-
-      val request: FakeRequest[JsValue] = FakeRequest()
-        .withHeaders(
-          ("User-Agent", "INVALID-AGENT"),
-          ("x-session-id", "some-session-id"),
-          ("x-request-id", "some-request-id"))
-        .withBody(Json.obj(
-          "id"              -> "1",
-          "callbackUrl"     -> "http://www.example.com",
-          "minimumFileSize" -> 0,
-          "maximumFileSize" -> 1024,
-          "session-id"      -> "some-session-id",
-          "request-id"      -> "some-request-id"
-        ) ++ extraRequestFields)
-
-      When("upload initiation has been requested")
-
-      val result = prepareUploadAction(controller)(request)
-
-      Then("service returns error response")
-
-      withClue(Helpers.contentAsString(result)) {
-        status(result) shouldBe 403
+        status(result) shouldBe BAD_REQUEST
       }
     }
 
@@ -314,7 +245,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
         Future.successful(Ok)
       }
 
-      status(result) shouldBe 200
+      status(result) shouldBe OK
     }
 
     "disallow http callback urls" in {
@@ -324,7 +255,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
         Future.failed(new RuntimeException("This block should not have been invoked."))
       }
 
-      status(result)          shouldBe 400
+      status(result)          shouldBe BAD_REQUEST
       contentAsString(result) should include("Invalid callback url protocol")
     }
 
@@ -334,7 +265,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
       val result = controller.withAllowedCallbackProtocol("123") {
         Future.failed(new RuntimeException("This block should not have been invoked."))
       }
-      status(result)          shouldBe 400
+      status(result)          shouldBe BAD_REQUEST
       contentAsString(result) should include("Invalid callback url format")
     }
   }

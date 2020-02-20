@@ -19,7 +19,7 @@ import scala.util.{Failure, Success, Try}
 @Singleton
 class PrepareUploadController @Inject()(
   prepareUploadService: PrepareUploadService,
-  override val configuration: ServiceConfiguration,
+  configuration: ServiceConfiguration,
   clock: Clock)
     extends BaseController
     with UserAgentFilter {
@@ -45,7 +45,7 @@ class PrepareUploadController @Inject()(
     Action.async(parse.json) { implicit request =>
       val receivedAt = Instant.now(clock)
 
-      onlyAllowedServices[JsValue] { (_, consumingService) =>
+      requireUserAgent[JsValue] { (_, consumingService) =>
         withJsonBody[T] { prepareUploadRequest: T =>
           withAllowedCallbackProtocol(prepareUploadRequest.callbackUrl) {
             Logger.debug(s"Processing request: [$prepareUploadRequest].")

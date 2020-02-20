@@ -4,6 +4,7 @@ import org.scalatest.GivenWhenThen
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.http.HeaderNames.USER_AGENT
+import play.api.http.Status.BAD_REQUEST
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{JsValue, Json}
 import play.api.test.Helpers._
@@ -12,11 +13,13 @@ import uk.gov.hmrc.http.HeaderNames.xSessionId
 import uk.gov.hmrc.play.test.UnitSpec
 
 class PrepareUploadControllerISpec extends UnitSpec with GuiceOneAppPerSuite with GivenWhenThen {
+
+  import PrepareUploadControllerISpec._
+
   override implicit lazy val app: Application = new GuiceApplicationBuilder()
     .configure(
-      "userAgentFilter.allowedUserAgents" -> "PrepareUploadControllerISpec",
-      "uploadProxy.url"                   -> "https://upload-proxy.tax.service.gov.uk",
-      "aws.s3.bucket.inbound"             -> "inbound-bucket"
+      "uploadProxy.url"     -> "https://upload-proxy.tax.service.gov.uk",
+      "aws.s3.bucket.inbound"      -> "inbound-bucket"
     )
     .build()
 
@@ -62,11 +65,11 @@ class PrepareUploadControllerISpec extends UnitSpec with GuiceOneAppPerSuite wit
     href: String): Unit = {
 
     "include x-amz-meta-consuming-service in the response" in {
-      Given("a request containing a USER_AGENT header contained in the configuration of allowedUserAgents")
+      Given("a request containing a User-Agent header")
       val initiateRequest = FakeRequest(
         POST,
         uri,
-        FakeHeaders(Seq((USER_AGENT, "PrepareUploadControllerISpec"), (xSessionId, "some-session-id"))),
+        FakeHeaders(Seq((USER_AGENT, SomeConsumingService), (xSessionId, "some-session-id"))),
         postBodyJson)
 
       When("a request is posted to the /initiate endpoint")
@@ -77,23 +80,20 @@ class PrepareUploadControllerISpec extends UnitSpec with GuiceOneAppPerSuite wit
 
       And("the response should include the expected value for x-amz-meta-consuming-service")
       val responseJson = contentAsJson(initiateResponse)
-
       (responseJson \ "uploadRequest" \ "fields" \ "x-amz-meta-consuming-service")
-        .as[String] shouldBe "PrepareUploadControllerISpec"
+        .as[String] shouldBe SomeConsumingService
 
       And("the href should be the expected url for the upload")
-
       (responseJson \ "uploadRequest" \ "href")
         .as[String] shouldBe href
-
     }
 
     "include x-amz-meta-session-id in the response" in {
-      Given("a request containing a x-session-id header")
+      Given("a valid request containing a x-session-id header")
       val initiateRequest = FakeRequest(
         POST,
         uri,
-        FakeHeaders(Seq((USER_AGENT, "PrepareUploadControllerISpec"), (xSessionId, "some-session-id"))),
+        FakeHeaders(Seq((USER_AGENT, SomeConsumingService), (xSessionId, "some-session-id"))),
         postBodyJson)
 
       When("a request is posted to the /initiate endpoint")
@@ -104,20 +104,17 @@ class PrepareUploadControllerISpec extends UnitSpec with GuiceOneAppPerSuite wit
 
       And("the response should include the expected value for x-amz-meta-consuming-service")
       val responseJson = contentAsJson(initiateResponse)
-
       (responseJson \ "uploadRequest" \ "fields" \ "x-amz-meta-session-id")
         .as[String] shouldBe "some-session-id"
 
       And("the href should be the expected url for the upload")
-
       (responseJson \ "uploadRequest" \ "href")
         .as[String] shouldBe href
     }
 
     "set a default x-amz-meta-session-id in the response if no session id passed in" in {
       Given("a request containing a x-session-id header")
-      val initiateRequest =
-        FakeRequest(POST, uri, FakeHeaders(Seq((USER_AGENT, "PrepareUploadControllerISpec"))), postBodyJson)
+      val initiateRequest = FakeRequest(POST, uri, FakeHeaders(Seq((USER_AGENT, SomeConsumingService))), postBodyJson)
 
       When("a request is posted to the /initiate endpoint")
       val initiateResponse = route(app, initiateRequest).get
@@ -127,38 +124,27 @@ class PrepareUploadControllerISpec extends UnitSpec with GuiceOneAppPerSuite wit
 
       And("the response should include the expected value for x-amz-meta-consuming-service")
       val responseJson = contentAsJson(initiateResponse)
-
       (responseJson \ "uploadRequest" \ "fields" \ "x-amz-meta-session-id")
         .as[String] shouldBe "n/a"
 
       And("the href should be the expected url for the upload")
-
       (responseJson \ "uploadRequest" \ "href")
         .as[String] shouldBe href
     }
 
-    "reject requests which do not include a valid USER_AGENT header" in {
-      Given("a request containing a USER_AGENT header not contained in the configuration of allowedUserAgents")
-      val initiateRequest =
-        FakeRequest(POST, uri, FakeHeaders(Seq((USER_AGENT, "SomeInvalidUserAgent"))), postBodyJson)
+    "reject requests which do not include a User-Agent header" in {
+      Given("a request not containing a User-Agent header")
+      val initiateRequest = FakeRequest(POST, uri, FakeHeaders(Seq((xSessionId, "some-session-id"))), postBodyJson)
 
       When("a request is posted to the /initiate endpoint")
       val initiateResponse = route(app, initiateRequest).get
 
-      Then("the response should indicate the request is Forbidden")
-      status(initiateResponse) shouldBe 403
-    }
-
-    "reject requests which do not include a USER_AGENT header" in {
-      Given("a request not containing a USER_AGENT header")
-      val initiateRequest =
-        FakeRequest(POST, uri, FakeHeaders(Seq((xSessionId, "some-session-id"))), postBodyJson)
-
-      When("a request is posted to the /initiate endpoint")
-      val initiateResponse = route(app, initiateRequest).get
-
-      Then("the response should indicate the request is Forbidden")
-      status(initiateResponse) shouldBe 403
+      Then("the response should indicate the request is invalid")
+      status(initiateResponse) shouldBe BAD_REQUEST
     }
   }
+}
+
+private object PrepareUploadControllerISpec {
+  val SomeConsumingService = "PrepareUploadControllerISpec"
 }
