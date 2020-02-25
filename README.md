@@ -15,24 +15,23 @@ This service is not for transfer of files from one HMRC service to another. See 
 
 ## Contents
 1. [Introduction](#introduction)
-2. [Onboarding requirements](#onboard)
-3. [File upload workflow](#workflow)
-4. [Service usage](#service)
+2. [File upload workflow](#workflow)
+3. [Service usage](#service)
   a. [Requesting a URL to upload to](#service__request)
   b. [The file upload](#service__upload)
   c. [File upload outcome](#service__uoutcome)
   d. [File processing outcome](#service__poutcome)
     i. [Success](#service__poutcome__success)
     ii. [Failure](#service__poutcome__failure)
-5. [Error handling](#error)
-6. [Design considerations](#design)
+4. [Error handling](#error)
+5. [Design considerations](#design)
   a. [Uploading multiple files](#design__multiple)
   b. [Security](#design__security)
   c. [File metadata](#design__metadata)
-7. [Architecture of the service](#architecture)
-8. [Running and maintenance of the service](#run)
+6. [Architecture of the service](#architecture)
+7. [Running and maintenance of the service](#run)
   a. [Running locally](#run__local)
-9. [Appendix](#appendix)
+8. [Appendix](#appendix)
   a. [Quick reference figures](#appendix__figures)
   b. [Related projects, useful links](#appendix__links)
     i. [Testing](#appendix__links__testing)
@@ -49,22 +48,16 @@ Once the upload URL has been requested, upload and verification of a file are pe
 
 [[Back to the top]](#top)
 
-## Onboarding requirements <a name="onboard"></a>
-To use Upscan, the consuming service must let Platform Services know:
-- how long they would like download URLs for their files to be valid for \[max. 7 days]
-
-[[Back to the top]](#top)
-
 ## File upload workflow <a name="workflow"></a>
 
 * Consuming service requests upload of a single file. It makes a HTTP POST call to the `/upscan/initiate` endpoint with details of the requested upload (including a callback URL and optional file size constraints)
 * Upscan service replies with a template of the HTTP POST form that will be used to upload the file. A unique file reference is also provided to allow the consuming service to correlate the upload request with notifications to the callback URL provided
 * Consuming service passes the form details to the end-user, either via a control on a webpage or to an internal/external service which will upload the file
-* The end user uploads the file
+* The end user uploads the file.  This must take place within 7 days of the upload being initiated.
 * Upscan service performs all checks on the uploaded file
 * If the file passes all checks, a notification is sent as a POST request to a consuming service. This notification contains the URL to GET the file from
-* Consuming service downloads the file using provided URL or passes this URL on to another service which will make use of the file location
-* After specified time, the file is automatically removed from the remote storage. Upscan does NOT keep files indefinitely
+* Consuming service downloads the file using the provided URL or passes this URL on to another service which will make use of the file location.  This download URL only remains valid for a limited duration (see [Success](#service__poutcome__success))
+* After some time the file is automatically removed from the remote storage. Upscan does NOT keep files indefinitely
 * If the file fails a check, a notification is sent to the consuming service containing information on the failed check. The file is unavailable for retrieval
 * If the consuming service fails to respond to the callback request (e.g. the consuming service is down, the consuming service answered with an HTTP status code other than 2xx), the callback will be retried up to a maximum of 30 retries. The time interval between the retries is 60 seconds
 Configuration of these values is here (https://github.com/hmrc/upscan-infrastructure/blob/master/modules/sqs/main.tf)
@@ -85,7 +78,7 @@ The service must also provide a callbackUrl for asynchronous notification of the
 (Although this rule is relaxed when testing locally with [upscan-stub](https://github.com/hmrc/upscan-stub) rather than [upscan-initiate](https://github.com/hmrc/upscan-initiate).
 In this stubbed scenario a `callbackUrl` referring to localhost may still specify `http` as the protocol.)
 
-Session-ID / Request-ID headers will be used to link the file with user's journey.
+Session-ID / Request-ID headers will be used to link the file with the user's journey.
 
 *Note:* If you are using `[http-verbs](https://github.com/hmrc/http-verbs)` to call Upscan, all the headers will be set automatically
 (See: [HttpVerb.scala](https://github.com/hmrc/http-verbs/blob/2807dc65f64009bd7ce1f14b38b356e06dd23512/src/main/scala/uk/gov/hmrc/http/HttpVerb.scala#L53))
@@ -305,6 +298,23 @@ Note the block entitled 'uploadDetails', see the Confluence page 'Upscan & Non-R
 - `fileMimeType` - Detected MIME type of the file. Please note that this refers to actual contents  
 of the file, not to the name (if user uploads PDF document named `data.png`, it will be detected as a `application/pdf`) 
 
+The downloadUrl will expire after 1 day by default.  This can be configured on a per-consuming service basis.  
+For example, to limit to 1 hour add the following configuration (substituting the appropriate `User-Agent` service identifier) to [upscan-notify.conf](https://github.com/hmrc/app-config-base/blob/master/upscan-notify.conf):
+
+```
+Prod {
+  upscan {
+      <user-agent-of-service> {
+        aws {
+          s3 {
+            urlExpirationPeriod = 1.hour
+          }
+        }
+      }
+  }
+}
+```
+
 [[Back to the top]](#top)
 
 #### Failure <a name="service__poutcome__failure"></a>
@@ -450,12 +460,12 @@ These commands will give you an access to SBT shell where you can run the servic
 ## Appendix <a name="appendix"></a>
 ### Quick reference figures <a name="appendix__figures"></a>
 
-| Metric                                                  | Value          | Comments |
-| ------------------------------------------------------- | -------------- |----------|
-| Expiration of S3 upload pre-signed URL                  | Up to 7 days   | A relatively long period, since we can't control exactly when users will initiate the upload process |
-| Expiration of S3 download pre-signed URL (scanned docs) | Up to 1 day    | Upscan is not intended as a storage solution for services |
-| Callback request retry time                             | 60 seconds     |          |
-| Maximum callback notification retries                   | 30             |          |
+| Metric                                                  | Value           | Comments |
+| ------------------------------------------------------- | ----------------|----------|
+| Expiration of S3 upload pre-signed URL                  | 7 days          | A relatively long period, since we can't control exactly when users will initiate the upload process |
+| Expiration of S3 download pre-signed URL (scanned docs) | 1 day (default) | Configurable per-service up to 7 days. Upscan is not intended as a storage solution for services |
+| Callback request retry time                             | 60 seconds      |          |
+| Maximum callback notification retries                   | 30              |          |
 
 [[Back to the top]](#top)
 
