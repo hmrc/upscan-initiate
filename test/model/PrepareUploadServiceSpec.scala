@@ -49,8 +49,6 @@ class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen
     override def globalFileSizeLimit = 1024
 
     override def allowedCallbackProtocols: List[String] = List("https")
-
-    override def allowedUserAgents: List[String] = ???
   }
 
   private def metricsStub() = new Metrics {
