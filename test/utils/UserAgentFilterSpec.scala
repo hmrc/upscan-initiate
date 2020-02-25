@@ -1,54 +1,70 @@
+/*
+ * Copyright 2020 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package utils
 
 import akka.util.Timeout
-import config.ServiceConfiguration
-import org.mockito.Mockito
-import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{GivenWhenThen, Matchers}
-import play.api.mvc.{Request, Result}
+import play.api.http.Status.{BAD_REQUEST, OK}
 import play.api.mvc.Results._
+import play.api.mvc.{Request, Result}
+import play.api.test.Helpers.contentAsString
 import play.api.test.{FakeRequest, Helpers}
+import play.mvc.Http.HeaderNames.USER_AGENT
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class UserAgentFilterSpec extends UnitSpec with Matchers with GivenWhenThen with MockitoSugar {
+class UserAgentFilterSpec extends UnitSpec with Matchers with GivenWhenThen {
 
-  class UserAgentFilterImpl(override val configuration: ServiceConfiguration) extends UserAgentFilter
+  import UserAgentFilterSpec._
 
   "UserAgentFilter" should {
-    val block: (Request[_], String) => Future[Result] = (_, _) => Future.successful(Ok("This is a successful result"))
+    "accept a request when the User-Agent header is specified" in {
+      Given("a request that specifies a User-Agent header")
+      val request = FakeRequest().withHeaders((USER_AGENT, SomeUserAgent))
 
-    implicit val timeout = Timeout(3.seconds)
+      When("the request is received")
+      val result = UserAgentFilter.requireUserAgent(block)(request)
 
-    "accept request if user agent in whitelist" in {
-      Given("a service configuration with no whitelist set")
-      val config = mock[ServiceConfiguration]
-      Mockito.when(config.allowedUserAgents).thenReturn(List("VALID-AGENT"))
-      val filter = new UserAgentFilterImpl(config)
+      Then("the request should be accepted")
+      status(result) shouldBe OK
 
-      When("a request is received")
-      val result = filter.onlyAllowedServices(block)(FakeRequest().withHeaders(("User-Agent", "VALID-AGENT")))
-
-      Then("the request should be passed through the filter")
-      status(result)                  shouldBe 200
-      Helpers.contentAsString(result) shouldBe "This is a successful result"
+      And("the User-Agent header value should be passed to the block")
+      contentAsString(result) shouldBe SomeUserAgent
     }
 
-    "reject request if user agent not in whitelist" in {
-      Given("a service configuration with no whitelist set")
-      val config = mock[ServiceConfiguration]
-      Mockito.when(config.allowedUserAgents).thenReturn(List("VALID-AGENT"))
-      val filter = new UserAgentFilterImpl(config)
+    "reject a request when the User-Agent header is not specified" in {
+      Given("a request that does not specify a User-Agent header")
+      val request = FakeRequest()
 
-      When("a request is received")
-      val result = filter.onlyAllowedServices(block)(FakeRequest())
+      When("the request is received")
+      val result = UserAgentFilter.requireUserAgent(block)(request)
 
-      Then("the filter should reject as forbidden")
-      status(result) shouldBe 403
-      Helpers.contentAsString(result) shouldBe "This service is not allowed to use upscan-initiate. " +
-        "If you need to use this service, please contact Platform Services team."
+      Then("the request should be rejected")
+      status(result) shouldBe BAD_REQUEST
     }
   }
+}
+
+private object UserAgentFilterSpec {
+  implicit val timeout: Timeout = Timeout(3.seconds)
+  val SomeUserAgent = "SOME_USER-AGENT"
+  val block: (Request[_], String) => Future[Result] = (_, userAgent) => Future.successful(Ok(userAgent))
+
+  object UserAgentFilter extends UserAgentFilter
 }

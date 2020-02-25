@@ -24,22 +24,20 @@ This service is not for transfer of files from one HMRC service to another. See 
   d. [File processing outcome](#service__poutcome)
     i. [Success](#service__poutcome__success)
     ii. [Failure](#service__poutcome__failure)
-5. [Whitelisting client services](#whitelist)
-6. [Error handling](#error)
-7. [Design considerations](#design)
+5. [Error handling](#error)
+6. [Design considerations](#design)
   a. [Uploading multiple files](#design__multiple)
   b. [Security](#design__security)
   c. [File metadata](#design__metadata)
-8. [Architecture of the service](#architecture)
-9. [Running and maintenance of the service](#run)
+7. [Architecture of the service](#architecture)
+8. [Running and maintenance of the service](#run)
   a. [Running locally](#run__local)
-10. [Appendix](#appendix)
+9. [Appendix](#appendix)
   a. [Quick reference figures](#appendix__figures)
   b. [Related projects, useful links](#appendix__links)
     i. [Testing](#appendix__links__testing)
     ii. [Slack](#appendix__links__slack)
   c. [License](#appendix__license)
-    
 
 ## Introduction <a name="introduction"></a>
 
@@ -52,8 +50,7 @@ Once the upload URL has been requested, upload and verification of a file are pe
 [[Back to the top]](#top)
 
 ## Onboarding requirements <a name="onboard"></a>
-To use Upscan, the consuming service must let Platform Services know :
-- the `User-Agent` request header of the service so it can be [whitelisted](#whitelist)
+To use Upscan, the consuming service must let Platform Services know:
 - how long they would like download URLs for their files to be valid for \[max. 7 days]
 
 [[Back to the top]](#top)
@@ -65,7 +62,7 @@ To use Upscan, the consuming service must let Platform Services know :
 * Consuming service passes the form details to the end-user, either via a control on a webpage or to an internal/external service which will upload the file
 * The end user uploads the file
 * Upscan service performs all checks on the uploaded file
-* If file the file passes all checks, a notification is sent as a POST request to a consuming service. This notification contains the URL to GET the file from
+* If the file passes all checks, a notification is sent as a POST request to a consuming service. This notification contains the URL to GET the file from
 * Consuming service downloads the file using provided URL or passes this URL on to another service which will make use of the file location
 * After specified time, the file is automatically removed from the remote storage. Upscan does NOT keep files indefinitely
 * If the file fails a check, a notification is sent to the consuming service containing information on the failed check. The file is unavailable for retrieval
@@ -80,11 +77,13 @@ Please view the [Upscan Service & Flow Overview in Confluence](https://confluenc
 
 ### Requesting a URL to upload to <a name="service__request"></a>
 
-Assuming the consuming service is whitelisted, it makes a POST request to `/upscan/initiate` or `upscan/v2/initiate`. The service must provide a callbackUrl for asynchronous notification of the outcome of a upload. The callback will be made from inside the MDTP environment. Hence, the callback URL should comprise the MDTP internal callback address and not the public domain address. `upscan/v2/initiate` additionally requires a successRedirect and errorRedirect url. See next section for specifics. 
+The consuming service makes a POST request to `/upscan/initiate` or `upscan/v2/initiate`.
+This request must contain a `User-Agent` header that can be used to identify the service, but a whitelist of authorised services is no longer cross-checked.
+The service must also provide a callbackUrl for asynchronous notification of the outcome of an upload. The callback will be made from inside the MDTP environment. Hence, the callback URL should comprise the MDTP internal callback address and not the public domain address. `upscan/v2/initiate` additionally requires a successRedirect and errorRedirect url. See next section for specifics. 
 
 **Note:** `callbackUrl` must use the `https` protocol.
 (Although this rule is relaxed when testing locally with [upscan-stub](https://github.com/hmrc/upscan-stub) rather than [upscan-initiate](https://github.com/hmrc/upscan-initiate).
-In this stubbed scenario a `callbackUrl` referring to localhost may still specific `http` as the protocol.)
+In this stubbed scenario a `callbackUrl` referring to localhost may still specify `http` as the protocol.)
 
 Session-ID / Request-ID headers will be used to link the file with user's journey.
 
@@ -282,7 +281,7 @@ If the POST is successful, the service returns a HTTP 204 response with an empty
 
 When a file is successfully uploaded it is processed by [upscan-verify](https://github.com/hmrc/upscan-verify) to check for viruses & that it is of an allowed file type.
 
-If these checks pass, the file is made for available for retrieval & the Upscan service will make a POST request to the URL specified as the 'callbackUrl' by the consuming service with the following body:
+If these checks pass, the file is made available for retrieval & the Upscan service will make a POST request to the URL specified as the 'callbackUrl' by the consuming service with the following body:
 
 ```json
 {
@@ -356,28 +355,6 @@ You or the Upscan service team can use the unique file reference to find out mor
 
 [[Back to the top]](#top)
 
-## Whitelisting client services <a name="whitelist"></a>
-
-Any service using Upscan must be whitelisted. Please view the "Upscan & Consuming Services" page of the Upscan documentation in Confluence for the onboarding process. The team are also available on Slack [#team-platops](https://hmrcdigital.slack.com/messages/T04RY81HB).
-
-Consuming services must identify themselves in requests via the `User-Agent` header. If the supplied value is not in Upscan's list of allowed services then the `/initiate` call will fail with a `403` error.
-
-In addition to returning a `403` error, Upscan will log details of the Forbidden request. For example:
-
-```json
-{
-    "app":"upscan-initiate",
-    "message":"Invalid User-Agent: [Some(my-unknown-service-name)].",
-    "logger":"application",
-    "level":"WARN"
-}
-```
-
-*Note:* If you are using `[http-verbs](https://github.com/hmrc/http-verbs)` to call Upscan, then the `User-Agent` header will be set automatically.
-(See: [HttpVerb.scala](https://github.com/hmrc/http-verbs/blob/2807dc65f64009bd7ce1f14b38b356e06dd23512/src/main/scala/uk/gov/hmrc/http/HttpVerb.scala#L53))
-
-[[Back to the top]](#top)
-
 ## Error handling <a name="error"></a>
 
 This document indicates the responses from Upscan components, including error/failure cases.
@@ -403,7 +380,7 @@ Because of this, the URL must not:
 [[Back to the top]](#top)
 
 ### File metadata <a name="design__metadata"></a>
-Upscan intentionally doesn't allow consuming services to attach metadata or tags to the uploaded file. It is expected that the consuming service will use the globally unique file reference to correlate any file metadata to an successfully uploaded file when it is notified of the successful upload.
+Upscan intentionally doesn't allow consuming services to attach metadata or tags to the uploaded file. It is expected that the consuming service will use the globally unique file reference to correlate any file metadata to a successfully uploaded file when it is notified of the successful upload.
 
 Upscan must not be used to route or transfer files between different services on MDTP - it is for files to be uploaded into the HMRC estate.
 
