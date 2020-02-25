@@ -34,8 +34,6 @@ trait ServiceConfiguration {
   def fileExpirationPeriod: java.time.Duration
   def globalFileSizeLimit: Int
   def allowedCallbackProtocols: Seq[String]
-  def allowedUserAgents: Seq[String]
-
 }
 
 class PlayBasedServiceConfiguration @Inject()(configuration: Configuration) extends ServiceConfiguration {
@@ -59,9 +57,6 @@ class PlayBasedServiceConfiguration @Inject()(configuration: Configuration) exte
 
   override def allowedCallbackProtocols: Seq[String] =
     commaSeparatedList(configuration.getString("callbackValidation.allowedProtocols"))
-
-  override def allowedUserAgents: Seq[String] =
-    commaSeparatedList(configuration.getString("userAgentFilter.allowedUserAgents"))
 
   private def getRequired[T](read: String => Option[T], path: String): T =
     read(path).getOrElse(throw new ConfigException.Missing(path))
