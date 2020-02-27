@@ -1,14 +1,6 @@
 import sbt._
 
-object MicroServiceBuild extends Build with MicroService {
-
-  val appName = "upscan-initiate"
-
-  override lazy val appDependencies: Seq[ModuleID] = AppDependencies()
-
-}
-
-private object AppDependencies {
+object AppDependencies {
   import play.core.PlayVersion
 
   val compile = Seq(
