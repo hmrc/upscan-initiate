@@ -24,9 +24,9 @@ import controllers.model.{PrepareUpload, PrepareUploadRequestV1, PrepareUploadRe
 import javax.inject.{Inject, Singleton}
 import play.api.Logger
 import play.api.libs.json._
-import play.api.mvc.{Action, Result}
+import play.api.mvc.{Action, ControllerComponents, Result}
 import services.PrepareUploadService
-import uk.gov.hmrc.play.bootstrap.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import utils.UserAgentFilter
 
 import scala.concurrent.Future
@@ -36,9 +36,8 @@ import scala.util.{Failure, Success, Try}
 class PrepareUploadController @Inject()(
   prepareUploadService: PrepareUploadService,
   configuration: ServiceConfiguration,
-  clock: Clock)
-    extends BaseController
-    with UserAgentFilter {
+  clock: Clock,
+  controllerComponents: ControllerComponents) extends BackendController(controllerComponents) with UserAgentFilter {
 
   implicit val prepareUploadRequestReads: Reads[PrepareUploadRequestV1] =
     PrepareUploadRequestV1.reads(prepareUploadService.globalFileSizeLimit)

@@ -26,15 +26,15 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
-import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{GivenWhenThen, Matchers}
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.HeaderNames.USER_AGENT
 import play.api.http.Status.{BAD_REQUEST, OK}
 import play.api.libs.json.{JsObject, JsValue, Json}
 import play.api.mvc.Action
 import play.api.mvc.Results.Ok
 import play.api.test.Helpers.contentAsString
-import play.api.test.{FakeRequest, Helpers}
+import play.api.test.{FakeRequest, Helpers, StubControllerComponentsFactory}
 import services.PrepareUploadService
 import services.model.UploadSettings
 import uk.gov.hmrc.play.test.UnitSpec
@@ -43,7 +43,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenThen with MockitoSugar {
+class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponentsFactory with Matchers with GivenWhenThen with MockitoSugar {
 
   implicit val actorSystem: ActorSystem = ActorSystem()
 
@@ -79,7 +79,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
     Mockito.when(config.allowedCallbackProtocols).thenReturn(List("https"))
 
     "build and return upload URL if valid request with all data" in {
-      val controller = new PrepareUploadController(prepareUploadService, config, clock)
+      val controller = new PrepareUploadController(prepareUploadService, config, clock, stubControllerComponents())
 
       Given("there is a valid upload request with all data")
 
@@ -117,7 +117,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
     }
 
     "build and return upload URL if valid request with redirect on success url" in {
-      val controller = new PrepareUploadController(prepareUploadService, config, clock)
+      val controller = new PrepareUploadController(prepareUploadService, config, clock, stubControllerComponents())
 
       Given("there is a valid upload request with all data")
 
@@ -158,7 +158,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
     }
 
     "build and return upload URL if valid request with minimal data including session id and request id" in {
-      val controller = new PrepareUploadController(prepareUploadService, config, clock)
+      val controller = new PrepareUploadController(prepareUploadService, config, clock, stubControllerComponents())
 
       Given("there is a valid upload request with minimal data")
 
@@ -188,7 +188,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
     }
 
     "build and return upload URL if valid request with minimal data excluding session id and request id" in {
-      val controller = new PrepareUploadController(prepareUploadService, config, clock)
+      val controller = new PrepareUploadController(prepareUploadService, config, clock, stubControllerComponents())
 
       Given("there is a valid upload request with minimal data")
 
@@ -214,7 +214,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
     }
 
     "return a bad request error if invalid request - wrong structure" in {
-      val controller = new PrepareUploadController(prepareUploadService, config, clock)
+      val controller = new PrepareUploadController(prepareUploadService, config, clock, stubControllerComponents())
 
       Given("there is an invalid upload request")
 
@@ -235,7 +235,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
     }
 
     "return a bad request error if invalid request - incorrect maximum file size " in {
-      val controller = new PrepareUploadController(prepareUploadService, config, clock)
+      val controller = new PrepareUploadController(prepareUploadService, config, clock, stubControllerComponents())
 
       Given("there is an invalid upload request")
 
@@ -255,7 +255,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
     }
 
     "allow https callback urls" in {
-      val controller = new PrepareUploadController(prepareUploadService, config, clock)
+      val controller = new PrepareUploadController(prepareUploadService, config, clock, stubControllerComponents())
 
       val result = controller.withAllowedCallbackProtocol("https://my.callback.url") {
         Future.successful(Ok)
@@ -265,7 +265,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
     }
 
     "disallow http callback urls" in {
-      val controller = new PrepareUploadController(prepareUploadService, config, clock)
+      val controller = new PrepareUploadController(prepareUploadService, config, clock, stubControllerComponents())
 
       val result = controller.withAllowedCallbackProtocol("http://my.callback.url") {
         Future.failed(new RuntimeException("This block should not have been invoked."))
@@ -276,7 +276,7 @@ class PrepareUploadControllerSpec extends UnitSpec with Matchers with GivenWhenT
     }
 
     "disallow invalidly formatted callback urls" in {
-      val controller = new PrepareUploadController(prepareUploadService, config, clock)
+      val controller = new PrepareUploadController(prepareUploadService, config, clock, stubControllerComponents())
 
       val result = controller.withAllowedCallbackProtocol("123") {
         Future.failed(new RuntimeException("This block should not have been invoked."))

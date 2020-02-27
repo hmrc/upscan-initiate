@@ -1,2 +1,2 @@
-POST        /initiate                                                  @controllers.PrepareUploadController.prepareUploadV1
-POST        /v2/initiate                                               @controllers.PrepareUploadController.prepareUploadV2
+POST        /initiate                                                  controllers.PrepareUploadController.prepareUploadV1
+POST        /v2/initiate                                               controllers.PrepareUploadController.prepareUploadV2

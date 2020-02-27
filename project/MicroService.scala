@@ -27,8 +27,6 @@ trait MicroService {
   )
   lazy val playSettings: Seq[Setting[_]] = Seq.empty
 
-  routesGenerator := InjectedRoutesGenerator
-
   lazy val scoverageSettings = {
     Seq(
       // Semicolon-separated list of regexs matching classes to exclude
@@ -59,8 +57,7 @@ trait MicroService {
       libraryDependencies ++= appDependencies,
       parallelExecution in Test := false,
       fork in Test := false,
-      retrieveManaged := true,
-      routesGenerator := StaticRoutesGenerator
+      retrieveManaged := true
     )
     .settings(inConfig(TemplateTest)(Defaults.testSettings): _*)
     .configs(IntegrationTest)
