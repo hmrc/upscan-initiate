@@ -21,8 +21,8 @@ import org.scalatest.{GivenWhenThen, Matchers}
 import play.api.http.Status.{BAD_REQUEST, OK}
 import play.api.mvc.Results._
 import play.api.mvc.{Request, Result}
+import play.api.test.FakeRequest
 import play.api.test.Helpers.contentAsString
-import play.api.test.{FakeRequest, Helpers}
 import play.mvc.Http.HeaderNames.USER_AGENT
 import uk.gov.hmrc.play.test.UnitSpec
 

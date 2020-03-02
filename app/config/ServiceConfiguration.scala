@@ -38,25 +38,27 @@ trait ServiceConfiguration {
 
 class PlayBasedServiceConfiguration @Inject()(configuration: Configuration) extends ServiceConfiguration {
 
-  override def region: String = getRequired(configuration.getString(_), "aws.s3.region")
+  override def region: String = getRequired(configuration.getOptional[String](_), "aws.s3.region")
 
-  override def uploadProxyUrl: String = getRequired(configuration.getString(_), "uploadProxy.url")
+  override def uploadProxyUrl: String = getRequired(configuration.getOptional[String](_), "uploadProxy.url")
 
-  override def inboundBucketName: String = getRequired(configuration.getString(_), "aws.s3.bucket.inbound")
+  override def inboundBucketName: String = getRequired(configuration.getOptional[String](_), "aws.s3.bucket.inbound")
 
-  override def fileExpirationPeriod: Duration =
-    Duration.ofMillis(getRequired(configuration.getMilliseconds, "aws.s3.upload.link.validity.duration"))
+  override def fileExpirationPeriod: Duration = {
+    val readAsMillis: String => Option[Long] = configuration.getOptional[scala.concurrent.duration.Duration](_).map(_.toMillis)
+    Duration.ofMillis(getRequired(readAsMillis, "aws.s3.upload.link.validity.duration"))
+  }
 
-  override def accessKeyId: String = getRequired(configuration.getString(_), "aws.accessKeyId")
+  override def accessKeyId: String = getRequired(configuration.getOptional[String](_), "aws.accessKeyId")
 
-  override def secretAccessKey: String = getRequired(configuration.getString(_), "aws.secretAccessKey")
+  override def secretAccessKey: String = getRequired(configuration.getOptional[String](_), "aws.secretAccessKey")
 
-  override def sessionToken: Option[String] = configuration.getString("aws.sessionToken")
+  override def sessionToken: Option[String] = configuration.getOptional[String]("aws.sessionToken")
 
-  override def globalFileSizeLimit: Int = getRequired(configuration.getInt, "global.file.size.limit")
+  override def globalFileSizeLimit: Int = getRequired(configuration.getOptional[Int](_), "global.file.size.limit")
 
   override def allowedCallbackProtocols: Seq[String] =
-    commaSeparatedList(configuration.getString("callbackValidation.allowedProtocols"))
+    commaSeparatedList(configuration.getOptional[String]("callbackValidation.allowedProtocols"))
 
   private def getRequired[T](read: String => Option[T], path: String): T =
     read(path).getOrElse(throw new ConfigException.Missing(path))

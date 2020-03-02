@@ -22,8 +22,8 @@ import java.util.Base64
 import connectors.model.{AwsCredentials, ContentLengthRange, UploadParameters}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{verify, when}
-import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{GivenWhenThen, Matchers, WordSpec}
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.libs.json.{JsArray, JsValue, Json}
 
 class S3UploadFormGeneratorSpec extends WordSpec with GivenWhenThen with Matchers with MockitoSugar {
