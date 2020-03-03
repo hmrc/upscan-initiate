@@ -302,15 +302,13 @@ The downloadUrl will expire after 1 day by default.  This can be configured on a
 For example, to limit to 1 hour add the following configuration (substituting the appropriate `User-Agent` service identifier) to [upscan-notify.conf](https://github.com/hmrc/app-config-base/blob/master/upscan-notify.conf):
 
 ```
-Prod {
-  upscan {
-      <user-agent-of-service> {
-        aws {
-          s3 {
-            urlExpirationPeriod = 1.hour
-          }
-        }
+consuming-services {
+  <user-agent-of-service> {
+    aws {
+      s3 {
+        urlExpirationPeriod = 1.hour
       }
+    }
   }
 }
 ```
