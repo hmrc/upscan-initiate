@@ -251,10 +251,7 @@ In order to upload the file, the following form is sent as the body of a POST re
 </form>
 ```
 
-This POST request can be sent programmatically from backend code or the submit of a web form.
-
-Whichever way the form is sent, remember:
-
+- You must make this request client side. Making this request server side defeats the objective of Upscan, which is to virus scan files before they are allowed on MDTP. 
 - You must use multipart encoding (`multipart/form-data`) NOT `application/x-www-form-urlencoded`. If you use` application/x-www-form-urlencoded`, AWS will return a response from which this error is not clear.
 - The 'file' field must be the last field in the submitted form.
 
