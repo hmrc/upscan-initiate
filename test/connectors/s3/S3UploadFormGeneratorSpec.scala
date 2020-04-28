@@ -22,11 +22,11 @@ import java.util.Base64
 import connectors.model.{AwsCredentials, ContentLengthRange, UploadParameters}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{verify, when}
-import org.scalatest.{GivenWhenThen, Matchers, WordSpec}
-import org.scalatestplus.mockito.MockitoSugar
+import org.scalatest.GivenWhenThen
 import play.api.libs.json.{JsArray, JsValue, Json}
+import uk.gov.hmrc.play.test.UnitSpec
 
-class S3UploadFormGeneratorSpec extends WordSpec with GivenWhenThen with Matchers with MockitoSugar {
+class S3UploadFormGeneratorSpec extends UnitSpec with GivenWhenThen {
 
   "S3UploadFormGenerator" should {
     "generate required fields for a presigned POST request" in {

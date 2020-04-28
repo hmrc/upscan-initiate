@@ -26,14 +26,13 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
-import org.scalatest.{GivenWhenThen, Matchers}
-import org.scalatestplus.mockito.MockitoSugar
+import org.scalatest.GivenWhenThen
 import play.api.http.HeaderNames.USER_AGENT
 import play.api.http.Status.{BAD_REQUEST, OK}
 import play.api.libs.json.{JsObject, JsValue, Json}
 import play.api.mvc.Action
 import play.api.mvc.Results.Ok
-import play.api.test.Helpers.contentAsString
+import play.api.test.Helpers.{contentAsString, status}
 import play.api.test.{FakeRequest, Helpers, StubControllerComponentsFactory}
 import services.PrepareUploadService
 import services.model.UploadSettings
@@ -43,7 +42,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponentsFactory with Matchers with GivenWhenThen with MockitoSugar {
+class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponentsFactory with GivenWhenThen {
 
   implicit val actorSystem: ActorSystem = ActorSystem()
 
