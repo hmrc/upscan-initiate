@@ -22,7 +22,7 @@ import java.time.{Clock, Instant}
 import config.ServiceConfiguration
 import controllers.model.{PrepareUpload, PrepareUploadRequestV1, PrepareUploadRequestV2, PreparedUploadResponse}
 import javax.inject.{Inject, Singleton}
-import play.api.Logger
+import play.api.Logging
 import play.api.libs.json._
 import play.api.mvc.{Action, ControllerComponents, Result}
 import services.PrepareUploadService
@@ -37,7 +37,7 @@ class PrepareUploadController @Inject()(
   prepareUploadService: PrepareUploadService,
   configuration: ServiceConfiguration,
   clock: Clock,
-  controllerComponents: ControllerComponents) extends BackendController(controllerComponents) with UserAgentFilter {
+  controllerComponents: ControllerComponents) extends BackendController(controllerComponents) with UserAgentFilter with Logging {
 
   implicit val prepareUploadRequestReads: Reads[PrepareUploadRequestV1] =
     PrepareUploadRequestV1.reads(prepareUploadService.globalFileSizeLimit)
@@ -63,7 +63,7 @@ class PrepareUploadController @Inject()(
       requireUserAgent[JsValue] { (_, consumingService) =>
         withJsonBody[T] { prepareUploadRequest: T =>
           withAllowedCallbackProtocol(prepareUploadRequest.callbackUrl) {
-            Logger.debug(s"Processing request: [$prepareUploadRequest].")
+            logger.debug(s"Processing request: [$prepareUploadRequest].")
 
             val sessionId = hc(request).sessionId.map(_.value).getOrElse("n/a")
             val requestId = hc(request).requestId.map(_.value).getOrElse("n/a")
@@ -95,13 +95,13 @@ class PrepareUploadController @Inject()(
     isAllowedCallbackProtocol match {
       case Success(true) => block
       case Success(false) =>
-        Logger.warn(s"Invalid callback url protocol: [$callbackUrl].")
+        logger.warn(s"Invalid callback url protocol: [$callbackUrl].")
 
         Future.successful(BadRequest(
           s"Invalid callback url protocol: [$callbackUrl]. Protocol must be in: [${allowedCallbackProtocols.mkString(",")}]."))
 
       case Failure(e) =>
-        Logger.warn(s"Invalid callback url format: [$callbackUrl].")
+        logger.warn(s"Invalid callback url format: [$callbackUrl].")
 
         Future.successful(BadRequest(s"Invalid callback url format: [$callbackUrl]. [${e.getMessage}]"))
     }

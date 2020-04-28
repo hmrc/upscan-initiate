@@ -18,6 +18,7 @@ package utils
 
 import akka.util.Timeout
 import org.scalatest.{GivenWhenThen, Matchers}
+import play.api.Logging
 import play.api.http.Status.{BAD_REQUEST, OK}
 import play.api.mvc.Results._
 import play.api.mvc.{Request, Result}
@@ -66,5 +67,5 @@ private object UserAgentFilterSpec {
   val SomeUserAgent = "SOME_USER-AGENT"
   val block: (Request[_], String) => Future[Result] = (_, userAgent) => Future.successful(Ok(userAgent))
 
-  object UserAgentFilter extends UserAgentFilter
+  object UserAgentFilter extends Logging with UserAgentFilter
 }

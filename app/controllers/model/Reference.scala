@@ -18,7 +18,6 @@ package controllers.model
 
 import java.util.UUID.randomUUID
 
-import play.api.libs.functional.syntax._
 import play.api.libs.json.Writes
 
 case class Reference(value: String) extends AnyVal {
