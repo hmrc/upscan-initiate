@@ -20,13 +20,11 @@ import java.time.Instant
 import java.util.Base64
 
 import connectors.model.{AwsCredentials, ContentLengthRange, UploadParameters}
-import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{verify, when}
-import org.scalatest.{GivenWhenThen, Matchers, WordSpec}
-import org.scalatestplus.mockito.MockitoSugar
+import org.scalatest.GivenWhenThen
 import play.api.libs.json.{JsArray, JsValue, Json}
+import test.UnitSpec
 
-class S3UploadFormGeneratorSpec extends WordSpec with GivenWhenThen with Matchers with MockitoSugar {
+class S3UploadFormGeneratorSpec extends UnitSpec with GivenWhenThen {
 
   "S3UploadFormGenerator" should {
     "generate required fields for a presigned POST request" in {
@@ -40,7 +38,7 @@ class S3UploadFormGeneratorSpec extends WordSpec with GivenWhenThen with Matcher
       val policySigner  = mock[PolicySigner]
       val testSignature = "test-signature"
 
-      when(policySigner.signPolicy(any(), any(), any(), any())).thenReturn(testSignature)
+      when(policySigner.signPolicy(any[AwsCredentials], any[String], any[String], any[String])).thenReturn(testSignature)
 
       val generator = new S3UploadFormGenerator(credentials, regionName, currentTime, policySigner)
 
@@ -117,7 +115,7 @@ class S3UploadFormGeneratorSpec extends WordSpec with GivenWhenThen with Matcher
       val policySigner  = mock[PolicySigner]
       val testSignature = "test-signature"
 
-      when(policySigner.signPolicy(any(), any(), any(), any())).thenReturn(testSignature)
+      when(policySigner.signPolicy(any[AwsCredentials], any[String], any[String], any[String])).thenReturn(testSignature)
 
       val generator = new S3UploadFormGenerator(credentials, regionName, currentTime, policySigner)
 
@@ -150,7 +148,7 @@ class S3UploadFormGeneratorSpec extends WordSpec with GivenWhenThen with Matcher
       val policySigner  = mock[PolicySigner]
       val testSignature = "test-signature"
 
-      when(policySigner.signPolicy(any(), any(), any(), any())).thenReturn(testSignature)
+      when(policySigner.signPolicy(any[AwsCredentials], any[String], any[String], any[String])).thenReturn(testSignature)
 
       val generator = new S3UploadFormGenerator(credentials, regionName, currentTime, policySigner)
 

@@ -16,49 +16,44 @@
 
 package controllers
 
-import java.time.Clock
+import java.time.{Clock, Instant}
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import config.ServiceConfiguration
 import controllers.model.{PreparedUploadResponse, Reference, UploadFormTemplate}
-import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito
-import org.mockito.invocation.InvocationOnMock
-import org.mockito.stubbing.Answer
-import org.scalatest.{GivenWhenThen, Matchers}
-import org.scalatestplus.mockito.MockitoSugar
+import org.scalatest.GivenWhenThen
 import play.api.http.HeaderNames.USER_AGENT
 import play.api.http.Status.{BAD_REQUEST, OK}
 import play.api.libs.json.{JsObject, JsValue, Json}
 import play.api.mvc.Action
 import play.api.mvc.Results.Ok
-import play.api.test.Helpers.contentAsString
+import play.api.test.Helpers.{contentAsString, status}
 import play.api.test.{FakeRequest, Helpers, StubControllerComponentsFactory}
 import services.PrepareUploadService
 import services.model.UploadSettings
-import uk.gov.hmrc.play.test.UnitSpec
+import test.UnitSpec
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponentsFactory with Matchers with GivenWhenThen with MockitoSugar {
+class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponentsFactory with GivenWhenThen {
 
-  implicit val actorSystem: ActorSystem = ActorSystem()
+  private implicit val actorSystem: ActorSystem = ActorSystem()
 
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
+  private implicit val materializer: ActorMaterializer = ActorMaterializer()
 
-  implicit val timeout: akka.util.Timeout = 10 seconds
+  private implicit val timeout: akka.util.Timeout = 10 seconds
 
   private val clock: Clock = Clock.systemDefaultZone()
 
-  "PaymentController prepareUploadV1" should {
+  "PrepareUploadController prepareUploadV1" should {
 
     behave like prepareUploadTests(_.prepareUploadV1())
   }
 
-  "PaymentController prepareUploadV2" should {
+  "PrepareUploadController prepareUploadV2" should {
 
     val extraRequestFields = Json
       .obj("successRedirect" -> "https://www.example.com/nextpage", "errorRedirect" -> "https://www.example.com/error")
@@ -76,10 +71,10 @@ class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponents
     extraResponseFields: JsObject = JsObject(Seq())) {
 
     val config = mock[ServiceConfiguration]
-    Mockito.when(config.allowedCallbackProtocols).thenReturn(List("https"))
+    when(config.allowedCallbackProtocols).thenReturn(List("https"))
 
     "build and return upload URL if valid request with all data" in {
-      val controller = new PrepareUploadController(prepareUploadService, config, clock, stubControllerComponents())
+      val controller = new PrepareUploadController(prepareUploadServiceWithUpload, config, clock, stubControllerComponents())
 
       Given("there is a valid upload request with all data")
 
@@ -117,7 +112,7 @@ class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponents
     }
 
     "build and return upload URL if valid request with redirect on success url" in {
-      val controller = new PrepareUploadController(prepareUploadService, config, clock, stubControllerComponents())
+      val controller = new PrepareUploadController(prepareUploadServiceWithUpload, config, clock, stubControllerComponents())
 
       Given("there is a valid upload request with all data")
 
@@ -158,7 +153,7 @@ class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponents
     }
 
     "build and return upload URL if valid request with minimal data including session id and request id" in {
-      val controller = new PrepareUploadController(prepareUploadService, config, clock, stubControllerComponents())
+      val controller = new PrepareUploadController(prepareUploadServiceWithUpload, config, clock, stubControllerComponents())
 
       Given("there is a valid upload request with minimal data")
 
@@ -188,7 +183,7 @@ class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponents
     }
 
     "build and return upload URL if valid request with minimal data excluding session id and request id" in {
-      val controller = new PrepareUploadController(prepareUploadService, config, clock, stubControllerComponents())
+      val controller = new PrepareUploadController(prepareUploadServiceWithUpload, config, clock, stubControllerComponents())
 
       Given("there is a valid upload request with minimal data")
 
@@ -214,7 +209,7 @@ class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponents
     }
 
     "return a bad request error if invalid request - wrong structure" in {
-      val controller = new PrepareUploadController(prepareUploadService, config, clock, stubControllerComponents())
+      val controller = new PrepareUploadController(prepareUploadServiceNoUpload, config, clock, stubControllerComponents())
 
       Given("there is an invalid upload request")
 
@@ -235,7 +230,7 @@ class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponents
     }
 
     "return a bad request error if invalid request - incorrect maximum file size " in {
-      val controller = new PrepareUploadController(prepareUploadService, config, clock, stubControllerComponents())
+      val controller = new PrepareUploadController(prepareUploadServiceNoUpload, config, clock, stubControllerComponents())
 
       Given("there is an invalid upload request")
 
@@ -255,7 +250,7 @@ class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponents
     }
 
     "allow https callback urls" in {
-      val controller = new PrepareUploadController(prepareUploadService, config, clock, stubControllerComponents())
+      val controller = new PrepareUploadController(prepareUploadServiceNoUpload, config, clock, stubControllerComponents())
 
       val result = controller.withAllowedCallbackProtocol("https://my.callback.url") {
         Future.successful(Ok)
@@ -265,7 +260,7 @@ class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponents
     }
 
     "disallow http callback urls" in {
-      val controller = new PrepareUploadController(prepareUploadService, config, clock, stubControllerComponents())
+      val controller = new PrepareUploadController(prepareUploadServiceNoUpload, config, clock, stubControllerComponents())
 
       val result = controller.withAllowedCallbackProtocol("http://my.callback.url") {
         Future.failed(new RuntimeException("This block should not have been invoked."))
@@ -276,7 +271,7 @@ class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponents
     }
 
     "disallow invalidly formatted callback urls" in {
-      val controller = new PrepareUploadController(prepareUploadService, config, clock, stubControllerComponents())
+      val controller = new PrepareUploadController(prepareUploadServiceNoUpload, config, clock, stubControllerComponents())
 
       val result = controller.withAllowedCallbackProtocol("123") {
         Future.failed(new RuntimeException("This block should not have been invoked."))
@@ -286,32 +281,31 @@ class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponents
     }
   }
 
-  private def prepareUploadService: PrepareUploadService = {
+  private def prepareUploadServiceNoUpload: PrepareUploadService = {
     val service = mock[PrepareUploadService]
-    Mockito.when(service.globalFileSizeLimit).thenReturn(1024)
-    Mockito
-      .when(service.prepareUpload(any(), any(), any(), any(), any()))
-      .thenAnswer(new Answer[PreparedUploadResponse]() {
-        override def answer(invocationOnMock: InvocationOnMock): PreparedUploadResponse = {
-          val settings  = invocationOnMock.getArgument[UploadSettings](0)
-          val requestId = invocationOnMock.getArgument[String](2)
-          val sessionId = invocationOnMock.getArgument[String](3)
-          PreparedUploadResponse(
-            Reference("TEST"),
-            UploadFormTemplate(
-              settings.callbackUrl,
-              Map.empty ++
-                settings.minimumFileSize.map(s => Map("minFileSize" -> s.toString).head) ++
-                settings.maximumFileSize.map(s => Map("maxFileSize" -> s.toString).head) ++
-                Map("sessionId" -> sessionId) ++
-                Map("requestId" -> requestId) ++
-                settings.successRedirect.map(url => Map("success_action_redirect" -> url)).getOrElse(Map.empty) ++
-                settings.errorRedirect.map(url => Map("error_action_redirect"     -> url)).getOrElse(Map.empty)
-            )
-          )
-        }
+    when(service.globalFileSizeLimit).thenReturn(1024)
+  }
 
-      })
+  private def prepareUploadServiceWithUpload: PrepareUploadService = {
+    val service = mock[PrepareUploadService]
+    when(service.globalFileSizeLimit).thenReturn(1024)
+    when(service.prepareUpload(any[UploadSettings], any[String], any[String], any[String], any[Instant]))
+      .thenAnswer{ (settings: UploadSettings, _: String, requestId: String, sessionId: String, _: Instant) =>
+        PreparedUploadResponse(
+          Reference("TEST"),
+          UploadFormTemplate(
+            settings.callbackUrl,
+            Map.empty ++
+              settings.minimumFileSize.map(s => Map("minFileSize" -> s.toString).head) ++
+              settings.maximumFileSize.map(s => Map("maxFileSize" -> s.toString).head) ++
+              Map("sessionId" -> sessionId) ++
+              Map("requestId" -> requestId) ++
+              settings.successRedirect.map(url => Map("success_action_redirect" -> url)).getOrElse(Map.empty) ++
+              settings.errorRedirect.map(url => Map("error_action_redirect"     -> url)).getOrElse(Map.empty)
+          )
+        )
+      }
+
     service
   }
 

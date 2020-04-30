@@ -17,9 +17,9 @@
 package connectors.s3
 
 import connectors.model.AwsCredentials
-import org.scalatest.{Matchers, WordSpec}
+import test.UnitSpec
 
-class PolicySignerSpec extends WordSpec with Matchers {
+class PolicySignerSpec extends UnitSpec {
 
   "Policy signer" should {
     "sign policy document" in {

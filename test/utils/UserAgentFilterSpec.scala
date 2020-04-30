@@ -17,21 +17,24 @@
 package utils
 
 import akka.util.Timeout
-import org.scalatest.{GivenWhenThen, Matchers}
+import org.scalatest.GivenWhenThen
+import play.api.Logging
 import play.api.http.Status.{BAD_REQUEST, OK}
 import play.api.mvc.Results._
 import play.api.mvc.{Request, Result}
 import play.api.test.FakeRequest
-import play.api.test.Helpers.contentAsString
+import play.api.test.Helpers.{contentAsString, status}
 import play.mvc.Http.HeaderNames.USER_AGENT
-import uk.gov.hmrc.play.test.UnitSpec
+import test.UnitSpec
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class UserAgentFilterSpec extends UnitSpec with Matchers with GivenWhenThen {
+class UserAgentFilterSpec extends UnitSpec with GivenWhenThen {
 
   import UserAgentFilterSpec._
+
+  private implicit val timeout: Timeout = Timeout(3.seconds)
 
   "UserAgentFilter" should {
     "accept a request when the User-Agent header is specified" in {
@@ -62,9 +65,8 @@ class UserAgentFilterSpec extends UnitSpec with Matchers with GivenWhenThen {
 }
 
 private object UserAgentFilterSpec {
-  implicit val timeout: Timeout = Timeout(3.seconds)
   val SomeUserAgent = "SOME_USER-AGENT"
   val block: (Request[_], String) => Future[Result] = (_, userAgent) => Future.successful(Ok(userAgent))
 
-  object UserAgentFilter extends UserAgentFilter
+  object UserAgentFilter extends Logging with UserAgentFilter
 }

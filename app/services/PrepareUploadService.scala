@@ -24,14 +24,14 @@ import connectors.model.{ContentLengthRange, UploadFormGenerator, UploadParamete
 import controllers.model.{PreparedUploadResponse, Reference, UploadFormTemplate}
 import javax.inject.{Inject, Singleton}
 import org.slf4j.MDC
-import play.api.Logger
+import play.api.Logging
 import services.model.UploadSettings
 
 @Singleton
 class PrepareUploadService @Inject()(
   postSigner: UploadFormGenerator,
   configuration: ServiceConfiguration,
-  metrics: Metrics) {
+  metrics: Metrics) extends Logging {
 
   def prepareUpload(
     settings: UploadSettings,
@@ -57,7 +57,7 @@ class PrepareUploadService @Inject()(
 
     try {
       MDC.put("file-reference", reference.toString)
-      Logger.info(
+      logger.info(
         s"Generated file-reference: [$reference], for settings: [$settings], with expiration at: [$expiration].")
 
       metrics.defaultRegistry.counter("uploadInitiated").inc()

@@ -23,12 +23,12 @@ import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
 import config.ServiceConfiguration
 import connectors.model.{UploadFormGenerator, UploadParameters}
-import org.scalatest.{GivenWhenThen, Matchers}
+import org.scalatest.GivenWhenThen
 import services.PrepareUploadService
 import services.model.UploadSettings
-import uk.gov.hmrc.play.test.UnitSpec
+import test.UnitSpec
 
-class PrepareUploadServiceSpec extends UnitSpec with Matchers with GivenWhenThen {
+class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
 
   private val serviceConfiguration = new ServiceConfiguration {
 
