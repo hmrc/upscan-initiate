@@ -17,7 +17,7 @@
 package connectors.s3
 
 import connectors.model.AwsCredentials
-import uk.gov.hmrc.play.test.UnitSpec
+import test.UnitSpec
 
 class PolicySignerSpec extends UnitSpec {
 

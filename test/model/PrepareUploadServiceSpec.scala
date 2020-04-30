@@ -26,7 +26,7 @@ import connectors.model.{UploadFormGenerator, UploadParameters}
 import org.scalatest.GivenWhenThen
 import services.PrepareUploadService
 import services.model.UploadSettings
-import uk.gov.hmrc.play.test.UnitSpec
+import test.UnitSpec
 
 class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
 

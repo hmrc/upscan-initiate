@@ -12,10 +12,10 @@ object AppDependencies {
 
   private val test = Seq(
     "com.typesafe.play"      %% "play-test"                   % PlayVersion.current % s"$Test,$IntegrationTest",
-    "org.scalatest"          %% "scalatest"                   % "3.0.8"             % s"$Test,$IntegrationTest",
+    "org.scalatest"          %% "scalatest"                   % "3.1.1"             % s"$Test,$IntegrationTest",
+    "org.scalatestplus"      %% "mockito-3-2"                 % "3.1.1.0"           % Test,
     "org.scalatestplus.play" %% "scalatestplus-play"          % "4.0.3"             % s"$Test,$IntegrationTest",
-    "org.pegdown"             % "pegdown"                     % "1.6.0"             % s"$Test,$IntegrationTest",
-    "org.mockito"             % "mockito-core"                % "3.3.3"             % s"$Test,$IntegrationTest"
+    "com.vladsch.flexmark"    % "flexmark-all"                % "0.35.10"           % s"$Test,$IntegrationTest"
   )
 
   def apply(): Seq[ModuleID] = compile ++ test

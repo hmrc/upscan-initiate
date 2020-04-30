@@ -25,7 +25,7 @@ import play.api.mvc.{Request, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentAsString, status}
 import play.mvc.Http.HeaderNames.USER_AGENT
-import uk.gov.hmrc.play.test.UnitSpec
+import test.UnitSpec
 
 import scala.concurrent.Future
 import scala.concurrent.duration._

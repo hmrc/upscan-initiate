@@ -1,6 +1,8 @@
 package controllers
 
-import org.scalatest.{GivenWhenThen, Matchers, WordSpecLike}
+import org.scalatest.GivenWhenThen
+import org.scalatest.matchers.should
+import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.http.HeaderNames.USER_AGENT
@@ -11,7 +13,7 @@ import play.api.test.Helpers._
 import play.api.test.{FakeHeaders, FakeRequest}
 import uk.gov.hmrc.http.HeaderNames.xSessionId
 
-class PrepareUploadControllerISpec extends WordSpecLike with Matchers with GuiceOneAppPerSuite with GivenWhenThen {
+class PrepareUploadControllerISpec extends AnyWordSpecLike with should.Matchers with GuiceOneAppPerSuite with GivenWhenThen {
 
   import PrepareUploadControllerISpec._
 

@@ -24,7 +24,7 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{verify, when}
 import org.scalatest.GivenWhenThen
 import play.api.libs.json.{JsArray, JsValue, Json}
-import uk.gov.hmrc.play.test.UnitSpec
+import test.UnitSpec
 
 class S3UploadFormGeneratorSpec extends UnitSpec with GivenWhenThen {
 

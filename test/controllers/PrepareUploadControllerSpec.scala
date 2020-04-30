@@ -36,7 +36,7 @@ import play.api.test.Helpers.{contentAsString, status}
 import play.api.test.{FakeRequest, Helpers, StubControllerComponentsFactory}
 import services.PrepareUploadService
 import services.model.UploadSettings
-import uk.gov.hmrc.play.test.UnitSpec
+import test.UnitSpec
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
