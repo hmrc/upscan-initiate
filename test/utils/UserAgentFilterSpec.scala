@@ -34,6 +34,8 @@ class UserAgentFilterSpec extends UnitSpec with GivenWhenThen {
 
   import UserAgentFilterSpec._
 
+  private implicit val timeout: Timeout = Timeout(3.seconds)
+
   "UserAgentFilter" should {
     "accept a request when the User-Agent header is specified" in {
       Given("a request that specifies a User-Agent header")
@@ -63,7 +65,6 @@ class UserAgentFilterSpec extends UnitSpec with GivenWhenThen {
 }
 
 private object UserAgentFilterSpec {
-  implicit val timeout: Timeout = Timeout(3.seconds)
   val SomeUserAgent = "SOME_USER-AGENT"
   val block: (Request[_], String) => Future[Result] = (_, userAgent) => Future.successful(Ok(userAgent))
 
