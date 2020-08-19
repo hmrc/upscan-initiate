@@ -71,8 +71,8 @@ Please view the [Upscan Service & Flow Overview in Confluence](https://confluenc
 ### Requesting a URL to upload to <a name="service__request"></a>
 
 The consuming service makes a POST request to `/upscan/initiate` or `upscan/v2/initiate`.
-This request must contain a `User-Agent` header that can be used to identify the service, but a whitelist of authorised services is no longer cross-checked.
-The service must also provide a callbackUrl for asynchronous notification of the outcome of an upload. The callback will be made from inside the MDTP environment. Hence, the callback URL should comprise the MDTP internal callback address and not the public domain address. `upscan/v2/initiate` additionally requires a successRedirect and errorRedirect url. See next section for specifics. 
+This request must contain a `User-Agent` header that can be used to identify the service, but an allow list of authorised services is no longer cross-checked.
+The service must also provide a callbackUrl for asynchronous notification of the outcome of an upload. The callback will be made from inside the MDTP environment. Hence, the callback URL should comprise the MDTP internal callback address and not the public domain address. `upscan/v2/initiate` additionally requires an errorRedirect url. See next section for specifics. 
 
 **Note:** `callbackUrl` must use the `https` protocol.
 (Although this rule is relaxed when testing locally with [upscan-stub](https://github.com/hmrc/upscan-stub) rather than [upscan-initiate](https://github.com/hmrc/upscan-initiate).
@@ -117,10 +117,11 @@ Example `upscan/v2/initiate` request:
 | Parameter name|Description|Required|
 |--------------|-----------|--------|
 |callbackUrl   |Url that will be called to report the outcome of file checking and upload, including retrieval details if successful. Notification format is detailed further down in this file. Must be https.| yes|
-|successRedirect|Url to redirect to after file has been successfully uploaded.|yes|
+|successRedirect|Url to redirect to after file has been successfully uploaded.|no|
 |errorRedirect|Url to redirect to if error encountered during upload.|yes|
 |minimumFileSize|Minimum file size (in Bytes). Default is 0.|no|
 |maximumFileSize|Maximum file size (in Bytes). Cannot be greater than 100MB. Default is 100MB.|no|
+|expectedContentType|MIME type describing the upload contents.|no|
 
 Example response
 
@@ -211,6 +212,7 @@ Example request:
 |minimumFileSize|Minimum file size (in Bytes). Default is 0.|no|
 |maximumFileSize|Maximum file size (in Bytes). Cannot be greater than 100MB. Default is 100MB.|no|
 |successRedirect|Url to redirect to after file has been successfully uploaded.|no|
+|expectedContentType|MIME type describing the upload contents.|no|
 
 
 
