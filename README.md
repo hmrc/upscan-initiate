@@ -59,7 +59,7 @@ Once the upload URL has been requested, upload and verification of a file are pe
 * Consuming service downloads the file using the provided URL or passes this URL on to another service which will make use of the file location.  This download URL only remains valid for a limited duration (see [Success](#service__poutcome__success))
 * After some time the file is automatically removed from the remote storage. Upscan does NOT keep files indefinitely
 * If the file fails a check, a notification is sent to the consuming service containing information on the failed check. The file is unavailable for retrieval
-* If the consuming service fails to respond to the callback request (e.g. the consuming service is down, the consuming service answered with an HTTP status code other than 2xx), the callback will be retried up to a maximum of 30 retries. The time interval between the retries is 60 seconds
+* If the consuming service fails to respond to the callback request (e.g. the consuming service is down, the consuming service answered with an HTTP status code other than 2xx), the callback will be retried up to a maximum of 30 retries. The time interval between the retries is 60 seconds.
 Configuration of these values is here (https://github.com/hmrc/upscan-infrastructure/blob/master/modules/sqs/main.tf)
 
 Please view the [Upscan Service & Flow Overview in Confluence](https://confluence.tools.tax.service.gov.uk/pages/viewpage.action?pageId=101663507) for a more visual representation.
@@ -72,7 +72,7 @@ Please view the [Upscan Service & Flow Overview in Confluence](https://confluenc
 
 The consuming service makes a POST request to `/upscan/initiate` or `upscan/v2/initiate`.
 This request must contain a `User-Agent` header that can be used to identify the service, but an allow list of authorised services is no longer cross-checked.
-The service must also provide a callbackUrl for asynchronous notification of the outcome of an upload. The callback will be made from inside the MDTP environment. Hence, the callback URL should comprise the MDTP internal callback address and not the public domain address. `upscan/v2/initiate` additionally requires an errorRedirect url. See next section for specifics. 
+The service must also provide a callbackUrl for asynchronous notification of the outcome of an upload. The callback will be made from inside the MDTP environment. Hence, the callback URL should comprise the MDTP internal callback address and not the public domain address.
 
 **Note:** `callbackUrl` must use the `https` protocol.
 (Although this rule is relaxed when testing locally with [upscan-stub](https://github.com/hmrc/upscan-stub) rather than [upscan-initiate](https://github.com/hmrc/upscan-initiate).
@@ -118,7 +118,7 @@ Example `upscan/v2/initiate` request:
 |--------------|-----------|--------|
 |callbackUrl   |Url that will be called to report the outcome of file checking and upload, including retrieval details if successful. Notification format is detailed further down in this file. Must be https.| yes|
 |successRedirect|Url to redirect to after file has been successfully uploaded.|no|
-|errorRedirect|Url to redirect to if error encountered during upload.|yes|
+|errorRedirect|Url to redirect to if error encountered during upload.|no|
 |minimumFileSize|Minimum file size (in Bytes). Default is 0.|no|
 |maximumFileSize|Maximum file size (in Bytes). Cannot be greater than 100MB. Default is 100MB.|no|
 |expectedContentType|MIME type describing the upload contents.|no|
@@ -163,22 +163,39 @@ S3 will return errors in `application/xml` in the following format:
 </Error>
 ```
 
-Example [upscan-upload-proxy](https://github.com/hmrc/upscan-upload-proxy) error redirect response:
+For v2, how such an error is returned depends upon whether the `error_action_redirect` form field was set.
 
-Redirect Response:
+If set, the [upscan-upload-proxy](https://github.com/hmrc/upscan-upload-proxy) will redirect to the specified URL.  
+Details of the error will be supplied to this URL as query parameters, with the names `errorCode`, `errorMessage`, `errorResource` and `errorRequestId`.
+
+The query parameter named `key` contains the globally unique file reference that was allocated by the initiate request 
+to identify the upload.
 
 ```
 HTTP Response Code: 303
-Header ("Location" ->  "https://myservice.com/errorPage?key=11370e18-6e24-453e-b45a-76d3e32ea33d&errorCode=NoSuchKey&errorMessage=The+resource+you+requested+does+not+exist&errorResource=/mybucket/myfoto.jpg&errorRequestId=4442587FB7D0A2F9")
+Header ("Location" -> "https://myservice.com/errorPage?key=11370e18-6e24-453e-b45a-76d3e32ea33d&errorCode=NoSuchKey&errorMessage=The+resource+you+requested+does+not+exist&errorResource=/mybucket/myfoto.jpg&errorRequestId=4442587FB7D0A2F9")
 ```
 
+If a redirect URL is not set, the proxy will respond with the failure status code.
+The details of the error along with the key will be available from the JSON body that has the following structure:
 
-Note that this Location header comprises the errorRedirect URL supplemented with additional information about the error by way of query parameters.  The query parameter named "key" contains the globally unique file reference that was allocated by the initiate request to identify the upload.
+```
+{
+ "key": "11370e18-6e24-453e-b45a-76d3e32ea33d",
+ "errorCode": "NoSuchKey",
+ "errorMessage": "The resource you requested does not exist",
+ "errorResource": "/mybucket/myfoto.jpg",
+ "errorRequestId": "4442587FB7D0A2F9"
+}
+```
 
+All error fields are optional.
+
+If an `error_action_redirect` is specified that does not represent a valid URL, the response will Bad Request:
 Json Error Response (can not redirect):
 
 ```json
-{"message":"Bad request"}
+{"message":"Unable to build valid redirect URL for error action"}
 ```
 
 

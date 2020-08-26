@@ -116,8 +116,7 @@ class PrepareUploadControllerISpec extends AnyWordSpecLike with should.Matchers 
 
   "PrepareUploadController prepareUploadV2 with only mandatory request values" in {
     val postBodyJson = Json.parse("""|{
-                                     |	"callbackUrl": "https://some-url/callback",
-                                     |	"errorRedirect": "https://some-url/error"
+                                     |	"callbackUrl": "https://some-url/callback"
                                      |}""".stripMargin)
 
     Given("a request containing a User-Agent header")
@@ -137,7 +136,7 @@ class PrepareUploadControllerISpec extends AnyWordSpecLike with should.Matchers 
     And("the response should contain the requested upload fields")
     val fields = (responseJson \ "uploadRequest" \ "fields").as[Map[String, String]]
     fields.get("x-amz-meta-callback-url") should contain ("https://some-url/callback")
-    fields.get("error_action_redirect") should contain ("https://some-url/error")
+    fields.get("error_action_redirect") shouldBe empty
     fields.get("success_action_redirect") shouldBe empty
     fields.get("Content-Type") shouldBe empty
   }
@@ -149,10 +148,7 @@ class PrepareUploadControllerISpec extends AnyWordSpecLike with should.Matchers 
   }
 
   "Upscan V2" should {
-    val requestJson = Json.parse("""|{
-                                    |	"callbackUrl": "https://some-url/callback",
-                                    |	"errorRedirect": "https://some-url/error"
-                                    |}""".stripMargin)
+    val requestJson = Json.parse("""{"callbackUrl": "https://some-url/callback"}""")
 
     behave like upscanInitiate(uri = "/upscan/v2/initiate", requestJson)
   }

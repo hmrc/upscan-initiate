@@ -29,15 +29,14 @@ class PrepareUploadRequestV2Spec extends UnitSpec with EitherValues {
     "specifying an upload success redirect URL" should {
       "parse as a valid request containing a success redirect URL" in {
         val request = s"""|{"callbackUrl":"$CallbackUrl",
-                          | "successRedirect":"$SuccessRedirectUrl",
-                          | "errorRedirect":"$ErrorRedirectUrl"}""".stripMargin
+                          | "successRedirect":"$SuccessRedirectUrl"}""".stripMargin
         val parseResult = Json.parse(request).validate(PrepareUploadRequestV2.reads(MaxFileSize))
 
         parseResult.asEither.map(_.successRedirect).right.value should contain (SuccessRedirectUrl)
       }
 
       "generate upload settings that contain the success redirect URL" in {
-        val uploadSettings = aV2RequestWith(successRedirectUrl = Some(SuccessRedirectUrl)).toUploadSettings(UploadUrl)
+        val uploadSettings = aV2RequestWithSuccessRedirectUrlOf(Some(SuccessRedirectUrl)).toUploadSettings(UploadUrl)
 
         uploadSettings.successRedirect should contain (SuccessRedirectUrl)
       }
@@ -45,17 +44,70 @@ class PrepareUploadRequestV2Spec extends UnitSpec with EitherValues {
 
     "omitting an upload success redirect URL" should {
       "parse as a valid request without a success redirect URL" in {
-        val request = s"""|{"callbackUrl":"$CallbackUrl",
-                          | "errorRedirect":"$ErrorRedirectUrl"}""".stripMargin
+        val request = s"""{"callbackUrl":"$CallbackUrl"}"""
         val parseResult = Json.parse(request).validate(PrepareUploadRequestV2.reads(MaxFileSize))
 
         parseResult.asEither.map(_.successRedirect).right.value shouldBe empty
       }
 
       "generate upload settings without a success redirect URL" in {
-        val uploadSettings = aV2RequestWith(successRedirectUrl = None).toUploadSettings(UploadUrl)
+        val uploadSettings = aV2RequestWithSuccessRedirectUrlOf(None).toUploadSettings(UploadUrl)
 
         uploadSettings.successRedirect shouldBe empty
+      }
+    }
+
+    "specifying an error redirect URL" should {
+      "parse as a valid request containing an error redirect URL" in {
+        val request = s"""|{"callbackUrl":"$CallbackUrl",
+                          | "errorRedirect":"$ErrorRedirectUrl"}""".stripMargin
+        val parseResult = Json.parse(request).validate(PrepareUploadRequestV2.reads(MaxFileSize))
+
+        parseResult.asEither.map(_.errorRedirect).right.value should contain (ErrorRedirectUrl)
+      }
+
+      "generate upload settings that contain the error redirect URL" in {
+        val uploadSettings = aV2RequestWithErrorRedirectUrlOf(Some(ErrorRedirectUrl)).toUploadSettings(UploadUrl)
+
+        uploadSettings.errorRedirect should contain (ErrorRedirectUrl)
+      }
+    }
+
+    "omitting an error redirect URL" should {
+      "parse as a valid request without an error redirect URL" in {
+        val request = s"""{"callbackUrl":"$CallbackUrl"}"""
+        val parseResult = Json.parse(request).validate(PrepareUploadRequestV2.reads(MaxFileSize))
+
+        parseResult.asEither.map(_.errorRedirect).right.value shouldBe empty
+      }
+
+      "generate upload settings without an error redirect URL" in {
+        val uploadSettings = aV2RequestWithErrorRedirectUrlOf(None).toUploadSettings(UploadUrl)
+
+        uploadSettings.errorRedirect shouldBe empty
+      }
+    }
+
+    "specifying a maximum file size" should {
+      "be accepted when equal to the global maximum" in {
+        val request = s"""{"callbackUrl":"$CallbackUrl", "maximumFileSize": $MaxFileSize}"""
+        val parseResult = Json.parse(request).validate(PrepareUploadRequestV2.reads(MaxFileSize))
+
+        parseResult.asEither.map(_.maximumFileSize).right.value should contain (MaxFileSize)
+      }
+
+      "be rejected when greater than the global maximum" in {
+        val request = s"""{"callbackUrl":"$CallbackUrl", "maximumFileSize": ${MaxFileSize + 1}}"""
+        val parseResult = Json.parse(request).validate(PrepareUploadRequestV2.reads(MaxFileSize))
+
+        parseResult.isError shouldBe true
+      }
+
+      "be rejected when less than the specified minimumFileSize" in {
+        val request = s"""{"callbackUrl":"$CallbackUrl", "minimumFileSize": $MaxFileSize, "maximumFileSize": ${MaxFileSize - 1}}"""
+        val parseResult = Json.parse(request).validate(PrepareUploadRequestV2.reads(MaxFileSize))
+
+        parseResult.isError shouldBe true
       }
     }
   }
@@ -71,11 +123,14 @@ private object PrepareUploadRequestV2Spec {
   private val template = PrepareUploadRequestV2(
     callbackUrl = CallbackUrl,
     successRedirect = None,
-    errorRedirect = ErrorRedirectUrl,
-    minimumFileSize = Some(1),
-    maximumFileSize = Some(99),
-    expectedContentType = Some("application/pdf"))
+    errorRedirect = None,
+    minimumFileSize = None,
+    maximumFileSize = None,
+    expectedContentType = None)
 
-  def aV2RequestWith(successRedirectUrl: Option[String]): PrepareUploadRequestV2 =
-    template.copy(successRedirect = successRedirectUrl)
+  def aV2RequestWithSuccessRedirectUrlOf(url: Option[String]): PrepareUploadRequestV2 =
+    template.copy(successRedirect = url)
+
+  def aV2RequestWithErrorRedirectUrlOf(url: Option[String]): PrepareUploadRequestV2 =
+    template.copy(errorRedirect = url)
 }
