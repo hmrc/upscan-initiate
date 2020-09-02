@@ -20,7 +20,7 @@ lazy val scoverageSettings = Seq(
 )
 
 lazy val microservice = Project(appName, file("."))
-  .enablePlugins(Seq(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory): _*)
+  .enablePlugins(Seq(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin): _*)
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
   .settings(scoverageSettings: _*)
   .settings(majorVersion := 0)
@@ -29,7 +29,7 @@ lazy val microservice = Project(appName, file("."))
   .settings(libraryDependencies ++= AppDependencies())
   .settings(resolvers += Resolver.jcenterRepo)
   .settings(scalacOptions += "-target:jvm-1.8")
-  .settings(scalaVersion := "2.12.10")
+  .settings(scalaVersion := "2.12.12")
   .settings(Test / parallelExecution := false)
   .configs(IntegrationTest)
   .settings(integrationTestSettings(): _*)

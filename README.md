@@ -191,8 +191,7 @@ The details of the error along with the key will be available from the JSON body
 
 All error fields are optional.
 
-If an `error_action_redirect` is specified that does not represent a valid URL, the response will Bad Request:
-Json Error Response (can not redirect):
+If an `error_action_redirect` is specified that does not represent a valid URL, the response will be a Bad Request:
 
 ```json
 {"message":"Unable to build valid redirect URL for error action"}
