@@ -88,6 +88,22 @@ class PrepareUploadRequestV2Spec extends UnitSpec with EitherValues {
       }
     }
 
+    "specifying a minimum file size" should {
+      "be rejected when negative" in {
+        val request = s"""{"callbackUrl":"$CallbackUrl", "minimumFileSize": -1}"""
+        val parseResult = Json.parse(request).validate(PrepareUploadRequestV2.reads(MaxFileSize))
+
+        parseResult.isError shouldBe true
+      }
+
+      "be accepted when zero" in {
+        val request = s"""{"callbackUrl":"$CallbackUrl", "minimumFileSize": 0}"""
+        val parseResult = Json.parse(request).validate(PrepareUploadRequestV2.reads(MaxFileSize))
+
+        parseResult.asEither.map(_.minimumFileSize).right.value should contain (0)
+      }
+    }
+
     "specifying a maximum file size" should {
       "be accepted when equal to the global maximum" in {
         val request = s"""{"callbackUrl":"$CallbackUrl", "maximumFileSize": $MaxFileSize}"""
