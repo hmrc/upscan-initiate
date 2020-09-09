@@ -26,7 +26,7 @@ import play.api.Logging
 import play.api.libs.json._
 import play.api.mvc.{Action, ControllerComponents, Result}
 import services.PrepareUploadService
-import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.UserAgentFilter
 
 import scala.concurrent.Future
@@ -55,8 +55,8 @@ class PrepareUploadController @Inject()(
     prepareUpload[PrepareUploadRequestV2](uploadUrl)
   }
 
-  private def prepareUpload[T <: PrepareUpload](
-    uploadUrl: String)(implicit reads: Reads[T], manifest: Manifest[T]): Action[JsValue] =
+  private def prepareUpload[T <: PrepareUpload](uploadUrl: String)
+                                               (implicit reads: Reads[T], manifest: Manifest[T]): Action[JsValue] =
     Action.async(parse.json) { implicit request =>
       val receivedAt = Instant.now(clock)
 

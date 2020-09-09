@@ -4,8 +4,8 @@ object AppDependencies {
   import play.core.PlayVersion
 
   private val compile = Seq(
-    "uk.gov.hmrc"       %% "bootstrap-backend-play-27"  % "2.14.0",
-    "com.typesafe.play" %% "play-json"                  % PlayVersion.current,
+    "uk.gov.hmrc"       %% "bootstrap-backend-play-27"  % "2.24.0",
+    "com.typesafe.play" %% "play-json"                  % "2.7.4",
     "com.amazonaws"      % "aws-java-sdk-s3"            % "1.11.769",
     "org.apache.commons" % "commons-lang3"              % "3.10"
   )
