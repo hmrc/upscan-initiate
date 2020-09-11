@@ -77,7 +77,7 @@ class PrepareUploadService @Inject()(
     sessionId: String,
     receivedAt: Instant): UploadFormTemplate = {
 
-    val minFileSize = settings.minimumFileSize.getOrElse(0)
+    val minFileSize = settings.minimumFileSize.getOrElse(0L)
     val maxFileSize = settings.maximumFileSize.getOrElse(globalFileSizeLimit)
 
     require(minFileSize >= 0, "Minimum file size is less than 0")
@@ -108,5 +108,5 @@ class PrepareUploadService @Inject()(
     UploadFormTemplate(endpoint, form)
   }
 
-  def globalFileSizeLimit: Int = configuration.globalFileSizeLimit
+  def globalFileSizeLimit: Long = configuration.globalFileSizeLimit
 }

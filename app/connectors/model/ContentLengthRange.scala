@@ -16,4 +16,4 @@
 
 package connectors.model
 
-case class ContentLengthRange(min: Int, max: Int)
+case class ContentLengthRange(min: Long, max: Long)
