@@ -32,32 +32,32 @@ trait ServiceConfiguration {
   def accessKeyId: String
   def secretAccessKey: String
   def fileExpirationPeriod: java.time.Duration
-  def globalFileSizeLimit: Int
+  def globalFileSizeLimit: Long
   def allowedCallbackProtocols: Seq[String]
 }
 
 class PlayBasedServiceConfiguration @Inject()(configuration: Configuration) extends ServiceConfiguration {
 
-  override def region: String = getRequired(configuration.getOptional[String](_), "aws.s3.region")
+  override val region: String = getRequired(configuration.getOptional[String](_), "aws.s3.region")
 
-  override def uploadProxyUrl: String = getRequired(configuration.getOptional[String](_), "uploadProxy.url")
+  override val uploadProxyUrl: String = getRequired(configuration.getOptional[String](_), "uploadProxy.url")
 
-  override def inboundBucketName: String = getRequired(configuration.getOptional[String](_), "aws.s3.bucket.inbound")
+  override val inboundBucketName: String = getRequired(configuration.getOptional[String](_), "aws.s3.bucket.inbound")
 
-  override def fileExpirationPeriod: Duration = {
+  override val fileExpirationPeriod: Duration = {
     val readAsMillis: String => Option[Long] = configuration.getOptional[scala.concurrent.duration.Duration](_).map(_.toMillis)
     Duration.ofMillis(getRequired(readAsMillis, "aws.s3.upload.link.validity.duration"))
   }
 
-  override def accessKeyId: String = getRequired(configuration.getOptional[String](_), "aws.accessKeyId")
+  override val accessKeyId: String = getRequired(configuration.getOptional[String](_), "aws.accessKeyId")
 
-  override def secretAccessKey: String = getRequired(configuration.getOptional[String](_), "aws.secretAccessKey")
+  override val secretAccessKey: String = getRequired(configuration.getOptional[String](_), "aws.secretAccessKey")
 
-  override def sessionToken: Option[String] = configuration.getOptional[String]("aws.sessionToken")
+  override val sessionToken: Option[String] = configuration.getOptional[String]("aws.sessionToken")
 
-  override def globalFileSizeLimit: Int = getRequired(configuration.getOptional[Int](_), "global.file.size.limit")
+  override val globalFileSizeLimit: Long = getRequired(configuration.getOptional[Long](_), "global.file.size.limit")
 
-  override def allowedCallbackProtocols: Seq[String] =
+  override val allowedCallbackProtocols: Seq[String] =
     commaSeparatedList(configuration.getOptional[String]("callbackValidation.allowedProtocols"))
 
   private def getRequired[T](read: String => Option[T], path: String): T =
