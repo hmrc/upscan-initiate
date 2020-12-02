@@ -249,6 +249,7 @@ Example Response:
             "x-amz-date": "yyyyMMddThhmmssZ",
             "x-amz-meta-callback-url": "https://myservice.com/callback",
             "x-amz-signature": "xxxx"
+	    //there might be more fields here - service that uses upscan should expect that this list is dynamic
         }
     }
 }
@@ -271,6 +272,7 @@ In order to upload the file, the following form is sent as the body of a POST re
 
 - You must make this request client side. Making this request server side defeats the objective of Upscan, which is to virus scan files before they are allowed on MDTP. 
 - You must use multipart encoding (`multipart/form-data`) NOT `application/x-www-form-urlencoded`. If you use` application/x-www-form-urlencoded`, AWS will return a response from which this error is not clear.
+- **Be aware that order, names and number of fields returned by upscan-initiate might change and your service shouldn't take any asumptions about that**
 - The 'file' field must be the last field in the submitted form.
 
 [[Back to the top]](#top)
