@@ -57,9 +57,8 @@ class PrepareUploadService @Inject()(
 
     try {
       MDC.put("file-reference", reference.toString)
-      logger.info(
-        s"Generated file-reference: [$reference], for settings: [$settings], with expiration at: [$expiration].")
-
+      logger.info(s"Allocated key=[${reference.value}] to uploadRequest with requestId=[$requestId] sessionId=[$sessionId] from [$consumingService].")
+      logger.debug(s"Prepared upload response [$result].")
       metrics.defaultRegistry.counter("uploadInitiated").inc()
 
       result

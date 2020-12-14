@@ -78,14 +78,15 @@ The service must also provide a callbackUrl for asynchronous notification of the
 (Although this rule is relaxed when testing locally with [upscan-stub](https://github.com/hmrc/upscan-stub) rather than [upscan-initiate](https://github.com/hmrc/upscan-initiate).
 In this stubbed scenario a `callbackUrl` referring to localhost may still specify `http` as the protocol.)
 
-Session-ID / Request-ID headers will be used to link the file with the user's journey.
+Session-ID / Request-ID headers are used to link the file with the user's journey.
 
 *Note:* If you are using `[http-verbs](https://github.com/hmrc/http-verbs)` to call Upscan, all the headers will be set automatically
 (See: [HttpVerb.scala](https://github.com/hmrc/http-verbs/blob/2807dc65f64009bd7ce1f14b38b356e06dd23512/src/main/scala/uk/gov/hmrc/http/HttpVerb.scala#L53))
 
 The service replies with a pre-filled template for the upload of the file.
-The JSON response also contains a globally unique file reference for the upload. This reference can be used by the Upscan service team to view the progress and result of the journey through the different Upscan components. The consuming service can use this reference to correlate the subsequent upload result with this upscan initiation.
-
+The JSON response contains a globally unique identifier for the upload (known as both _reference_ and _key_).
+This identifier can be used by the Upscan service team to view the progress and result of the journey through the different Upscan components. 
+The consuming service can use this identifier to correlate the subsequent file processing outcome with this upload initiation (see [File processing outcome](#service__poutcome)).
 
 
 ### POST upscan/v2/initiate
@@ -133,7 +134,7 @@ Example response
         "fields": {
             "Content-Type": "application/xml",
             "acl": "private",
-            "key": "xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+            "key": "11370e18-6e24-453e-b45a-76d3e32ea33d",
             "policy": "xxxxxxxx==",
             "x-amz-algorithm": "AWS4-HMAC-SHA256",
             "x-amz-credential": "ASIAxxxxxxxxx/20180202/eu-west-2/s3/aws4_request",
@@ -168,8 +169,8 @@ For v2, how such an error is returned depends upon whether the `error_action_red
 If set, the [upscan-upload-proxy](https://github.com/hmrc/upscan-upload-proxy) will redirect to the specified URL.  
 Details of the error will be supplied to this URL as query parameters, with the names `errorCode`, `errorMessage`, `errorResource` and `errorRequestId`.
 
-The query parameter named `key` contains the globally unique file reference that was allocated by the initiate request 
-to identify the upload.
+The query parameter named `key` contains the globally unique identifier that was allocated by the initiate request 
+to identify the upload (and was returned as `reference` in the initiate response).
 
 ```
 HTTP Response Code: 303
@@ -231,7 +232,6 @@ Example request:
 |expectedContentType|MIME type describing the upload contents.|no|
 
 
-
 Example Response:
 
 ```json
@@ -242,7 +242,7 @@ Example Response:
         "fields": {
             "Content-Type": "application/xml",
             "acl": "private",
-            "key": "xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+            "key": "11370e18-6e24-453e-b45a-76d3e32ea33d",
             "policy": "xxxxxxxx==",
             "x-amz-algorithm": "AWS4-HMAC-SHA256",
             "x-amz-credential": "ASIAxxxxxxxxx/20180202/eu-west-2/s3/aws4_request",
@@ -284,6 +284,9 @@ If the POST is successful, the service returns a HTTP 204 response with an empty
 [[Back to the top]](#top)
 
 ### File processing outcome <a name="service__poutcome"></a>
+
+A callback notification provides details of the file processing outcome.
+This contains a _reference_ that correlates with that contained in the upload initiation request (see [Requesting a URL to upload to](#service__request)).
 
 #### Success <a name="service__poutcome__success"></a>
 

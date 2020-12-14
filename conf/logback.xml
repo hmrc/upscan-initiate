@@ -44,8 +44,10 @@
     </logger>
 
     <logger name="uk.gov" level="INFO"/>
-
     <logger name="application" level="DEBUG"/>
+
+    <logger name="controllers" level="DEBUG"/>
+    <logger name="services" level="DEBUG"/>
 
     <logger name="connector" level="TRACE">
         <appender-ref ref="STDOUT"/>
