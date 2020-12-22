@@ -85,8 +85,9 @@ Session-ID / Request-ID headers are used to link the file with the user's journe
 
 The service replies with a pre-filled template for the upload of the file.
 The JSON response contains a globally unique identifier for the upload (known as both _reference_ and _key_).
-This identifier can be used by the Upscan service team to view the progress and result of the journey through the different Upscan components. 
 The consuming service can use this identifier to correlate the subsequent file processing outcome with this upload initiation (see [File processing outcome](#service__poutcome)).
+This identifier can also be used to track the journey of an upload through the various Upscan services.  If you require support from the Upscan team in relation to a particular
+upload, please provide this reference.
 
 
 ### POST upscan/v2/initiate
