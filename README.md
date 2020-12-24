@@ -1,7 +1,7 @@
 # upscan-initiate <a name="top"></a>
 
 Microservice for initiating the upload of files created externally to HMRC estate. These could be from members of the public or third-party services.
-This service is not for transfer of files from one HMRC service to another. See the Transmission Service as documented in Confluence for this use-case.
+This service is not for transfer of files from one HMRC service to another. Please speak to us for advice on file transfer integration.
 
 [ ![Download](https://api.bintray.com/packages/hmrc/releases/upscan-initiate/images/download.svg) ](https://bintray.com/hmrc/releases/upscan-initiate/_latestVersion)
 
