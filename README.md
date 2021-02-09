@@ -297,25 +297,27 @@ If these checks pass, the file is made available for retrieval & the Upscan serv
 
 ```json
 {
-    "reference" : "11370e18-6e24-453e-b45a-76d3e32ea33d",
-    "fileStatus" : "READY",
-    "downloadUrl" : "https://bucketName.s3.eu-west-2.amazonaws.com?1235676",
+    "reference": "11370e18-6e24-453e-b45a-76d3e32ea33d",
+    "downloadUrl": "https://bucketName.s3.eu-west-2.amazonaws.com?1235676",
+    "fileStatus": "READY",
     "uploadDetails": {
+        "fileName": "test.pdf",
+        "fileMimeType": "application/pdf",
         "uploadTimestamp": "2018-04-24T09:30:00Z",
         "checksum": "396f101dd52e8b2ace0dcf5ed09b1d1f030e608938510ce46e7a5c7a4e775100",
-        "fileName": "test.pdf",
-        "fileMimeType": "application/pdf"
+        "size": 987
     }
 }
 ```
 
 Note the block entitled 'uploadDetails', see the Confluence page 'Upscan & Non-Repudiation Service' in the Platform Services space usage of this information:
 
-- `uploadTimestamp` - The timestamp of the file upload
-- `checksum` - The SHA256 hash of the uploaded file
 - `fileName` - File name as it was provided by the user
 - `fileMimeType` - Detected MIME type of the file. Please note that this refers to actual contents  
-of the file, not to the name (if user uploads PDF document named `data.png`, it will be detected as a `application/pdf`) 
+of the file, not to the name (if user uploads PDF document named `data.png`, it will be detected as a `application/pdf`)
+- `uploadTimestamp` - The timestamp of the file upload
+- `checksum` - The SHA256 hash of the uploaded file
+- `size` - The size of the uploaded file (in bytes)
 
 The downloadUrl will expire after 1 day by default.  This can be configured on a per-consuming service basis.  
 For example, to limit to 1 hour add the following configuration (substituting the appropriate `User-Agent` service identifier) to [upscan-notify.conf](https://github.com/hmrc/app-config-base/blob/master/upscan-notify.conf):
