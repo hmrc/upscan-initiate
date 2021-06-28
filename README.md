@@ -341,7 +341,7 @@ consuming-services {
 The list of failure reasons is as follows:
 
 - `QUARANTINE` - the file has failed virus scanning
-- `REJECTED` - the file is not of an allowed file type
+- `REJECTED` - the [file's detected mime-type is not allowed for the service](https://github.com/hmrc/upscan-app-config/blob/master/production/verify.yaml) or the [file's extension is not allowed for the detected mime-type](https://github.com/hmrc/upscan-verify/blob/master/conf/extensionsAllowList.conf)
 - `UNKNOWN` - there is some other problem with the file
 
 These reasons form one of the following JSON responses sent to the callback URL:
