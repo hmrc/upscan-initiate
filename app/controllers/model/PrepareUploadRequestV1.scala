@@ -25,7 +25,6 @@ case class PrepareUploadRequestV1(
   callbackUrl: String,
   minimumFileSize: Option[Long],
   maximumFileSize: Option[Long],
-  expectedContentType: Option[String],
   successRedirect: Option[String])
     extends PrepareUpload {
 
@@ -34,7 +33,6 @@ case class PrepareUploadRequestV1(
     callbackUrl         = callbackUrl,
     minimumFileSize     = minimumFileSize,
     maximumFileSize     = maximumFileSize,
-    expectedContentType = expectedContentType,
     successRedirect     = successRedirect,
     errorRedirect       = None
   )
@@ -47,7 +45,6 @@ object PrepareUploadRequestV1 {
     ((JsPath \ "callbackUrl").read[String] and
       (JsPath \ "minimumFileSize").readNullable[Long](min(0)) and
       (JsPath \ "maximumFileSize").readNullable[Long](min(0L) keepAnd max(maxFileSize)) and
-      (JsPath \ "expectedContentType").readNullable[String] and
       (JsPath \ "successRedirect").readNullable[String])(PrepareUploadRequestV1.apply _)
       .filter(JsonValidationError("Maximum file size must be equal or greater than minimum file size"))(request =>
         request.minimumFileSize.getOrElse(0L) <= request.maximumFileSize.getOrElse(maxFileSize))

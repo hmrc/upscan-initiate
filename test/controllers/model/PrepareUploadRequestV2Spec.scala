@@ -141,8 +141,7 @@ private object PrepareUploadRequestV2Spec {
     successRedirect = None,
     errorRedirect = None,
     minimumFileSize = None,
-    maximumFileSize = None,
-    expectedContentType = None)
+    maximumFileSize = None)
 
   def aV2RequestWithSuccessRedirectUrlOf(url: Option[String]): PrepareUploadRequestV2 =
     template.copy(successRedirect = url)

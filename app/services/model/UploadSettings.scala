@@ -21,6 +21,5 @@ case class UploadSettings(
   callbackUrl: String,
   minimumFileSize: Option[Long],
   maximumFileSize: Option[Long],
-  expectedContentType: Option[String],
   successRedirect: Option[String],
   errorRedirect: Option[String])
