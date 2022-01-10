@@ -51,7 +51,6 @@ class S3UploadFormGeneratorSpec extends UnitSpec with GivenWhenThen {
         acl                 = "private",
         additionalMetadata  = Map("key1" -> "value1"),
         contentLengthRange  = ContentLengthRange(0, 1024),
-        expectedContentType = Some("application/xml"),
         successRedirect     = Some("http://test.com/abc"),
         errorRedirect       = Some("http://test.com/error")
       )
@@ -73,7 +72,6 @@ class S3UploadFormGeneratorSpec extends UnitSpec with GivenWhenThen {
       ((policy \ "conditions").get \\ "x-amz-date").head.as[String]              shouldBe "19970716T192030Z"
       ((policy \ "conditions").get \\ "x-amz-security-token").head.as[String]    shouldBe "session-token"
       ((policy \ "conditions").get \\ "x-amz-meta-key1").head.as[String]         shouldBe "value1"
-      ((policy \ "conditions").get \\ "Content-Type").head.as[String]            shouldBe "application/xml"
       ((policy \ "conditions").get \\ "success_action_redirect").head.as[String] shouldBe "http://test.com/abc"
       ((policy \ "conditions").get \\ "error_action_redirect").head.as[String]   shouldBe "http://test.com/error"
 
@@ -128,7 +126,6 @@ class S3UploadFormGeneratorSpec extends UnitSpec with GivenWhenThen {
         acl                 = "private",
         additionalMetadata  = Map("key1" -> "value1"),
         contentLengthRange  = ContentLengthRange(0, 1024),
-        expectedContentType = Some("application/xml"),
         successRedirect     = Some("http://test.server/success"),
         errorRedirect       = None
       )
@@ -161,7 +158,6 @@ class S3UploadFormGeneratorSpec extends UnitSpec with GivenWhenThen {
         acl                 = "private",
         additionalMetadata  = Map("key1" -> "value1"),
         contentLengthRange  = ContentLengthRange(0, 1024),
-        expectedContentType = Some("application/xml"),
         successRedirect     = None,
         errorRedirect       = Some("http://test.server/error")
       )

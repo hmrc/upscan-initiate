@@ -67,9 +67,6 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
         "maxSize" -> uploadParameters.contentLengthRange.max.toString
       ) ++
         uploadParameters.additionalMetadata.map { case (k, v) => s"x-amz-meta-$k" -> v } ++
-        uploadParameters.expectedContentType.map { contentType =>
-          "Content-Type" -> contentType
-        } ++
         uploadParameters.successRedirect.map { "success_redirect_url" -> _ } ++
         uploadParameters.errorRedirect.map { "error_redirect_url"     -> _ }
   }
@@ -94,7 +91,6 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
         callbackUrl         = callbackUrl,
         minimumFileSize     = None,
         maximumFileSize     = None,
-        expectedContentType = Some("application/xml"),
         successRedirect     = None,
         errorRedirect       = None
       )
@@ -116,7 +112,6 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
         "x-amz-meta-request-id"               -> "some-request-id",
         "minSize"                             -> "0",
         "maxSize"                             -> "1024",
-        "Content-Type"                        -> "application/xml",
         "x-amz-meta-upscan-initiate-received" -> receivedAt.toString
       )
 
@@ -139,7 +134,6 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
         callbackUrl         = callbackUrl,
         minimumFileSize     = Some(100),
         maximumFileSize     = Some(200),
-        expectedContentType = None,
         successRedirect     = None,
         errorRedirect       = None
       )
@@ -169,7 +163,6 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
         callbackUrl         = callbackUrl,
         minimumFileSize     = Some(-1),
         maximumFileSize     = Some(1024),
-        expectedContentType = None,
         successRedirect     = None,
         errorRedirect       = None
       )
@@ -199,7 +192,6 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
         callbackUrl         = callbackUrl,
         minimumFileSize     = Some(0),
         maximumFileSize     = Some(1025),
-        expectedContentType = None,
         successRedirect     = None,
         errorRedirect       = None
       )
@@ -228,7 +220,6 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
         callbackUrl         = callbackUrl,
         minimumFileSize     = Some(1024),
         maximumFileSize     = Some(0),
-        expectedContentType = None,
         successRedirect     = None,
         errorRedirect       = None
       )
@@ -257,7 +248,6 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
         callbackUrl         = callbackUrl,
         minimumFileSize     = None,
         maximumFileSize     = None,
-        expectedContentType = Some("application/xml"),
         successRedirect     = Some("https://new.service/page1"),
         errorRedirect       = None
       )
@@ -279,7 +269,6 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
         "x-amz-meta-request-id"               -> "some-request-id",
         "minSize"                             -> "0",
         "maxSize"                             -> "1024",
-        "Content-Type"                        -> "application/xml",
         "x-amz-meta-upscan-initiate-received" -> receivedAt.toString,
         "success_redirect_url"                -> "https://new.service/page1"
       )
@@ -303,7 +292,6 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
         callbackUrl         = callbackUrl,
         minimumFileSize     = None,
         maximumFileSize     = None,
-        expectedContentType = Some("application/xml"),
         successRedirect     = None,
         errorRedirect       = Some("https://new.service/error")
       )
@@ -325,7 +313,6 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
         "x-amz-meta-request-id"               -> "some-request-id",
         "minSize"                             -> "0",
         "maxSize"                             -> "1024",
-        "Content-Type"                        -> "application/xml",
         "x-amz-meta-upscan-initiate-received" -> receivedAt.toString,
         "error_redirect_url"                  -> "https://new.service/error"
       )

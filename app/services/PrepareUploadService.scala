@@ -96,7 +96,6 @@ class PrepareUploadService @Inject()(
         "upscan-initiate-received" -> receivedAt.toString
       ),
       contentLengthRange  = ContentLengthRange(minFileSize, maxFileSize),
-      expectedContentType = settings.expectedContentType,
       successRedirect     = settings.successRedirect,
       errorRedirect       = settings.errorRedirect
     )

@@ -86,14 +86,13 @@ class S3UploadFormGenerator(
       }
 
     val sessionCredentials = securityToken.map(v => Map("x-amz-security-token"                -> v)).getOrElse(Map.empty)
-    val contentTypeField   = uploadParameters.expectedContentType.map(v => Map("Content-Type" -> v)).getOrElse(Map.empty)
     val successRedirect =
       uploadParameters.successRedirect.map(v => Map("success_action_redirect" -> v)).getOrElse(Map.empty)
 
     val errorRedirect =
       uploadParameters.errorRedirect.map(v => Map("error_action_redirect" -> v)).getOrElse(Map.empty)
 
-    fields ++ metadataFields ++ sessionCredentials ++ contentTypeField ++ successRedirect ++ errorRedirect
+    fields ++ metadataFields ++ sessionCredentials ++ successRedirect ++ errorRedirect
   }
 
   private def buildPolicy(
@@ -109,9 +108,6 @@ class S3UploadFormGenerator(
     }.toSeq :+
       Json.arr("starts-with", "$x-amz-meta-original-filename", "") :+
       Json.arr("starts-with", "$x-amz-meta-upscan-initiate-response", "")
-
-    val contentTypeConstraintJson =
-      uploadParameters.expectedContentType.map(contentType => Json.obj("Content-Type" -> contentType))
 
     val successRedirectConstraint =
       uploadParameters.successRedirect.map(redirect => Json.obj("success_action_redirect" -> redirect))
@@ -135,7 +131,6 @@ class S3UploadFormGenerator(
             uploadParameters.contentLengthRange.max)
         ) ++ securityTokenJson
           ++ metadataJson
-          ++ contentTypeConstraintJson
           ++ successRedirectConstraint
           ++ errorRedirectConstraint
       )

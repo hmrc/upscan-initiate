@@ -81,7 +81,6 @@ class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponents
       callbackUrl = "https://www.example.com",
       minimumFileSize = None,
       maximumFileSize = None,
-      expectedContentType = None,
       successRedirect = None,
       errorRedirect = None
     )
@@ -97,7 +96,6 @@ class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponents
       "callbackUrl" -> "https://www.example.com",
       "minimumFileSize" -> 1,
       "maximumFileSize" -> 1024,
-      "expectedContentType" -> "application/pdf",
       "successRedirect" -> "https://www.example.com/success"
     )
     val expectedUploadSettings = UploadSettings(
@@ -105,7 +103,6 @@ class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponents
       callbackUrl = "https://www.example.com",
       minimumFileSize = Some(1),
       maximumFileSize = Some(1024),
-      expectedContentType = Some("application/pdf"),
       successRedirect = Some("https://www.example.com/success"),
       errorRedirect = None
     )
@@ -123,7 +120,6 @@ class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponents
       callbackUrl = "https://www.example.com",
       minimumFileSize = None,
       maximumFileSize = None,
-      expectedContentType = None,
       successRedirect = None,
       errorRedirect = None
     )
@@ -139,7 +135,6 @@ class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponents
       "callbackUrl" -> "https://www.example.com",
       "minimumFileSize" -> 1,
       "maximumFileSize" -> 1024,
-      "expectedContentType" -> "application/pdf",
       "successRedirect" -> "https://www.example.com/success",
       "errorRedirect" -> "https://www.example.com/error"
     )
@@ -148,7 +143,6 @@ class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponents
       callbackUrl = "https://www.example.com",
       minimumFileSize = Some(1),
       maximumFileSize = Some(1024),
-      expectedContentType = Some("application/pdf"),
       successRedirect = Some("https://www.example.com/success"),
       errorRedirect = Some("https://www.example.com/error")
     )

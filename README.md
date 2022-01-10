@@ -123,7 +123,6 @@ Example `upscan/v2/initiate` request:
 |errorRedirect|Url to redirect to if error encountered during upload.|no|
 |minimumFileSize|Minimum file size (in Bytes). Default is 0.|no|
 |maximumFileSize|Maximum file size (in Bytes). Cannot be greater than 100MB. Default is 100MB.|no|
-|expectedContentType|MIME type describing the upload contents.|no|
 
 Example response
 
@@ -133,7 +132,6 @@ Example response
     "uploadRequest": {
         "href": "https://xxxx/upscan-upload-proxy/bucketName",
         "fields": {
-            "Content-Type": "application/xml",
             "acl": "private",
             "key": "11370e18-6e24-453e-b45a-76d3e32ea33d",
             "policy": "xxxxxxxx==",
@@ -230,7 +228,6 @@ Example request:
 |minimumFileSize|Minimum file size (in Bytes). Default is 0.|no|
 |maximumFileSize|Maximum file size (in Bytes). Cannot be greater than 100MB. Default is 100MB.|no|
 |successRedirect|Url to redirect to after file has been successfully uploaded.|no|
-|expectedContentType|MIME type describing the upload contents.|no|
 
 
 Example Response:
@@ -241,7 +238,6 @@ Example Response:
     "uploadRequest": {
         "href": "https://bucketName.s3.eu-west-2.amazonaws.com",
         "fields": {
-            "Content-Type": "application/xml",
             "acl": "private",
             "key": "11370e18-6e24-453e-b45a-76d3e32ea33d",
             "policy": "xxxxxxxx==",
