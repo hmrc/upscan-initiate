@@ -26,7 +26,8 @@ case class PrepareUploadRequestV2(
   successRedirect: Option[String],
   errorRedirect: Option[String],
   minimumFileSize: Option[Long],
-  maximumFileSize: Option[Long])
+  maximumFileSize: Option[Long],
+  consumingService: Option[String])
     extends PrepareUpload {
 
   def toUploadSettings(uploadUrl: String): UploadSettings = UploadSettings(
@@ -46,7 +47,8 @@ object PrepareUploadRequestV2 {
       (JsPath \ "successRedirect").readNullable[String] and
       (JsPath \ "errorRedirect").readNullable[String] and
       (JsPath \ "minimumFileSize").readNullable[Long](min(0)) and
-      (JsPath \ "maximumFileSize").readNullable[Long](min(0L) keepAnd max(maxFileSize)))(PrepareUploadRequestV2.apply _)
+      (JsPath \ "maximumFileSize").readNullable[Long](min(0L) keepAnd max(maxFileSize)) and
+      (JsPath \ "consumingService").readNullable[String])(PrepareUploadRequestV2.apply _)
       .filter(JsonValidationError("Maximum file size must be equal or greater than minimum file size"))(request =>
         request.minimumFileSize.getOrElse(0L) <= request.maximumFileSize.getOrElse(maxFileSize))
 }

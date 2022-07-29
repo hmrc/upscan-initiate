@@ -20,5 +20,6 @@ import services.model.UploadSettings
 
 trait PrepareUpload {
   def callbackUrl: String
+  def consumingService: Option[String]
   def toUploadSettings(uploadUrl: String): UploadSettings
 }

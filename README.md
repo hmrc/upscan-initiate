@@ -74,6 +74,9 @@ The consuming service makes a POST request to `/upscan/initiate` or `upscan/v2/i
 This request must contain a `User-Agent` header that can be used to identify the service, but an allow list of authorised services is no longer cross-checked.
 The service must also provide a callbackUrl for asynchronous notification of the outcome of an upload. The callback will be made from inside the MDTP environment. Hence, the callback URL should comprise the MDTP internal callback address and not the public domain address.
 
+**Note:** Although a `User-Agent` header is always required, consuming services may wish to explicitly identify themselves by including a `"consumingService"` field in the request body. 
+This functionality may be useful to you if the actual service that initiates the request is different to your preferred logical service.
+
 **Note:** `callbackUrl` must use the `https` protocol.
 (Although this rule is relaxed when testing locally with [upscan-stub](https://github.com/hmrc/upscan-stub) rather than [upscan-initiate](https://github.com/hmrc/upscan-initiate).
 In this stubbed scenario a `callbackUrl` referring to localhost may still specify `http` as the protocol.)
@@ -103,6 +106,19 @@ Example `upscan/v2/initiate` request:
     "errorRedirect": "https://myservice.com/errorPage",
     "minimumFileSize" : 0,
     "maximumFileSize" : 1024
+}
+```
+
+Another example `upscan/v2/initiate` requests that explicitly identifies the consuming service:
+
+```json
+{
+  "callbackUrl": "https://myservice.com/callback",
+  "successRedirect": "https://myservice.com/nextPage",
+  "errorRedirect": "https://myservice.com/errorPage",
+  "minimumFileSize" : 0,
+  "maximumFileSize" : 1024,
+  "consumingService": "some-consuming-service"
 }
 ```
 

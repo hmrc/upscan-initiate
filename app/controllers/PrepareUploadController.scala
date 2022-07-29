@@ -60,12 +60,13 @@ class PrepareUploadController @Inject()(
     Action.async(parse.json) { implicit request =>
       val receivedAt = Instant.now(clock)
 
-      requireUserAgent[JsValue] { (_, consumingService) =>
+      requireUserAgent[JsValue] { (_, userAgent) =>
         withJsonBody[T] { prepareUploadRequest: T =>
           withAllowedCallbackProtocol(prepareUploadRequest.callbackUrl) {
             val sessionId = hc(request).sessionId.map(_.value).getOrElse("n/a")
             val requestId = hc(request).requestId.map(_.value).getOrElse("n/a")
-            logger.debug(s"Processing request: [$prepareUploadRequest] with requestId: [$requestId] sessionId: [$sessionId] from: [$consumingService].")
+            logger.debug(s"Processing request: [$prepareUploadRequest] with requestId: [$requestId] sessionId: [$sessionId] from: [$userAgent].")
+            val consumingService = prepareUploadRequest.consumingService.getOrElse(userAgent)
             val result: PreparedUploadResponse =
               prepareUploadService
                 .prepareUpload(

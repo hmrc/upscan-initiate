@@ -126,6 +126,18 @@ class PrepareUploadRequestV2Spec extends UnitSpec with EitherValues {
         parseResult.isError shouldBe true
       }
     }
+
+    "specifying an explicit consuming service" should {
+      "deserialise accordingly" in {
+        val request1              = s"""{"callbackUrl":"$CallbackUrl", "consumingService": "$ConsumingService"}"""
+        val prepareUploadRequest1 = Json.parse(request1).validate(PrepareUploadRequestV2.reads(MaxFileSize)).get
+        prepareUploadRequest1.consumingService shouldBe Some(ConsumingService)
+
+        val request2              = s"""{"callbackUrl":"$CallbackUrl"}"""
+        val prepareUploadRequest2 = Json.parse(request2).validate(PrepareUploadRequestV2.reads(MaxFileSize)).get
+        prepareUploadRequest2.consumingService shouldBe None
+      }
+    }
   }
 }
 
@@ -135,13 +147,15 @@ private object PrepareUploadRequestV2Spec {
   val SuccessRedirectUrl = "https://myservice.com/nextPage"
   val ErrorRedirectUrl = "https://myservice.com/errorPage"
   val MaxFileSize = 512
+  val ConsumingService = "some-consuming-service"
 
   private val template = PrepareUploadRequestV2(
     callbackUrl = CallbackUrl,
     successRedirect = None,
     errorRedirect = None,
     minimumFileSize = None,
-    maximumFileSize = None)
+    maximumFileSize = None,
+    consumingService = None)
 
   def aV2RequestWithSuccessRedirectUrlOf(url: Option[String]): PrepareUploadRequestV2 =
     template.copy(successRedirect = url)
