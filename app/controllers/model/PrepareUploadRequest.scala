@@ -16,39 +16,34 @@
 
 package controllers.model
 
+import play.api.libs.json.Reads
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 import play.api.libs.json.Reads.{max, min}
-import play.api.libs.json.{JsPath, JsonValidationError, Reads}
-import services.model.UploadSettings
 
-case class PrepareUploadRequestV1(
+final case class PrepareUploadRequest(
   callbackUrl: String,
   minimumFileSize: Option[Long],
   maximumFileSize: Option[Long],
   successRedirect: Option[String],
-  consumingService: Option[String])
-    extends PrepareUpload {
+  errorRedirect: Option[String],
+  consumingService: Option[String]
+)
 
-  def toUploadSettings(uploadUrl: String): UploadSettings = UploadSettings(
-    uploadUrl           = uploadUrl,
-    callbackUrl         = callbackUrl,
-    minimumFileSize     = minimumFileSize,
-    maximumFileSize     = maximumFileSize,
-    successRedirect     = successRedirect,
-    errorRedirect       = None
-  )
+object PrepareUploadRequest {
 
-}
+  def readsV1(maxFileSize: Long): Reads[PrepareUploadRequest] =
+    readsV2(maxFileSize)
+      .map(_.copy(errorRedirect = None))
 
-object PrepareUploadRequestV1 {
-
-  def reads(maxFileSize: Long): Reads[PrepareUploadRequestV1] =
-    ((JsPath \ "callbackUrl").read[String] and
-      (JsPath \ "minimumFileSize").readNullable[Long](min(0)) and
-      (JsPath \ "maximumFileSize").readNullable[Long](min(0L) keepAnd max(maxFileSize)) and
-      (JsPath \ "successRedirect").readNullable[String] and
-      (JsPath \ "consumingService").readNullable[String])(PrepareUploadRequestV1.apply _)
+  def readsV2(maxFileSize: Long): Reads[PrepareUploadRequest] =
+    ( (__ \ "callbackUrl"     ).read[String]
+    ~ (__ \ "minimumFileSize" ).readNullable[Long](min(0L))
+    ~ (__ \ "maximumFileSize" ).readNullable[Long](min(0L) keepAnd max(maxFileSize))
+    ~ (__ \ "successRedirect" ).readNullable[String]
+    ~ (__ \ "errorRedirect"   ).readNullable[String]
+    ~ (__ \ "consumingService").readNullable[String]
+    )(PrepareUploadRequest.apply _)
       .filter(JsonValidationError("Maximum file size must be equal or greater than minimum file size"))(request =>
         request.minimumFileSize.getOrElse(0L) <= request.maximumFileSize.getOrElse(maxFileSize))
-
 }

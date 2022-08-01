@@ -16,10 +16,14 @@
 
 package services.model
 
-case class UploadSettings(
+import controllers.model.PrepareUploadRequest
+
+final case class UploadSettings(
   uploadUrl: String,
-  callbackUrl: String,
-  minimumFileSize: Option[Long],
-  maximumFileSize: Option[Long],
-  successRedirect: Option[String],
-  errorRedirect: Option[String])
+  userAgent: String,
+  prepareUploadRequest: PrepareUploadRequest
+) {
+
+  lazy val consumingService: String =
+    prepareUploadRequest.consumingService.getOrElse(userAgent)
+}

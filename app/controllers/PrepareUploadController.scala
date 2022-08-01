@@ -18,14 +18,15 @@ package controllers
 
 import java.net.URL
 import java.time.{Clock, Instant}
-
 import config.ServiceConfiguration
-import controllers.model.{PrepareUpload, PrepareUploadRequestV1, PrepareUploadRequestV2, PreparedUploadResponse}
+import controllers.model.{PrepareUploadRequest, PreparedUploadResponse}
+
 import javax.inject.{Inject, Singleton}
 import play.api.Logging
 import play.api.libs.json._
 import play.api.mvc.{Action, ControllerComponents, Result}
 import services.PrepareUploadService
+import services.model.UploadSettings
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.UserAgentFilter
 
@@ -39,42 +40,55 @@ class PrepareUploadController @Inject()(
   clock: Clock,
   controllerComponents: ControllerComponents) extends BackendController(controllerComponents) with UserAgentFilter with Logging {
 
-  implicit val prepareUploadRequestReads: Reads[PrepareUploadRequestV1] =
-    PrepareUploadRequestV1.reads(prepareUploadService.globalFileSizeLimit)
+  val prepareUploadRequestReadsV1: Reads[PrepareUploadRequest] =
+    PrepareUploadRequest.readsV1(prepareUploadService.globalFileSizeLimit)
 
-  implicit val prepareUploadRequestV2Reads: Reads[PrepareUploadRequestV2] =
-    PrepareUploadRequestV2.reads(prepareUploadService.globalFileSizeLimit)
+  val prepareUploadRequestReadsV2: Reads[PrepareUploadRequest] =
+    PrepareUploadRequest.readsV2(prepareUploadService.globalFileSizeLimit)
 
+  /**
+   * V1 of the API supports direct upload to an S3 bucket and *does not support* error redirects in the event of failure
+   */
   def prepareUploadV1(): Action[JsValue] = {
     val uploadUrl = s"https://${configuration.inboundBucketName}.s3.amazonaws.com"
-    prepareUpload[PrepareUploadRequestV1](uploadUrl)
+    prepareUpload(uploadUrl)(prepareUploadRequestReadsV1)
   }
 
+  /**
+   * V2 of the API supports upload to an S3 bucket via a proxy that additionally supports error redirects in the event of failure
+   */
   def prepareUploadV2(): Action[JsValue] = {
     val uploadUrl = s"${configuration.uploadProxyUrl}/v1/uploads/${configuration.inboundBucketName}"
-    prepareUpload[PrepareUploadRequestV2](uploadUrl)
+    prepareUpload(uploadUrl)(prepareUploadRequestReadsV2)
   }
 
-  private def prepareUpload[T <: PrepareUpload](uploadUrl: String)
-                                               (implicit reads: Reads[T], manifest: Manifest[T]): Action[JsValue] =
+  private def prepareUpload(uploadUrl: String)(
+    implicit reads: Reads[PrepareUploadRequest]): Action[JsValue] =
     Action.async(parse.json) { implicit request =>
       val receivedAt = Instant.now(clock)
 
       requireUserAgent[JsValue] { (_, userAgent) =>
-        withJsonBody[T] { prepareUploadRequest: T =>
+        withJsonBody[PrepareUploadRequest] { prepareUploadRequest =>
           withAllowedCallbackProtocol(prepareUploadRequest.callbackUrl) {
+
             val sessionId = hc(request).sessionId.map(_.value).getOrElse("n/a")
             val requestId = hc(request).requestId.map(_.value).getOrElse("n/a")
             logger.debug(s"Processing request: [$prepareUploadRequest] with requestId: [$requestId] sessionId: [$sessionId] from: [$userAgent].")
-            val consumingService = prepareUploadRequest.consumingService.getOrElse(userAgent)
-            val result: PreparedUploadResponse =
+
+            val settings =
+              UploadSettings(
+                uploadUrl            = uploadUrl,
+                userAgent            = userAgent,
+                prepareUploadRequest = prepareUploadRequest
+              )
+
+            val result =
               prepareUploadService
                 .prepareUpload(
-                  settings         = prepareUploadRequest.toUploadSettings(uploadUrl),
-                  consumingService = consumingService,
-                  requestId        = requestId,
-                  sessionId        = sessionId,
-                  receivedAt       = receivedAt
+                  settings   = settings,
+                  requestId  = requestId,
+                  sessionId  = sessionId,
+                  receivedAt = receivedAt
                 )
 
             Future.successful(Ok(Json.toJson(result)(PreparedUploadResponse.writes)))

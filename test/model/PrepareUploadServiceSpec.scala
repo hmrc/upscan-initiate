@@ -18,11 +18,12 @@ package model
 
 import java.time
 import java.time.Instant
-
 import com.codahale.metrics.MetricRegistry
 import com.kenshoo.play.metrics.Metrics
 import config.ServiceConfiguration
 import connectors.model.{UploadFormGenerator, UploadParameters}
+import controllers.model.PrepareUploadRequest
+import model.PrepareUploadServiceSpec.{requestTemplate, settingsTemplate}
 import org.scalatest.GivenWhenThen
 import services.PrepareUploadService
 import services.model.UploadSettings
@@ -83,31 +84,28 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
 
       Given("there are valid upload settings")
 
-      val uploadUrl   = s"http://upload-proxy.com"
-      val callbackUrl = "http://www.callback.com"
-
-      val uploadSettings = UploadSettings(
-        uploadUrl           = uploadUrl,
-        callbackUrl         = callbackUrl,
-        minimumFileSize     = None,
-        maximumFileSize     = None,
-        successRedirect     = None,
-        errorRedirect       = None
-      )
+      val settings =
+        settingsTemplate
 
       When("we setup the upload")
 
-      val result = service(metrics)
-        .prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-request-id", "some-session-id", receivedAt)
+      val result =
+        service(metrics)
+          .prepareUpload(
+            settings,
+            "some-request-id",
+            "some-session-id",
+            receivedAt
+          )
 
       Then("proper upload request form definition should be returned")
 
-      result.uploadRequest.href shouldBe uploadUrl
+      result.uploadRequest.href shouldBe settings.uploadUrl
       result.uploadRequest.fields shouldBe Map(
         "bucket"                              -> serviceConfiguration.inboundBucketName,
         "key"                                 -> result.reference.value,
-        "x-amz-meta-callback-url"             -> callbackUrl,
-        "x-amz-meta-consuming-service"        -> "PrepareUploadServiceSpec",
+        "x-amz-meta-callback-url"             -> settings.prepareUploadRequest.callbackUrl,
+        "x-amz-meta-consuming-service"        -> settings.consumingService,
         "x-amz-meta-session-id"               -> "some-session-id",
         "x-amz-meta-request-id"               -> "some-request-id",
         "minSize"                             -> "0",
@@ -126,22 +124,20 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
 
       Given("there are valid upload settings with size limits")
 
-      val uploadUrl   = s"http://upload-proxy.com"
-      val callbackUrl = "http://www.callback.com"
-
-      val uploadSettings = UploadSettings(
-        uploadUrl           = uploadUrl,
-        callbackUrl         = callbackUrl,
-        minimumFileSize     = Some(100),
-        maximumFileSize     = Some(200),
-        successRedirect     = None,
-        errorRedirect       = None
-      )
+      val settings =
+        settingsTemplate
+          .copy(
+            prepareUploadRequest =
+              requestTemplate.copy(
+                minimumFileSize = Some(100),
+                maximumFileSize = Some(200),
+              )
+          )
 
       When("we setup the upload")
 
       val result = service(metrics)
-        .prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-request-id", "some-session-id", receivedAt)
+        .prepareUpload(settings, "some-request-id", "some-session-id", receivedAt)
 
       Then("upload request should contain requested min/max size")
 
@@ -155,23 +151,21 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
 
       val metrics = metricsStub()
 
-      val uploadUrl   = s"http://upload-proxy.com"
-      val callbackUrl = "http://www.callback.com"
-
-      val uploadSettings = UploadSettings(
-        uploadUrl           = uploadUrl,
-        callbackUrl         = callbackUrl,
-        minimumFileSize     = Some(-1),
-        maximumFileSize     = Some(1024),
-        successRedirect     = None,
-        errorRedirect       = None
-      )
+      val settings =
+        settingsTemplate
+          .copy(
+            prepareUploadRequest =
+              requestTemplate.copy(
+                minimumFileSize = Some(-1),
+                maximumFileSize = Some(1024),
+              )
+          )
 
       When("we setup the upload")
       Then("an exception should be thrown")
 
       val thrown = the[IllegalArgumentException] thrownBy service(metrics)
-        .prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-request-id", "some-session-id", receivedAt)
+        .prepareUpload(settings, "some-request-id", "some-session-id", receivedAt)
       thrown.getMessage should include("Minimum file size is less than 0")
 
       metrics.defaultRegistry.counter("uploadInitiated").getCount shouldBe 0
@@ -184,23 +178,21 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
 
       val metrics = metricsStub()
 
-      val uploadUrl   = s"http://upload-proxy.com"
-      val callbackUrl = "http://www.callback.com"
-
-      val uploadSettings = UploadSettings(
-        uploadUrl           = uploadUrl,
-        callbackUrl         = callbackUrl,
-        minimumFileSize     = Some(0),
-        maximumFileSize     = Some(1025),
-        successRedirect     = None,
-        errorRedirect       = None
-      )
+      val settings =
+        settingsTemplate
+          .copy(
+            prepareUploadRequest =
+              requestTemplate.copy(
+                minimumFileSize = Some(0),
+                maximumFileSize = Some(1025),
+              )
+          )
 
       When("we setup the upload")
       Then("an exception should be thrown")
 
       val thrown = the[IllegalArgumentException] thrownBy service(metrics)
-        .prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-request-id", "some-session-id", receivedAt)
+        .prepareUpload(settings, "some-request-id", "some-session-id", receivedAt)
       thrown.getMessage should include("Maximum file size is greater than global maximum file size")
 
       metrics.defaultRegistry.counter("uploadInitiated").getCount shouldBe 0
@@ -212,23 +204,21 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
 
       val metrics = metricsStub()
 
-      val uploadUrl   = s"http://upload-proxy.com"
-      val callbackUrl = "http://www.callback.com"
-
-      val uploadSettings = UploadSettings(
-        uploadUrl           = uploadUrl,
-        callbackUrl         = callbackUrl,
-        minimumFileSize     = Some(1024),
-        maximumFileSize     = Some(0),
-        successRedirect     = None,
-        errorRedirect       = None
-      )
+      val settings =
+        settingsTemplate
+          .copy(
+            prepareUploadRequest =
+              requestTemplate.copy(
+                minimumFileSize = Some(1024),
+                maximumFileSize = Some(0),
+              )
+          )
 
       When("we setup the upload")
       Then("an exception should be thrown")
 
       val thrown = the[IllegalArgumentException] thrownBy service(metrics)
-        .prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-request-id", "some-session-id", receivedAt)
+        .prepareUpload(settings, "some-request-id", "some-session-id", receivedAt)
       thrown.getMessage should include("Minimum file size is greater than maximum file size")
 
       metrics.defaultRegistry.counter("uploadInitiated").getCount shouldBe 0
@@ -240,37 +230,34 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
 
       Given("there are valid upload settings")
 
-      val uploadUrl   = s"http://upload-proxy.com"
-      val callbackUrl = "http://www.callback.com"
-
-      val uploadSettings = UploadSettings(
-        uploadUrl           = uploadUrl,
-        callbackUrl         = callbackUrl,
-        minimumFileSize     = None,
-        maximumFileSize     = None,
-        successRedirect     = Some("https://new.service/page1"),
-        errorRedirect       = None
-      )
+      val settings =
+        settingsTemplate
+          .copy(
+            prepareUploadRequest =
+              requestTemplate.copy(
+                successRedirect = Some("https://new.service/page1")
+              )
+          )
 
       When("we setup the upload")
 
       val result = service(metrics)
-        .prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-request-id", "some-session-id", receivedAt)
+        .prepareUpload(settings, "some-request-id", "some-session-id", receivedAt)
 
       Then("proper upload request form definition should be returned")
 
-      result.uploadRequest.href shouldBe uploadUrl
+      result.uploadRequest.href shouldBe settings.uploadUrl
       result.uploadRequest.fields shouldBe Map(
         "bucket"                              -> serviceConfiguration.inboundBucketName,
         "key"                                 -> result.reference.value,
-        "x-amz-meta-callback-url"             -> callbackUrl,
-        "x-amz-meta-consuming-service"        -> "PrepareUploadServiceSpec",
+        "x-amz-meta-callback-url"             -> settings.prepareUploadRequest.callbackUrl,
+        "x-amz-meta-consuming-service"        -> settings.consumingService,
         "x-amz-meta-session-id"               -> "some-session-id",
         "x-amz-meta-request-id"               -> "some-request-id",
         "minSize"                             -> "0",
         "maxSize"                             -> "1024",
         "x-amz-meta-upscan-initiate-received" -> receivedAt.toString,
-        "success_redirect_url"                -> "https://new.service/page1"
+        "success_redirect_url"                -> settings.prepareUploadRequest.successRedirect.get
       )
 
       And("uploadInitiated counter has been incremented")
@@ -284,37 +271,34 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
 
       Given("there are valid upload settings")
 
-      val uploadUrl   = s"http://upload-proxy.com"
-      val callbackUrl = "http://www.callback.com"
-
-      val uploadSettings = UploadSettings(
-        uploadUrl           = uploadUrl,
-        callbackUrl         = callbackUrl,
-        minimumFileSize     = None,
-        maximumFileSize     = None,
-        successRedirect     = None,
-        errorRedirect       = Some("https://new.service/error")
-      )
+      val settings =
+        settingsTemplate
+          .copy(
+            prepareUploadRequest =
+              requestTemplate.copy(
+                errorRedirect = Some("https://new.service/error")
+              )
+          )
 
       When("we setup the upload")
 
       val result = service(metrics)
-        .prepareUpload(uploadSettings, "PrepareUploadServiceSpec", "some-request-id", "some-session-id", receivedAt)
+        .prepareUpload(settings, "some-request-id", "some-session-id", receivedAt)
 
       Then("proper upload request form definition should be returned")
 
-      result.uploadRequest.href shouldBe uploadUrl
+      result.uploadRequest.href shouldBe settings.uploadUrl
       result.uploadRequest.fields shouldBe Map(
         "bucket"                              -> serviceConfiguration.inboundBucketName,
         "key"                                 -> result.reference.value,
-        "x-amz-meta-callback-url"             -> callbackUrl,
-        "x-amz-meta-consuming-service"        -> "PrepareUploadServiceSpec",
+        "x-amz-meta-callback-url"             -> settings.prepareUploadRequest.callbackUrl,
+        "x-amz-meta-consuming-service"        -> settings.consumingService,
         "x-amz-meta-session-id"               -> "some-session-id",
         "x-amz-meta-request-id"               -> "some-request-id",
         "minSize"                             -> "0",
         "maxSize"                             -> "1024",
         "x-amz-meta-upscan-initiate-received" -> receivedAt.toString,
-        "error_redirect_url"                  -> "https://new.service/error"
+        "error_redirect_url"                  -> settings.prepareUploadRequest.errorRedirect.get
       )
 
       And("uploadInitiated counter has been incremented")
@@ -323,5 +307,24 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
     }
 
   }
+}
 
+object PrepareUploadServiceSpec {
+
+  val requestTemplate: PrepareUploadRequest =
+    PrepareUploadRequest(
+      callbackUrl      = "http://www.callback.com",
+      minimumFileSize  = None,
+      maximumFileSize  = None,
+      successRedirect  = None,
+      errorRedirect    = None,
+      consumingService = None
+    )
+
+  val settingsTemplate: UploadSettings =
+    UploadSettings(
+      uploadUrl            = s"http://upload-proxy.com",
+      userAgent            = "PrepareUploadServiceSpec",
+      prepareUploadRequest = requestTemplate
+    )
 }

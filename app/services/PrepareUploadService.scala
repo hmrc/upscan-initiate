@@ -17,11 +17,11 @@
 package services
 
 import java.time.Instant
-
 import com.kenshoo.play.metrics.Metrics
 import config.ServiceConfiguration
 import connectors.model.{ContentLengthRange, UploadFormGenerator, UploadParameters}
 import controllers.model.{PreparedUploadResponse, Reference, UploadFormTemplate}
+
 import javax.inject.{Inject, Singleton}
 import org.slf4j.MDC
 import play.api.Logging
@@ -35,7 +35,6 @@ class PrepareUploadService @Inject()(
 
   def prepareUpload(
     settings: UploadSettings,
-    consumingService: String,
     requestId: String,
     sessionId: String,
     receivedAt: Instant): PreparedUploadResponse = {
@@ -44,20 +43,21 @@ class PrepareUploadService @Inject()(
 
     val result =
       PreparedUploadResponse(
-        reference = reference,
-        uploadRequest = generatePost(
-          key              = reference,
-          expiration       = expiration,
-          settings         = settings,
-          consumingService = consumingService,
-          requestId        = requestId,
-          sessionId        = sessionId,
-          receivedAt       = receivedAt)
+        reference     = reference,
+        uploadRequest =
+            generatePost(
+            key        = reference,
+            expiration = expiration,
+            settings   = settings,
+            requestId  = requestId,
+            sessionId  = sessionId,
+            receivedAt = receivedAt
+          )
       )
 
     try {
       MDC.put("file-reference", reference.toString)
-      logger.info(s"Allocated key=[${reference.value}] to uploadRequest with requestId=[$requestId] sessionId=[$sessionId] from [$consumingService].")
+      logger.info(s"Allocated key=[${reference.value}] to uploadRequest with requestId=[$requestId] sessionId=[$sessionId] from [${settings.consumingService}].")
       logger.debug(s"Prepared upload response [$result].")
       metrics.defaultRegistry.counter("uploadInitiated").inc()
 
@@ -71,13 +71,12 @@ class PrepareUploadService @Inject()(
     key: Reference,
     expiration: Instant,
     settings: UploadSettings,
-    consumingService: String,
     requestId: String,
     sessionId: String,
     receivedAt: Instant): UploadFormTemplate = {
 
-    val minFileSize = settings.minimumFileSize.getOrElse(0L)
-    val maxFileSize = settings.maximumFileSize.getOrElse(globalFileSizeLimit)
+    val minFileSize = settings.prepareUploadRequest.minimumFileSize.getOrElse(0L)
+    val maxFileSize = settings.prepareUploadRequest.maximumFileSize.getOrElse(globalFileSizeLimit)
 
     require(minFileSize >= 0, "Minimum file size is less than 0")
     require(maxFileSize <= globalFileSizeLimit, "Maximum file size is greater than global maximum file size")
@@ -89,21 +88,20 @@ class PrepareUploadService @Inject()(
       objectKey          = key.value,
       acl                = "private",
       additionalMetadata = Map(
-        "callback-url"             -> settings.callbackUrl,
-        "consuming-service"        -> consumingService,
+        "callback-url"             -> settings.prepareUploadRequest.callbackUrl,
+        "consuming-service"        -> settings.consumingService,
         "session-id"               -> sessionId,
         "request-id"               -> requestId,
         "upscan-initiate-received" -> receivedAt.toString
       ),
       contentLengthRange  = ContentLengthRange(minFileSize, maxFileSize),
-      successRedirect     = settings.successRedirect,
-      errorRedirect       = settings.errorRedirect
+      successRedirect     = settings.prepareUploadRequest.successRedirect,
+      errorRedirect       = settings.prepareUploadRequest.errorRedirect
     )
 
     val form     = postSigner.generateFormFields(uploadParameters)
-    val endpoint = settings.uploadUrl
 
-    UploadFormTemplate(endpoint, form)
+    UploadFormTemplate(settings.uploadUrl, form)
   }
 
   def globalFileSizeLimit: Long = configuration.globalFileSizeLimit
