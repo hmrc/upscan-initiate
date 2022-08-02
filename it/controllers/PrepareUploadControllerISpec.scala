@@ -251,60 +251,6 @@ class PrepareUploadControllerISpec extends AnyWordSpecLike with should.Matchers 
       fields should contain key "policy"
     }
   }
-
-  "PrepareUploadController prepareUploadV1 with expectedContentType" in {
-    val postBodyJson = Json.parse("""|{
-                                     |	"callbackUrl": "https://some-url/callback",
-                                     |	"minimumFileSize" : 0,
-                                     |	"maximumFileSize" : 1024,
-                                     |	"expectedContentType": "application/xml",
-                                     |  "successRedirect": "https://some-url/success"
-                                     |}""".stripMargin)
-
-    Given("a request containing a User-Agent header")
-    val headers = FakeHeaders(Seq((USER_AGENT, SomeConsumingService)))
-    val initiateRequest = FakeRequest(POST, uri = "/upscan/initiate", headers, postBodyJson)
-
-    When("a request is posted to the /initiate endpoint")
-    val initiateResponse = route(app, initiateRequest).get
-
-    Then("the response should indicate success")
-    status(initiateResponse) shouldBe OK
-
-    And("the response should not contain Content-Type")
-    val responseJson = contentAsJson(initiateResponse)
-    val fields = (responseJson \ "uploadRequest" \ "fields").as[Map[String, String]]
-    fields.get("Content-Type") shouldBe empty
-  }
-
-  "PrepareUploadController prepareUploadV2 with expectedContentType" in {
-    val postBodyJson = Json.parse("""
-                                    |{
-                                    |	"callbackUrl": "https://some-url/callback",
-                                    |	"successRedirect": "https://some-url/success",
-                                    |	"errorRedirect": "https://some-url/error",
-                                    |	"minimumFileSize" : 0,
-                                    |	"expectedContentType": "application/xml",
-                                    |	"maximumFileSize" : 1024
-                                    |}
-      """.stripMargin)
-
-    Given("a request containing a User-Agent header")
-    val headers = FakeHeaders(Seq((USER_AGENT, SomeConsumingService)))
-    val initiateRequest = FakeRequest(POST, uri = "/upscan/v2/initiate", headers, postBodyJson)
-
-    When("a request is posted to the /initiate endpoint")
-    val initiateResponse = route(app, initiateRequest).get
-
-    Then("the response should indicate success")
-    status(initiateResponse) shouldBe OK
-
-    And("the response should contain the requested upload fields")
-    val responseJson = contentAsJson(initiateResponse)
-    val fields = (responseJson \ "uploadRequest" \ "fields").as[Map[String, String]]
-    fields.get("Content-Type") shouldBe empty
-  }
-
 }
 
 private object PrepareUploadControllerISpec {
