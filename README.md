@@ -17,10 +17,11 @@ This service is not for transfer of files from one HMRC service to another. Plea
 1. [Introduction](#introduction)
 2. [File upload workflow](#workflow)
 3. [Service usage](#service)
-  a. [Requesting a URL to upload to](#service__request)
-  b. [The file upload](#service__upload)
-  c. [File upload outcome](#service__uoutcome)
-  d. [File processing outcome](#service__poutcome)
+  a. [Consuming services](#service__consuming-services)
+  b. [Requesting a URL to upload to](#service__request)
+  c. [The file upload](#service__upload)
+  d. [File upload outcome](#service__uoutcome)
+  e. [File processing outcome](#service__poutcome)
     i. [Success](#service__poutcome__success)
     ii. [Failure](#service__poutcome__failure)
 4. [Error handling](#error)
@@ -68,14 +69,21 @@ Please view the [Upscan Service & Flow Overview in Confluence](https://confluenc
 
 ## Service usage <a name="service"></a>
 
+### Consuming Services <a name="service__consuming-services"></a>
+
+A _consuming service_ is the intermediary between the end-user and Upscan, responsible for initiating upload requests and configuring the parameters of the upload itself (minimum and maximum file sizes, permitted MIME types and redirect URLs, etc.)
+
+Consuming services must identify themselves to `upscan-initiate` in one of two ways:
+
+ 1. Via the `User-Agent` header, which must always be provided
+ 2. By including a `"consumingService"` field in the request body, which overrides the value provided in the `User-Agent` header and may be useful if your use-case involves proxies or requires _logical_ consuming services that differ from the actual service that initiates the request
+
+Consuming services may configure permitted MIME-types in [upscan-app-config](https://github.com/hmrc/upscan-app-config) (a default set is used in the case that no consuming service-specific configuration is provided.)
+
 ### Requesting a URL to upload to <a name="service__request"></a>
 
 The consuming service makes a POST request to `/upscan/initiate` or `upscan/v2/initiate`.
-This request must contain a `User-Agent` header that can be used to identify the service, but an allow list of authorised services is no longer cross-checked.
 The service must also provide a callbackUrl for asynchronous notification of the outcome of an upload. The callback will be made from inside the MDTP environment. Hence, the callback URL should comprise the MDTP internal callback address and not the public domain address.
-
-**Note:** Although a `User-Agent` header is always required, consuming services may wish to explicitly identify themselves by including a `"consumingService"` field in the request body. 
-This functionality may be useful to you if the actual service that initiates the request is different to your preferred logical service.
 
 **Note:** `callbackUrl` must use the `https` protocol.
 (Although this rule is relaxed when testing locally with [upscan-stub](https://github.com/hmrc/upscan-stub) rather than [upscan-initiate](https://github.com/hmrc/upscan-initiate).
