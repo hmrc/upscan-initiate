@@ -17,11 +17,10 @@
 package controllers
 
 import java.time.Clock
-
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import config.ServiceConfiguration
-import controllers.model.{PreparedUploadResponse, Reference, UploadFormTemplate}
+import controllers.model.{PrepareUploadRequest, PreparedUploadResponse, Reference, UploadFormTemplate}
 import org.scalatest.GivenWhenThen
 import play.api.http.HeaderNames.USER_AGENT
 import play.api.http.Status.{BAD_REQUEST, OK}
@@ -34,6 +33,8 @@ import services.PrepareUploadService
 import services.model.UploadSettings
 import test.UnitSpec
 import Helpers.contentAsJson
+import controllers.PrepareUploadControllerSpec.{ConsumingService, UserAgent, requestTemplate, settingsTemplate}
+
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -75,81 +76,122 @@ class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponents
   private trait WithV2BadRequestFixture extends WithV1BadRequestFixture with WithUploadProxyUrl
 
   "V1 initiate with minimal request settings" should {
-    val minimalRequestBody = Json.obj("callbackUrl" -> "https://www.example.com")
-    val expectedUploadSettings = UploadSettings(
-      uploadUrl = "https://inbound-bucket.s3.amazonaws.com",
-      callbackUrl = "https://www.example.com",
-      minimumFileSize = None,
-      maximumFileSize = None,
-      successRedirect = None,
-      errorRedirect = None
-    )
+    val minimalRequestBody =
+      Json.obj("callbackUrl" -> "https://www.example.com")
+
+    val expectedUploadSettings =
+      settingsTemplate
+        .copy(
+          uploadUrl = "https://inbound-bucket.s3.amazonaws.com"
+        )
 
     val _ = new WithV1SuccessFixture {
-      behave like successfulInitiate(config, _.prepareUploadV1(), minimalRequestBody, requestId = None, sessionId = None,
-        expectedUploadSettings)
+      behave like
+        successfulInitiate(
+          config                   = config,
+          actionUnderTest          = _.prepareUploadV1(),
+          requestBody              = minimalRequestBody,
+          requestId                = None,
+          sessionId                = None,
+          expectedUploadSettings   = expectedUploadSettings
+        )
     }
   }
 
   "V1 initiate with all request settings" should {
-    val maximalRequestBody = Json.obj(
-      "callbackUrl" -> "https://www.example.com",
-      "minimumFileSize" -> 1,
-      "maximumFileSize" -> 1024,
-      "successRedirect" -> "https://www.example.com/success"
-    )
-    val expectedUploadSettings = UploadSettings(
-      uploadUrl = "https://inbound-bucket.s3.amazonaws.com",
-      callbackUrl = "https://www.example.com",
-      minimumFileSize = Some(1),
-      maximumFileSize = Some(1024),
-      successRedirect = Some("https://www.example.com/success"),
-      errorRedirect = None
-    )
+    val maximalRequestBody =
+      Json.obj(
+        "callbackUrl" -> "https://www.example.com",
+        "minimumFileSize" -> 1,
+        "maximumFileSize" -> 1024,
+        "successRedirect" -> "https://www.example.com/success",
+        "consumingService" -> ConsumingService
+      )
+
+    val expectedUploadSettings =
+      settingsTemplate
+        .copy(
+          uploadUrl            = "https://inbound-bucket.s3.amazonaws.com",
+          prepareUploadRequest =
+            requestTemplate.copy(
+              minimumFileSize  = Some(1),
+              maximumFileSize  = Some(1024),
+              successRedirect  = Some("https://www.example.com/success"),
+              consumingService = Some(ConsumingService)
+            )
+        )
 
     val _ = new WithV1SuccessFixture {
-      behave like successfulInitiate(config, _.prepareUploadV1(), maximalRequestBody, requestId = Some("a-request-id"),
-        sessionId = Some("a-session-id"), expectedUploadSettings)
+      behave like
+        successfulInitiate(
+          config                   = config,
+          actionUnderTest          = _.prepareUploadV1(),
+          requestBody              = maximalRequestBody,
+          requestId                = Some("a-request-id"),
+          sessionId                = Some("a-session-id"),
+          expectedUploadSettings   = expectedUploadSettings
+        )
     }
   }
 
   "V2 initiate with minimal request settings" should {
-    val minimalRequestBody = Json.obj("callbackUrl" -> "https://www.example.com")
-    val expectedUploadSettings = UploadSettings(
-      uploadUrl = "https://upload-proxy.com/v1/uploads/inbound-bucket",
-      callbackUrl = "https://www.example.com",
-      minimumFileSize = None,
-      maximumFileSize = None,
-      successRedirect = None,
-      errorRedirect = None
-    )
+    val minimalRequestBody =
+      Json.obj("callbackUrl" -> "https://www.example.com")
+
+    val expectedUploadSettings =
+      settingsTemplate
+        .copy(
+          uploadUrl = "https://upload-proxy.com/v1/uploads/inbound-bucket"
+        )
 
     val _ = new WithV2SuccessFixture {
-      behave like successfulInitiate(config, _.prepareUploadV2(), minimalRequestBody, requestId = None, sessionId = None,
-        expectedUploadSettings)
+      behave like
+        successfulInitiate(
+          config                   = config,
+          actionUnderTest          = _.prepareUploadV2(),
+          requestBody              = minimalRequestBody,
+          requestId                = None,
+          sessionId                = None,
+          expectedUploadSettings   = expectedUploadSettings
+        )
     }
   }
 
   "V2 initiate with all request settings" should {
-    val maximalRequestBody = Json.obj(
-      "callbackUrl" -> "https://www.example.com",
-      "minimumFileSize" -> 1,
-      "maximumFileSize" -> 1024,
-      "successRedirect" -> "https://www.example.com/success",
-      "errorRedirect" -> "https://www.example.com/error"
-    )
-    val expectedUploadSettings = UploadSettings(
-      uploadUrl = "https://upload-proxy.com/v1/uploads/inbound-bucket",
-      callbackUrl = "https://www.example.com",
-      minimumFileSize = Some(1),
-      maximumFileSize = Some(1024),
-      successRedirect = Some("https://www.example.com/success"),
-      errorRedirect = Some("https://www.example.com/error")
-    )
+    val maximalRequestBody =
+      Json.obj(
+        "callbackUrl" -> "https://www.example.com",
+        "minimumFileSize" -> 1,
+        "maximumFileSize" -> 1024,
+        "successRedirect" -> "https://www.example.com/success",
+        "errorRedirect" -> "https://www.example.com/error",
+        "consumingService" -> ConsumingService
+      )
+
+    val expectedUploadSettings =
+      settingsTemplate
+        .copy(
+          uploadUrl            = "https://upload-proxy.com/v1/uploads/inbound-bucket",
+          prepareUploadRequest =
+            requestTemplate.copy(
+              minimumFileSize  = Some(1),
+              maximumFileSize  = Some(1024),
+              successRedirect  = Some("https://www.example.com/success"),
+              errorRedirect    = Some("https://www.example.com/error"),
+              consumingService = Some(ConsumingService)
+            )
+        )
 
     val _ = new WithV2SuccessFixture {
-      behave like successfulInitiate(config, _.prepareUploadV2(), maximalRequestBody, requestId = Some("a-request-id"),
-        sessionId = Some("a-session-id"), expectedUploadSettings)
+      behave like
+        successfulInitiate(
+          config                   = config,
+          actionUnderTest          = _.prepareUploadV2(),
+          requestBody              = maximalRequestBody,
+          requestId                = Some("a-request-id"),
+          sessionId                = Some("a-session-id"),
+          expectedUploadSettings   = expectedUploadSettings
+        )
     }
   }
 
@@ -165,7 +207,7 @@ class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponents
       val controller = new PrepareUploadController(prepareUploadService, config, clock, stubControllerComponents())
 
       Given("a valid initiate request")
-      val headers = (USER_AGENT, "SOME-USER-AGENT") +: Seq(
+      val headers = (USER_AGENT, UserAgent) +: Seq(
         requestId.map(Tuple2("x-request-id", _)),
         sessionId.map(Tuple2("x-session-id", _))
       ).flatten
@@ -181,7 +223,6 @@ class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponents
 
       when(prepareUploadService.prepareUpload(
         expectedUploadSettings,
-        "SOME-USER-AGENT",
         requestId.getOrElse("n/a"),
         sessionId.getOrElse("n/a"),
         clock.instant)
@@ -229,7 +270,7 @@ class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponents
 
       Given("there is an invalid upload request")
       val request = FakeRequest().withHeaders(
-        (USER_AGENT, "SOME-USER-AGENT"),
+        (USER_AGENT, UserAgent),
         ("x-session-id", "some-session-id"),
         ("x-request-id", "some-request-id")
       ).withBody(Json.obj("invalid" -> "body"))
@@ -246,7 +287,7 @@ class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponents
 
       Given("there is an invalid upload request")
       val request = FakeRequest().withHeaders(
-        (USER_AGENT, "SOME-USER-AGENT"),
+        (USER_AGENT, UserAgent),
         ("x-session-id", "some-session-id")
       ).withBody(Json.obj(
         "callbackUrl" -> "https://www.example.com",
@@ -313,4 +354,27 @@ class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponents
       contentAsString(result) should include("Invalid callback url format")
     }
   }
+}
+
+object PrepareUploadControllerSpec {
+
+  val UserAgent = "user-agent"
+  val ConsumingService = "some-consuming-service"
+
+  val requestTemplate: PrepareUploadRequest =
+    PrepareUploadRequest(
+      callbackUrl      = "https://www.example.com",
+      minimumFileSize  = None,
+      maximumFileSize  = None,
+      successRedirect  = None,
+      errorRedirect    = None,
+      consumingService = None
+    )
+
+  val settingsTemplate: UploadSettings =
+    UploadSettings(
+      uploadUrl            = s"http://upload-proxy.com",
+      userAgent            = UserAgent,
+      prepareUploadRequest = requestTemplate
+    )
 }
