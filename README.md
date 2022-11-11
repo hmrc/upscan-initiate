@@ -285,10 +285,12 @@ In order to upload the file, the following form is sent as the body of a POST re
 <form method="POST" href="...value of the href from the response above...">
     <input type="hidden" name="x-amz-algorithm" value="AWS4-HMAC-SHA256">
     ... all the fields returned in "fields" map in the response above ...
-    <input type="file" name="file"/> <- form field representing the file to upload
+    <input type="file" name="file" required/> <- form field representing the file to upload
     <input type="submit" value="OK"/>
 </form>
 ```
+
+**Note: You should consider implementing validation on the frontend to prevent submitting the form if a file has not been selected (such as marking the file input `required`.)**
 
 - You must make this request client side. Making this request server side defeats the objective of Upscan, which is to virus scan files before they are allowed on MDTP. 
 - You must use multipart encoding (`multipart/form-data`) NOT `application/x-www-form-urlencoded`. If you use` application/x-www-form-urlencoded`, AWS will return a response from which this error is not clear.
