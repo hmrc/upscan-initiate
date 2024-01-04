@@ -1,18 +1,17 @@
 import sbt._
 
 object AppDependencies {
-  private val bootstrapVersion = "5.12.0"
+  private val bootstrapVersion = "8.4.0"
 
   private val compile = Seq(
-    "uk.gov.hmrc"        %% "bootstrap-backend-play-28" % bootstrapVersion,
-    "com.amazonaws"      % "aws-java-sdk-s3"            % "1.11.921",
-    "org.apache.commons" % "commons-lang3"              % "3.11"
+    "uk.gov.hmrc"        %% "bootstrap-backend-play-30" % bootstrapVersion,
+    "com.amazonaws"      % "aws-java-sdk-s3"            % "1.12.606",
+    "org.apache.commons" % "commons-lang3"              % "3.12.0"
   )
 
   private val test = Seq(
-    "uk.gov.hmrc"          %% "bootstrap-test-play-28"  % bootstrapVersion % s"$Test,$IntegrationTest",
-    "com.vladsch.flexmark" % "flexmark-all"             % "0.35.10"        % s"$Test,$IntegrationTest",
-    "org.mockito"          %% "mockito-scala-scalatest" % "1.16.25"        % Test
+    "uk.gov.hmrc"          %% "bootstrap-test-play-30"  % bootstrapVersion % Test,
+    "org.mockito"          %% "mockito-scala-scalatest" % "1.17.29"        % Test
   )
 
   def apply(): Seq[ModuleID] = compile ++ test

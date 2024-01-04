@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ class S3UploadFormGeneratorSpec extends UnitSpec with GivenWhenThen {
       ((policy \ "conditions").get \\ "error_action_redirect").head.as[String]   shouldBe "http://test.com/error"
 
       val conditions                         = (policy \ "conditions").as[JsArray].value
-      val arrayConditions: Seq[Seq[JsValue]] = conditions.flatMap(_.asOpt[JsArray].map(_.value))
+      val arrayConditions = conditions.flatMap(_.asOpt[JsArray].map(_.value))
 
       And("policy contains proper size constraints")
       val fileSizeCondition = arrayConditions.find(_.toIndexedSeq(0).as[String] == "content-length-range")

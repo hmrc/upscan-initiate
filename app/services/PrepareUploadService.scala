@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package services
 
 import java.time.Instant
-import com.kenshoo.play.metrics.Metrics
 import config.ServiceConfiguration
 import connectors.model.{ContentLengthRange, UploadFormGenerator, UploadParameters}
 import controllers.model.{PreparedUploadResponse, Reference, UploadFormTemplate}
@@ -26,6 +25,7 @@ import javax.inject.{Inject, Singleton}
 import org.slf4j.MDC
 import play.api.Logging
 import services.model.UploadSettings
+import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 @Singleton
 class PrepareUploadService @Inject()(
