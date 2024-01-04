@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package model
 import java.time
 import java.time.Instant
 import com.codahale.metrics.MetricRegistry
-import com.kenshoo.play.metrics.Metrics
 import config.ServiceConfiguration
 import connectors.model.{UploadFormGenerator, UploadParameters}
 import controllers.model.PrepareUploadRequest
@@ -28,6 +27,7 @@ import org.scalatest.GivenWhenThen
 import services.PrepareUploadService
 import services.model.UploadSettings
 import test.UnitSpec
+import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
 
@@ -56,7 +56,6 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
 
     override val defaultRegistry: MetricRegistry = new MetricRegistry
 
-    override def toJson: String = ???
   }
 
   private val s3PostSigner = new UploadFormGenerator {

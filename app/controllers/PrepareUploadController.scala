@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ class PrepareUploadController @Inject()(
   /**
    * V1 of the API supports direct upload to an S3 bucket and *does not support* error redirects in the event of failure
    */
-  def prepareUploadV1(): Action[JsValue] = {
+  def prepareUploadV1: Action[JsValue] = {
     val uploadUrl = s"https://${configuration.inboundBucketName}.s3.amazonaws.com"
     prepareUpload(uploadUrl)(prepareUploadRequestReadsV1)
   }
@@ -57,7 +57,7 @@ class PrepareUploadController @Inject()(
   /**
    * V2 of the API supports upload to an S3 bucket via a proxy that additionally supports error redirects in the event of failure
    */
-  def prepareUploadV2(): Action[JsValue] = {
+  def prepareUploadV2: Action[JsValue] = {
     val uploadUrl = s"${configuration.uploadProxyUrl}/v1/uploads/${configuration.inboundBucketName}"
     prepareUpload(uploadUrl)(prepareUploadRequestReadsV2)
   }

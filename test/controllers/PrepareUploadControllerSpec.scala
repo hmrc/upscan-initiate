@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,25 +16,23 @@
 
 package controllers
 
-import java.time.Clock
-import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
 import config.ServiceConfiguration
+import controllers.PrepareUploadControllerSpec.{ConsumingService, UserAgent, requestTemplate, settingsTemplate}
 import controllers.model.{PrepareUploadRequest, PreparedUploadResponse, Reference, UploadFormTemplate}
+import org.apache.pekko.actor.ActorSystem
 import org.scalatest.GivenWhenThen
 import play.api.http.HeaderNames.USER_AGENT
 import play.api.http.Status.{BAD_REQUEST, OK}
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.Action
 import play.api.mvc.Results.Ok
-import play.api.test.Helpers.{contentAsString, status}
+import play.api.test.Helpers.{contentAsJson, contentAsString, status}
 import play.api.test.{FakeRequest, Helpers, StubControllerComponentsFactory}
 import services.PrepareUploadService
 import services.model.UploadSettings
 import test.UnitSpec
-import Helpers.contentAsJson
-import controllers.PrepareUploadControllerSpec.{ConsumingService, UserAgent, requestTemplate, settingsTemplate}
 
+import java.time.Clock
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -42,8 +40,8 @@ import scala.language.postfixOps
 class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponentsFactory with GivenWhenThen {
 
   private implicit val actorSystem: ActorSystem = ActorSystem()
-  private implicit val materializer: ActorMaterializer = ActorMaterializer()
-  private implicit val timeout: akka.util.Timeout = 10 seconds
+
+  private implicit val timeout: org.apache.pekko.util.Timeout = 10 seconds
 
   private val clock = Clock.fixed(Clock.systemDefaultZone().instant(), Clock.systemDefaultZone().getZone)
 
