@@ -261,7 +261,7 @@ class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponents
 
   private def badRequestInitiate(// scalastyle:ignore
                                  config: ServiceConfiguration,
-                                 prepareUploadAction: PrepareUploadController => Action[JsValue]) {
+                                 prepareUploadAction: PrepareUploadController => Action[JsValue]): Unit = {
 
     "return a bad request error when the request has the wrong structure" in new WithGlobalFileSizeLimitFixture {
       val controller = new PrepareUploadController(prepareUploadService, config, clock, stubControllerComponents())

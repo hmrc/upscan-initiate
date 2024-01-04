@@ -2,7 +2,7 @@ import play.sbt.PlayImport.PlayKeys.playDefaultPort
 import sbt.Keys._
 import sbt._
 import scoverage.ScoverageKeys
-import uk.gov.hmrc.DefaultBuildSettings.integrationTestSettings
+import uk.gov.hmrc.DefaultBuildSettings
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
 
 
@@ -35,5 +35,9 @@ lazy val microservice = Project(appName, file("."))
   .settings(libraryDependencies ++= AppDependencies())
   .settings(resolvers += Resolver.jcenterRepo)
   .settings(Test / parallelExecution := false)
-  .configs(IntegrationTest)
-  .settings(integrationTestSettings(): _*)
+
+lazy val it = project
+  .enablePlugins(PlayScala)
+  .dependsOn(microservice % "test->test") // the "test->test" allows reusing test code and test dependencies
+  .settings(DefaultBuildSettings.itSettings())
+  .settings(libraryDependencies ++= AppDependencies())
