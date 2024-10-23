@@ -24,13 +24,13 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatter.ISO_INSTANT
 
 class S3UploadFormGenerator(
-  credentials: AwsCredentials,
-  regionName: String,
-  currentTime: () => Instant,
-  policySigner: PolicySigner = PolicySigner)
-    extends UploadFormGenerator {
+  credentials : AwsCredentials,
+  regionName  : String,
+  currentTime : () => Instant,
+  policySigner: PolicySigner = PolicySigner
+) extends UploadFormGenerator:
 
-  def generateFormFields(uploadParameters: UploadParameters): Map[String, String] = {
+  def generateFormFields(uploadParameters: UploadParameters): Map[String, String] =
     val timestamp            = currentTime()
     val formattedSigningDate = awsDate(timestamp)
     val signingCredentials   = s"${credentials.accessKeyId}/$formattedSigningDate/$regionName/s3/aws4_request"
@@ -47,7 +47,6 @@ class S3UploadFormGenerator(
       encodedPolicy,
       policySignature
     )
-  }
 
   private def awsTimestamp(i: Instant): String =
     DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'").withZone(ZoneOffset.UTC).format(i)
@@ -55,18 +54,18 @@ class S3UploadFormGenerator(
   private def awsDate(i: Instant): String =
     DateTimeFormatter.ofPattern("yyyyMMdd").withZone(ZoneOffset.UTC).format(i)
 
-  private def base64encode(input: String): String = {
+  private def base64encode(input: String): String =
     val encodedBytes = java.util.Base64.getEncoder.encode(input.getBytes("UTF-8"))
-    new String(encodedBytes).replaceAll("\n", "").replaceAll("\r", "")
-  }
+    String(encodedBytes).replaceAll("\n", "").replaceAll("\r", "")
 
   private def buildFormFields(
-    uploadParameters: UploadParameters,
-    securityToken: Option[String],
-    timeStamp: String,
+    uploadParameters  : UploadParameters,
+    securityToken     : Option[String],
+    timeStamp         : String,
     signingCredentials: String,
-    encodedPolicy: String,
-    policySignature: String): Map[String, String] = {
+    encodedPolicy     : String,
+    policySignature   : String
+  ): Map[String, String] =
 
     val fields = Map(
       "x-amz-algorithm"                     -> "AWS4-HMAC-SHA256",
@@ -81,33 +80,40 @@ class S3UploadFormGenerator(
     )
 
     val metadataFields =
-      uploadParameters.additionalMetadata.map {
+      uploadParameters.additionalMetadata.map:
         case (metadataKey, value) => s"x-amz-meta-$metadataKey" -> value
-      }
 
-    val sessionCredentials = securityToken.map(v => Map("x-amz-security-token"                -> v)).getOrElse(Map.empty)
+    val sessionCredentials =
+      securityToken.map(v => Map("x-amz-security-token" -> v)).getOrElse(Map.empty)
+
     val successRedirect =
       uploadParameters.successRedirect.map(v => Map("success_action_redirect" -> v)).getOrElse(Map.empty)
 
     val errorRedirect =
       uploadParameters.errorRedirect.map(v => Map("error_action_redirect" -> v)).getOrElse(Map.empty)
 
-    fields ++ metadataFields ++ sessionCredentials ++ successRedirect ++ errorRedirect
-  }
+    fields
+      ++ metadataFields
+      ++ sessionCredentials
+      ++ successRedirect
+      ++ errorRedirect
 
   private def buildPolicy(
-    uploadParameters: UploadParameters,
-    securityToken: Option[String],
-    timeStamp: String,
-    signingCredentials: String) = {
+    uploadParameters  : UploadParameters,
+    securityToken     : Option[String],
+    timeStamp         : String,
+    signingCredentials: String
+  ) =
 
     val securityTokenJson = securityToken.map(t => Json.obj("x-amz-security-token" -> t)).toList
 
-    val metadataJson: Seq[JsValue] = uploadParameters.additionalMetadata.map {
-      case (k, v) => Json.obj(s"x-amz-meta-$k" -> v)
-    }.toSeq :+
-      Json.arr("starts-with", "$x-amz-meta-original-filename", "") :+
-      Json.arr("starts-with", "$x-amz-meta-upscan-initiate-response", "")
+    val metadataJson: Seq[JsValue] =
+      uploadParameters.additionalMetadata
+        .map: (k, v) =>
+          Json.obj(s"x-amz-meta-$k" -> v)
+        .toSeq
+        :+ Json.arr("starts-with", "$x-amz-meta-original-filename"       , "")
+        :+ Json.arr("starts-with", "$x-amz-meta-upscan-initiate-response", "")
 
     val successRedirectConstraint =
       uploadParameters.successRedirect.map(redirect => Json.obj("success_action_redirect" -> redirect))
@@ -115,28 +121,27 @@ class S3UploadFormGenerator(
     val errorRedirectConstraint =
       uploadParameters.errorRedirect.map(redirect => Json.obj("error_action_redirect" -> redirect))
 
-    val policyDocument = Json.obj(
-      "expiration" -> ISO_INSTANT.format(uploadParameters.expirationDateTime),
-      "conditions" -> JsArray(
-        List(
-          Json.obj("bucket"           -> uploadParameters.bucketName),
-          Json.obj("acl"              -> uploadParameters.acl),
-          Json.obj("x-amz-credential" -> signingCredentials),
-          Json.obj("x-amz-algorithm"  -> "AWS4-HMAC-SHA256"),
-          Json.obj("key"              -> uploadParameters.objectKey),
-          Json.obj("x-amz-date"       -> timeStamp),
-          Json.arr(
-            "content-length-range",
-            uploadParameters.contentLengthRange.min,
-            uploadParameters.contentLengthRange.max)
-        ) ++ securityTokenJson
-          ++ metadataJson
-          ++ successRedirectConstraint
-          ++ errorRedirectConstraint
+    val policyDocument =
+      Json.obj(
+        "expiration" -> ISO_INSTANT.format(uploadParameters.expirationDateTime),
+        "conditions" -> JsArray(
+          List(
+            Json.obj("bucket"           -> uploadParameters.bucketName),
+            Json.obj("acl"              -> uploadParameters.acl),
+            Json.obj("x-amz-credential" -> signingCredentials),
+            Json.obj("x-amz-algorithm"  -> "AWS4-HMAC-SHA256"),
+            Json.obj("key"              -> uploadParameters.objectKey),
+            Json.obj("x-amz-date"       -> timeStamp),
+            Json.arr(
+              "content-length-range",
+              uploadParameters.contentLengthRange.min,
+              uploadParameters.contentLengthRange.max
+            )
+          ) ++ securityTokenJson
+            ++ metadataJson
+            ++ successRedirectConstraint
+            ++ errorRedirectConstraint
+        )
       )
-    )
 
     Json.stringify(policyDocument)
-  }
-
-}

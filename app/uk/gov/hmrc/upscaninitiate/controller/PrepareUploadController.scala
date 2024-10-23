@@ -18,7 +18,7 @@ package uk.gov.hmrc.upscaninitiate.controller
 
 import play.api.Logging
 import play.api.libs.json._
-import play.api.mvc.{Action, ControllerComponents, Result}
+import play.api.mvc.{Action, ControllerComponents, Request, Result}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.upscaninitiate.config.ServiceConfiguration
 import uk.gov.hmrc.upscaninitiate.controller.model.{PrepareUploadRequest, PreparedUploadResponse}
@@ -35,40 +35,40 @@ import scala.util.{Failure, Success, Try}
 @Singleton
 class PrepareUploadController @Inject()(
   prepareUploadService: PrepareUploadService,
-  configuration: ServiceConfiguration,
-  clock: Clock,
-  controllerComponents: ControllerComponents) extends BackendController(controllerComponents) with UserAgentFilter with Logging {
-
-  val prepareUploadRequestReadsV1: Reads[PrepareUploadRequest] =
-    PrepareUploadRequest.readsV1(prepareUploadService.globalFileSizeLimit)
-
-  val prepareUploadRequestReadsV2: Reads[PrepareUploadRequest] =
-    PrepareUploadRequest.readsV2(prepareUploadService.globalFileSizeLimit)
+  configuration       : ServiceConfiguration,
+  clock               : Clock,
+  controllerComponents: ControllerComponents
+) extends BackendController(controllerComponents)
+     with UserAgentFilter
+     with Logging:
 
   /**
    * V1 of the API supports direct upload to an S3 bucket and *does not support* error redirects in the event of failure
    */
-  def prepareUploadV1: Action[JsValue] = {
-    val uploadUrl = s"https://${configuration.inboundBucketName}.s3.amazonaws.com"
-    prepareUpload(uploadUrl)(prepareUploadRequestReadsV1)
-  }
+  def prepareUploadV1: Action[JsValue] =
+    given Reads[PrepareUploadRequest] = PrepareUploadRequest.readsV1(prepareUploadService.globalFileSizeLimit)
+    prepareUpload(uploadUrl = s"https://${configuration.inboundBucketName}.s3.amazonaws.com")
 
   /**
    * V2 of the API supports upload to an S3 bucket via a proxy that additionally supports error redirects in the event of failure
    */
-  def prepareUploadV2: Action[JsValue] = {
-    val uploadUrl = s"${configuration.uploadProxyUrl}/v1/uploads/${configuration.inboundBucketName}"
-    prepareUpload(uploadUrl)(prepareUploadRequestReadsV2)
-  }
+  def prepareUploadV2: Action[JsValue] =
+    given Reads[PrepareUploadRequest] = PrepareUploadRequest.readsV2(prepareUploadService.globalFileSizeLimit)
+    prepareUpload(uploadUrl = s"${configuration.uploadProxyUrl}/v1/uploads/${configuration.inboundBucketName}")
 
-  private def prepareUpload(uploadUrl: String)(
-    implicit reads: Reads[PrepareUploadRequest]): Action[JsValue] =
-    Action.async(parse.json) { implicit request =>
+  private def prepareUpload(
+    uploadUrl: String
+  )(using
+    Reads[PrepareUploadRequest]
+  ): Action[JsValue] =
+    Action.async(parse.json): request =>
+      given Request[JsValue] = request
+
       val receivedAt = Instant.now(clock)
 
-      requireUserAgent[JsValue] { (_, userAgent) =>
-        withJsonBody[PrepareUploadRequest] { prepareUploadRequest =>
-          withAllowedCallbackProtocol(prepareUploadRequest.callbackUrl) {
+      requireUserAgent[JsValue]: (_, userAgent) =>
+        withJsonBody[PrepareUploadRequest]: prepareUploadRequest =>
+          withAllowedCallbackProtocol(prepareUploadRequest.callbackUrl):
 
             val sessionId = hc(request).sessionId.map(_.value).getOrElse("n/a")
             val requestId = hc(request).requestId.map(_.value).getOrElse("n/a")
@@ -91,32 +91,30 @@ class PrepareUploadController @Inject()(
                 )
 
             Future.successful(Ok(Json.toJson(result)(PreparedUploadResponse.writes)))
-          }
-        }
-      }
-    }
 
-  private[controller] def withAllowedCallbackProtocol[A](callbackUrl: String)(
-    block: => Future[Result]): Future[Result] = {
+  private[controller] def withAllowedCallbackProtocol[A](
+    callbackUrl: String
+  )(
+    block: => Future[Result]
+  ): Future[Result] =
 
     val allowedCallbackProtocols: Seq[String] = configuration.allowedCallbackProtocols
 
-    val isAllowedCallbackProtocol: Try[Boolean] = Try {
-      allowedCallbackProtocols.contains(new URL(callbackUrl).getProtocol)
-    }
+    val isAllowedCallbackProtocol: Try[Boolean] =
+      Try(allowedCallbackProtocols.contains(URL(callbackUrl).getProtocol))
 
-    isAllowedCallbackProtocol match {
-      case Success(true) => block
+    isAllowedCallbackProtocol match
+      case Success(true)  =>
+        block
+
       case Success(false) =>
         logger.warn(s"Invalid callback url protocol: [$callbackUrl].")
-
         Future.successful(BadRequest(
-          s"Invalid callback url protocol: [$callbackUrl]. Protocol must be in: [${allowedCallbackProtocols.mkString(",")}]."))
+          s"Invalid callback url protocol: [$callbackUrl]. Protocol must be in: [${allowedCallbackProtocols.mkString(",")}]."
+        ))
 
-      case Failure(e) =>
+      case Failure(e)     =>
         logger.warn(s"Invalid callback url format: [$callbackUrl].")
-
         Future.successful(BadRequest(s"Invalid callback url format: [$callbackUrl]. [${e.getMessage}]"))
-    }
-  }
-}
+
+end PrepareUploadController

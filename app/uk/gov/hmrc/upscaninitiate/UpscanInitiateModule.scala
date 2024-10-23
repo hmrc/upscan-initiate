@@ -26,6 +26,6 @@ class UpscanInitiateModule extends Module {
   override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[_]] =
     Seq(
       bind[ServiceConfiguration].to[PlayBasedServiceConfiguration],
-      bind[Clock].toInstance(Clock.systemDefaultZone())
+      bind[Clock               ].toInstance(Clock.systemDefaultZone())
     )
 }

@@ -20,31 +20,28 @@ import play.api.libs.json.{JsSuccess, Json, Reads}
 import uk.gov.hmrc.upscaninitiate.controller.model.PrepareUploadRequestSpec._
 import uk.gov.hmrc.upscaninitiate.test.UnitSpec
 
-class PrepareUploadRequestSpec extends UnitSpec {
+class PrepareUploadRequestSpec extends UnitSpec:
 
-  "V1 deserialisation" should {
+  "V1 deserialisation" should:
     behave like
       testDeserialisation(
         reads                 = PrepareUploadRequest.readsV1(maxFileSize),
         expectedErrorRedirect = None
       )
-  }
 
-  "V2 deserialisation" should {
+  "V2 deserialisation" should:
     behave like
       testDeserialisation(
         reads                 = PrepareUploadRequest.readsV2(maxFileSize),
         expectedErrorRedirect = Some("https://www.example.com/error")
       )
-  }
 
   //noinspection ScalaStyle
   private def testDeserialisation(
     reads: Reads[PrepareUploadRequest],
     expectedErrorRedirect: Option[String]
-  ) = {
-
-    "deserialise from required fields" in {
+  ) =
+    "deserialise from required fields" in:
       val parse =
         Json.parse(
           """
@@ -58,9 +55,8 @@ class PrepareUploadRequestSpec extends UnitSpec {
         requestTemplate
 
       parse shouldBe JsSuccess(expectedPrepareUploadRequest)
-    }
 
-    "deserialise from all fields" in {
+    "deserialise from all fields" in:
       val parse =
         Json.parse(
           """
@@ -86,9 +82,8 @@ class PrepareUploadRequestSpec extends UnitSpec {
           )
 
       parse shouldBe JsSuccess(expectedPrepareUploadRequest)
-    }
 
-    "reject out-of-bounds `minimumFileSize` values" in {
+    "reject out-of-bounds `minimumFileSize` values" in:
       val parse =
         Json.parse(
           """
@@ -100,9 +95,8 @@ class PrepareUploadRequestSpec extends UnitSpec {
         ).validate(reads)
 
       parse.isError shouldBe true
-    }
 
-    "reject out-of-bounds `maximumFileSize` values" in {
+    "reject out-of-bounds `maximumFileSize` values" in:
       def parse(withMaximumFileSizeValue: Long) =
         Json.parse(
           s"""
@@ -113,11 +107,10 @@ class PrepareUploadRequestSpec extends UnitSpec {
             |""".stripMargin
         ).validate(reads)
 
-      parse(withMaximumFileSizeValue = -1).isError shouldBe true
+      parse(withMaximumFileSizeValue = -1             ).isError shouldBe true
       parse(withMaximumFileSizeValue = maxFileSize + 1).isError shouldBe true
-    }
 
-    "reject erroneous `minimumFileSize` & `maximumFileSize` combinations" in {
+    "reject erroneous `minimumFileSize` & `maximumFileSize` combinations" in:
       val parse =
         Json.parse(
           """
@@ -130,11 +123,8 @@ class PrepareUploadRequestSpec extends UnitSpec {
         ).validate(reads)
 
       parse.isError shouldBe true
-    }
-  }
-}
 
-object PrepareUploadRequestSpec {
+object PrepareUploadRequestSpec:
 
   val maxFileSize: Long =
     100
@@ -148,4 +138,3 @@ object PrepareUploadRequestSpec {
       errorRedirect    = None,
       consumingService = None
     )
-}

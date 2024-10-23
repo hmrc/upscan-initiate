@@ -16,4 +16,7 @@
 
 package uk.gov.hmrc.upscaninitiate.connector.model
 
-case class ContentLengthRange(min: Long, max: Long)
+case class ContentLengthRange(
+  min: Long,
+  max: Long
+)

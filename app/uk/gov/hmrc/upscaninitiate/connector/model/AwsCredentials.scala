@@ -16,4 +16,8 @@
 
 package uk.gov.hmrc.upscaninitiate.connector.model
 
-final case class AwsCredentials(accessKeyId: String, secretKey: String, sessionToken: Option[String])
+case class AwsCredentials(
+  accessKeyId : String,
+  secretKey   : String,
+  sessionToken: Option[String]
+)

@@ -26,10 +26,10 @@ import uk.gov.hmrc.upscaninitiate.test.UnitSpec
 import java.time.Instant
 import java.util.Base64
 
-class S3UploadFormGeneratorSpec extends UnitSpec with GivenWhenThen {
+class S3UploadFormGeneratorSpec extends UnitSpec with GivenWhenThen:
 
-  "S3UploadFormGenerator" should {
-    "generate required fields for a presigned POST request" in {
+  "S3UploadFormGenerator" should:
+    "generate required fields for a presigned POST request" in:
 
       // based on: https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-HTTPPOSTForms.html#sigv4-HTTPPOSTFormFields
 
@@ -40,13 +40,14 @@ class S3UploadFormGeneratorSpec extends UnitSpec with GivenWhenThen {
       val policySigner  = mock[PolicySigner]
       val testSignature = "test-signature"
 
-      when(policySigner.signPolicy(any[AwsCredentials], any[String], any[String], any[String])).thenReturn(testSignature)
+      when(policySigner.signPolicy(any[AwsCredentials], any[String], any[String], any[String]))
+        .thenReturn(testSignature)
 
-      val generator = new S3UploadFormGenerator(credentials, regionName, currentTime, policySigner)
+      val generator = S3UploadFormGenerator(credentials, regionName, currentTime, policySigner)
 
       And("there are valid upload parameters")
       val expirationTimestamp = "1997-07-16T19:20:40Z"
-      val uploadParameters = UploadParameters(
+      val uploadParameters    = UploadParameters(
         expirationDateTime  = Instant.parse(expirationTimestamp),
         bucketName          = "test-bucket",
         objectKey           = "test-key",
@@ -62,22 +63,20 @@ class S3UploadFormGeneratorSpec extends UnitSpec with GivenWhenThen {
 
       Then("valid POST policy is produced")
       val policy = decodePolicyFormResult(result("policy"))
-
       (policy \ "expiration").as[String] shouldBe "1997-07-16T19:20:40Z"
 
       And("policy contains proper conditions")
-
-      ((policy \ "conditions").get \\ "acl").head.as[String]                     shouldBe "private"
-      ((policy \ "conditions").get \\ "bucket").head.as[String]                  shouldBe "test-bucket"
-      ((policy \ "conditions").get \\ "key").head.as[String]                     shouldBe "test-key"
-      ((policy \ "conditions").get \\ "x-amz-algorithm").head.as[String]         shouldBe "AWS4-HMAC-SHA256"
-      ((policy \ "conditions").get \\ "x-amz-date").head.as[String]              shouldBe "19970716T192030Z"
-      ((policy \ "conditions").get \\ "x-amz-security-token").head.as[String]    shouldBe "session-token"
-      ((policy \ "conditions").get \\ "x-amz-meta-key1").head.as[String]         shouldBe "value1"
+      ((policy \ "conditions").get \\ "acl"                    ).head.as[String] shouldBe "private"
+      ((policy \ "conditions").get \\ "bucket"                 ).head.as[String] shouldBe "test-bucket"
+      ((policy \ "conditions").get \\ "key"                    ).head.as[String] shouldBe "test-key"
+      ((policy \ "conditions").get \\ "x-amz-algorithm"        ).head.as[String] shouldBe "AWS4-HMAC-SHA256"
+      ((policy \ "conditions").get \\ "x-amz-date"             ).head.as[String] shouldBe "19970716T192030Z"
+      ((policy \ "conditions").get \\ "x-amz-security-token"   ).head.as[String] shouldBe "session-token"
+      ((policy \ "conditions").get \\ "x-amz-meta-key1"        ).head.as[String] shouldBe "value1"
       ((policy \ "conditions").get \\ "success_action_redirect").head.as[String] shouldBe "http://test.com/abc"
-      ((policy \ "conditions").get \\ "error_action_redirect").head.as[String]   shouldBe "http://test.com/error"
+      ((policy \ "conditions").get \\ "error_action_redirect"  ).head.as[String] shouldBe "http://test.com/error"
 
-      val conditions                         = (policy \ "conditions").as[JsArray].value
+      val conditions      = (policy \ "conditions").as[JsArray].value
       val arrayConditions = conditions.flatMap(_.asOpt[JsArray].map(_.value))
 
       And("policy contains proper size constraints")
@@ -104,10 +103,8 @@ class S3UploadFormGeneratorSpec extends UnitSpec with GivenWhenThen {
       result("x-amz-meta-key1")              shouldBe "value1"
       result("x-amz-security-token")         shouldBe "session-token"
       result("x-amz-meta-original-filename") shouldBe s"$${filename}"
-    }
 
-    "generate a signed link with a success redirect" in {
-
+    "generate a signed link with a success redirect" in:
       Given("there is a properly configured form generator with AWS credentials")
       val credentials   = AwsCredentials("accessKeyId", "secretKey", Some("session-token"))
       val regionName    = "us-east-1"
@@ -115,13 +112,14 @@ class S3UploadFormGeneratorSpec extends UnitSpec with GivenWhenThen {
       val policySigner  = mock[PolicySigner]
       val testSignature = "test-signature"
 
-      when(policySigner.signPolicy(any[AwsCredentials], any[String], any[String], any[String])).thenReturn(testSignature)
+      when(policySigner.signPolicy(any[AwsCredentials], any[String], any[String], any[String]))
+        .thenReturn(testSignature)
 
-      val generator = new S3UploadFormGenerator(credentials, regionName, currentTime, policySigner)
+      val generator = S3UploadFormGenerator(credentials, regionName, currentTime, policySigner)
 
       And("there are valid upload parameters")
       val expirationTimestamp = "1997-07-16T19:20:40Z"
-      val uploadParameters = UploadParameters(
+      val uploadParameters    = UploadParameters(
         expirationDateTime  = Instant.parse(expirationTimestamp),
         bucketName          = "test-bucket",
         objectKey           = "test-key",
@@ -134,12 +132,9 @@ class S3UploadFormGeneratorSpec extends UnitSpec with GivenWhenThen {
 
       When("form fields are generated")
       val result = generator.generateFormFields(uploadParameters)
-
       result("success_action_redirect") shouldBe "http://test.server/success"
-    }
 
-    "generate a signed link with a error redirect" in {
-
+    "generate a signed link with a error redirect" in:
       Given("there is a properly configured form generator with AWS credentials")
       val credentials   = AwsCredentials("accessKeyId", "secretKey", Some("session-token"))
       val regionName    = "us-east-1"
@@ -147,9 +142,10 @@ class S3UploadFormGeneratorSpec extends UnitSpec with GivenWhenThen {
       val policySigner  = mock[PolicySigner]
       val testSignature = "test-signature"
 
-      when(policySigner.signPolicy(any[AwsCredentials], any[String], any[String], any[String])).thenReturn(testSignature)
+      when(policySigner.signPolicy(any[AwsCredentials], any[String], any[String], any[String]))
+        .thenReturn(testSignature)
 
-      val generator = new S3UploadFormGenerator(credentials, regionName, currentTime, policySigner)
+      val generator = S3UploadFormGenerator(credentials, regionName, currentTime, policySigner)
 
       And("there are valid upload parameters")
       val expirationTimestamp = "1997-07-16T19:20:40Z"
@@ -166,14 +162,8 @@ class S3UploadFormGeneratorSpec extends UnitSpec with GivenWhenThen {
 
       When("form fields are generated")
       val result = generator.generateFormFields(uploadParameters)
-
       result("error_action_redirect") shouldBe "http://test.server/error"
-    }
-  }
 
-  def decodePolicyFormResult(base64EncodedPolicy: String): JsValue = {
-    val decoded = new String(Base64.getDecoder.decode(base64EncodedPolicy), "UTF-8")
+  def decodePolicyFormResult(base64EncodedPolicy: String): JsValue =
+    val decoded = String(Base64.getDecoder.decode(base64EncodedPolicy), "UTF-8")
     Json.parse(decoded)
-  }
-
-}

@@ -18,14 +18,13 @@ package uk.gov.hmrc.upscaninitiate.controller.model
 
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-import play.api.libs.json.Reads.{max, min}
 
-final case class PrepareUploadRequest(
-  callbackUrl: String,
-  minimumFileSize: Option[Long],
-  maximumFileSize: Option[Long],
-  successRedirect: Option[String],
-  errorRedirect: Option[String],
+case class PrepareUploadRequest(
+  callbackUrl     : String,
+  minimumFileSize : Option[Long],
+  maximumFileSize : Option[Long],
+  successRedirect : Option[String],
+  errorRedirect   : Option[String],
   consumingService: Option[String]
 )
 
@@ -37,8 +36,8 @@ object PrepareUploadRequest {
 
   def readsV2(maxFileSize: Long): Reads[PrepareUploadRequest] =
     ( (__ \ "callbackUrl"     ).read[String]
-    ~ (__ \ "minimumFileSize" ).readNullable[Long](min(0L))
-    ~ (__ \ "maximumFileSize" ).readNullable[Long](min(0L) keepAnd max(maxFileSize))
+    ~ (__ \ "minimumFileSize" ).readNullable[Long](Reads.min(0L))
+    ~ (__ \ "maximumFileSize" ).readNullable[Long](Reads.min(0L) keepAnd Reads.max(maxFileSize))
     ~ (__ \ "successRedirect" ).readNullable[String]
     ~ (__ \ "errorRedirect"   ).readNullable[String]
     ~ (__ \ "consumingService").readNullable[String]

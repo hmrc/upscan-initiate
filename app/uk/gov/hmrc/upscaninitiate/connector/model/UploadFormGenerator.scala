@@ -16,6 +16,5 @@
 
 package uk.gov.hmrc.upscaninitiate.connector.model
 
-trait UploadFormGenerator {
+trait UploadFormGenerator:
   def generateFormFields(uploadParameters: UploadParameters): Map[String, String]
-}

@@ -23,15 +23,15 @@ import play.api.mvc.{Request, Result}
 
 import scala.concurrent.Future
 
-trait UserAgentFilter { this: Logging =>
+trait UserAgentFilter:
+  this: Logging =>
+
   /*
    * We require the user agent to be set with the name of the client service.
    */
-  def requireUserAgent[A](block: (Request[A], String) => Future[Result])(implicit request: Request[A]): Future[Result] =
-    request.headers.get(USER_AGENT).fold(onMissingUserAgent())(block(request, _))
+  def requireUserAgent[A](block: (Request[A], String) => Future[Result])(using request: Request[A]): Future[Result] =
+    request.headers.get(USER_AGENT).fold(onMissingUserAgent)(block(request, _))
 
-  private def onMissingUserAgent(): Future[Result] = {
+  private def onMissingUserAgent: Future[Result] =
     logger.warn(s"No $USER_AGENT Request Header found - unable to identify client service")
     Future.successful(BadRequest(s"Missing $USER_AGENT Header"))
-  }
-}

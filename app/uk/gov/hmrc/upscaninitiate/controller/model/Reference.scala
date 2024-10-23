@@ -20,14 +20,14 @@ import play.api.libs.json.Writes
 
 import java.util.UUID.randomUUID
 
-case class Reference(value: String) extends AnyVal {
-  override def toString: String = value.toString
-}
+case class Reference(value: String) extends AnyVal:
+  override def toString: String =
+    value
 
-object Reference {
+object Reference:
 
-  val writes: Writes[Reference] = Writes.of[String].contramap(_.value)
+  val writes: Writes[Reference] =
+    Writes.of[String].contramap(_.value)
 
-  def generate(): Reference = Reference(randomUUID().toString)
-
-}
+  def generate(): Reference =
+    Reference(randomUUID().toString)

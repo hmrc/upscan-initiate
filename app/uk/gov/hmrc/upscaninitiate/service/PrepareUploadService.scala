@@ -26,61 +26,63 @@ import uk.gov.hmrc.upscaninitiate.service.model.UploadSettings
 
 import java.time.Instant
 import javax.inject.{Inject, Singleton}
+import scala.jdk.DurationConverters.ScalaDurationOps
 
 @Singleton
 class PrepareUploadService @Inject()(
-  postSigner: UploadFormGenerator,
+  postSigner   : UploadFormGenerator,
   configuration: ServiceConfiguration,
-  metrics: Metrics) extends Logging {
+  metrics      : Metrics
+) extends Logging:
 
   def prepareUpload(
-    settings: UploadSettings,
-    requestId: String,
-    sessionId: String,
-    receivedAt: Instant): PreparedUploadResponse = {
+    settings  : UploadSettings,
+    requestId : String,
+    sessionId : String,
+    receivedAt: Instant
+  ): PreparedUploadResponse =
+
     val reference  = Reference.generate()
-    val expiration = receivedAt.plus(configuration.fileExpirationPeriod)
+    val expiration = receivedAt.plus(configuration.fileExpirationPeriod.toJava)
 
     val result =
       PreparedUploadResponse(
         reference     = reference,
-        uploadRequest =
-            generatePost(
-            key        = reference,
-            expiration = expiration,
-            settings   = settings,
-            requestId  = requestId,
-            sessionId  = sessionId,
-            receivedAt = receivedAt
-          )
+        uploadRequest = generatePost(
+                          key        = reference,
+                          expiration = expiration,
+                          settings   = settings,
+                          requestId  = requestId,
+                          sessionId  = sessionId,
+                          receivedAt = receivedAt
+                        )
       )
 
-    try {
+    try
       MDC.put("file-reference", reference.toString)
       logger.info(s"Allocated key=[${reference.value}] to uploadRequest with requestId=[$requestId] sessionId=[$sessionId] from [${settings.consumingService}].")
       logger.debug(s"Prepared upload response [$result].")
       metrics.defaultRegistry.counter("uploadInitiated").inc()
 
       result
-    } finally {
+    finally
       MDC.remove("file-reference")
-    }
-  }
 
   private def generatePost(
-    key: Reference,
+    key       : Reference,
     expiration: Instant,
-    settings: UploadSettings,
-    requestId: String,
-    sessionId: String,
-    receivedAt: Instant): UploadFormTemplate = {
+    settings  : UploadSettings,
+    requestId : String,
+    sessionId : String,
+    receivedAt: Instant
+  ): UploadFormTemplate =
 
     val minFileSize = settings.prepareUploadRequest.minimumFileSize.getOrElse(0L)
     val maxFileSize = settings.prepareUploadRequest.maximumFileSize.getOrElse(globalFileSizeLimit)
 
-    require(minFileSize >= 0, "Minimum file size is less than 0")
+    require(minFileSize >= 0                  , "Minimum file size is less than 0")
     require(maxFileSize <= globalFileSizeLimit, "Maximum file size is greater than global maximum file size")
-    require(minFileSize <= maxFileSize, "Minimum file size is greater than maximum file size")
+    require(minFileSize <= maxFileSize        , "Minimum file size is greater than maximum file size")
 
     val uploadParameters = UploadParameters(
       expirationDateTime = expiration,
@@ -88,21 +90,22 @@ class PrepareUploadService @Inject()(
       objectKey          = key.value,
       acl                = "private",
       additionalMetadata = Map(
-        "callback-url"             -> settings.prepareUploadRequest.callbackUrl,
-        "consuming-service"        -> settings.consumingService,
-        "session-id"               -> sessionId,
-        "request-id"               -> requestId,
-        "upscan-initiate-received" -> receivedAt.toString
-      ),
+                             "callback-url"             -> settings.prepareUploadRequest.callbackUrl,
+                             "consuming-service"        -> settings.consumingService,
+                             "session-id"               -> sessionId,
+                             "request-id"               -> requestId,
+                             "upscan-initiate-received" -> receivedAt.toString
+                           ),
       contentLengthRange  = ContentLengthRange(minFileSize, maxFileSize),
       successRedirect     = settings.prepareUploadRequest.successRedirect,
       errorRedirect       = settings.prepareUploadRequest.errorRedirect
     )
 
-    val form     = postSigner.generateFormFields(uploadParameters)
+    val form = postSigner.generateFormFields(uploadParameters)
 
     UploadFormTemplate(settings.uploadUrl, form)
-  }
 
-  def globalFileSizeLimit: Long = configuration.globalFileSizeLimit
-}
+  def globalFileSizeLimit: Long =
+    configuration.globalFileSizeLimit
+
+end PrepareUploadService

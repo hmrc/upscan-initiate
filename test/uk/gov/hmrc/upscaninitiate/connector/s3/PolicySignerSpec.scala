@@ -19,11 +19,10 @@ package uk.gov.hmrc.upscaninitiate.connector.s3
 import uk.gov.hmrc.upscaninitiate.connector.model.AwsCredentials
 import uk.gov.hmrc.upscaninitiate.test.UnitSpec
 
-class PolicySignerSpec extends UnitSpec {
+class PolicySignerSpec extends UnitSpec:
 
-  "Policy signer" should {
-    "sign policy document" in {
-
+  "Policy signer" should:
+    "sign policy document" in:
       /*
 
         The test tries to verify if signing function works according to AWS documentation, and
@@ -37,7 +36,6 @@ class PolicySignerSpec extends UnitSpec {
         https://stackoverflow.com/questions/47701044/sigv4-post-example-using-python
 
         We assume that signature that has been mentioned on stackoverflow is the one that is correct.
-
        */
 
       val credentials = AwsCredentials("AKIAIOSFODNN7EXAMPLE", "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY", None)
@@ -48,8 +46,3 @@ class PolicySignerSpec extends UnitSpec {
       val signature = PolicySigner.signPolicy(credentials, "20151229", "us-east-1", encodedPolicy)
 
       signature shouldBe "8afdbf4008c03f22c2cd3cdb72e4afbb1f6a588f3255ac628749a66d7f09699e"
-
-    }
-  }
-
-}

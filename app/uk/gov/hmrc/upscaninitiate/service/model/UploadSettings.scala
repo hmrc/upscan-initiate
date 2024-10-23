@@ -18,12 +18,11 @@ package uk.gov.hmrc.upscaninitiate.service.model
 
 import uk.gov.hmrc.upscaninitiate.controller.model.PrepareUploadRequest
 
-final case class UploadSettings(
-  uploadUrl: String,
-  userAgent: String,
+case class UploadSettings(
+  uploadUrl           : String,
+  userAgent           : String,
   prepareUploadRequest: PrepareUploadRequest
-) {
+):
 
   lazy val consumingService: String =
     prepareUploadRequest.consumingService.getOrElse(userAgent)
-}

@@ -30,43 +30,40 @@ import uk.gov.hmrc.upscaninitiate.test.UnitSpec
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class UserAgentFilterSpec extends UnitSpec with GivenWhenThen {
+class UserAgentFilterSpec extends UnitSpec with GivenWhenThen:
 
   import UserAgentFilterSpec._
 
-  private implicit val timeout: Timeout = Timeout(3.seconds)
+  private given Timeout = 3.seconds
 
-  "UserAgentFilter" should {
-    "accept a request when the User-Agent header is specified" in {
+  "UserAgentFilter" should:
+    "accept a request when the User-Agent header is specified" in:
       Given("a request that specifies a User-Agent header")
-      val request = FakeRequest().withHeaders((USER_AGENT, SomeUserAgent))
+      val request = FakeRequest().withHeaders((USER_AGENT, someUserAgent))
 
       When("the request is received")
-      val result = UserAgentFilter.requireUserAgent(block)(request)
+      val result = UserAgentFilter.requireUserAgent(block)(using request)
 
       Then("the request should be accepted")
       status(result) shouldBe OK
 
       And("the User-Agent header value should be passed to the block")
-      contentAsString(result) shouldBe SomeUserAgent
-    }
+      contentAsString(result) shouldBe someUserAgent
 
-    "reject a request when the User-Agent header is not specified" in {
+    "reject a request when the User-Agent header is not specified" in:
       Given("a request that does not specify a User-Agent header")
       val request = FakeRequest()
 
       When("the request is received")
-      val result = UserAgentFilter.requireUserAgent(block)(request)
+      val result = UserAgentFilter.requireUserAgent(block)(using request)
 
       Then("the request should be rejected")
       status(result) shouldBe BAD_REQUEST
-    }
-  }
-}
 
-private object UserAgentFilterSpec {
-  val SomeUserAgent = "SOME_USER-AGENT"
-  val block: (Request[_], String) => Future[Result] = (_, userAgent) => Future.successful(Ok(userAgent))
+private object UserAgentFilterSpec:
+  val someUserAgent = "SOME_USER-AGENT"
+
+  val block: (Request[_], String) => Future[Result] =
+    (_, userAgent) => Future.successful(Ok(userAgent))
 
   object UserAgentFilter extends Logging with UserAgentFilter
-}

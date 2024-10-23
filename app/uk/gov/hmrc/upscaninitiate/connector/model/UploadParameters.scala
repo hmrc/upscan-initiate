@@ -20,11 +20,11 @@ import java.time.Instant
 
 case class UploadParameters(
   expirationDateTime: Instant,
-  bucketName: String,
-  objectKey: String,
-  acl: String,
+  bucketName        : String,
+  objectKey         : String,
+  acl               : String,
   additionalMetadata: Map[String, String],
   contentLengthRange: ContentLengthRange,
-  successRedirect: Option[String],
-  errorRedirect: Option[String]
+  successRedirect   : Option[String],
+  errorRedirect     : Option[String]
 )

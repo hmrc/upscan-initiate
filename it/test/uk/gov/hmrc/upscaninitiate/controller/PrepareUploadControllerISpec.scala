@@ -18,39 +18,44 @@ package uk.gov.hmrc.upscaninitiate.controller
 
 import org.scalatest.GivenWhenThen
 import org.scalatest.matchers.should
-import org.scalatest.wordspec.AnyWordSpecLike
+import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
-import play.api.http.HeaderNames.USER_AGENT
-import play.api.http.Status.BAD_REQUEST
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{JsValue, Json}
 import play.api.test.Helpers._
 import play.api.test.{FakeHeaders, FakeRequest}
 import uk.gov.hmrc.http.HeaderNames.xSessionId
 
-class PrepareUploadControllerISpec extends AnyWordSpecLike with should.Matchers with GuiceOneAppPerSuite with GivenWhenThen {
+class PrepareUploadControllerISpec
+  extends AnyWordSpec
+     with should.Matchers
+     with GuiceOneAppPerSuite
+     with GivenWhenThen:
 
   import PrepareUploadControllerISpec._
 
-  override implicit lazy val app: Application = new GuiceApplicationBuilder()
-    .configure(
-      "uploadProxy.url"     -> "https://upload-proxy.tax.service.gov.uk",
-      "aws.s3.bucket.inbound"      -> "inbound-bucket"
+  override implicit lazy val app: Application =
+    GuiceApplicationBuilder()
+      .configure(
+        "uploadProxy.url"       -> "https://upload-proxy.tax.service.gov.uk",
+        "aws.s3.bucket.inbound" -> "inbound-bucket"
+      )
+      .build()
+
+  "PrepareUploadController prepareUploadV1 with all request values" in:
+    val postBodyJson =
+     Json.parse(s"""{
+      |  "callbackUrl"     : "https://some-url/callback",
+      |  "minimumFileSize" : 0,
+      |  "maximumFileSize" : 1024,
+      |  "successRedirect" : "https://some-url/success",
+      |  "consumingService": "$someOtherConsumingService"
+      |}""".stripMargin
     )
-    .build()
-
-  "PrepareUploadController prepareUploadV1 with all request values" in {
-    val postBodyJson = Json.parse(s"""|{
-                                      |  "callbackUrl": "https://some-url/callback",
-                                      |  "minimumFileSize" : 0,
-                                      |  "maximumFileSize" : 1024,
-                                      |  "successRedirect": "https://some-url/success",
-                                      |  "consumingService": "$SomeOtherConsumingService"
-                                      |}""".stripMargin)
 
     Given("a request containing a User-Agent header")
-    val headers = FakeHeaders(Seq((USER_AGENT, SomeConsumingService)))
+    val headers         = FakeHeaders(Seq((USER_AGENT, someConsumingService)))
     val initiateRequest = FakeRequest(POST, uri = "/upscan/initiate", headers, postBodyJson)
 
     When("a request is posted to the /initiate endpoint")
@@ -65,18 +70,16 @@ class PrepareUploadControllerISpec extends AnyWordSpecLike with should.Matchers 
 
     And("the response should contain the requested upload fields")
     val fields = (responseJson \ "uploadRequest" \ "fields").as[Map[String, String]]
-    fields.get("x-amz-meta-callback-url") should contain ("https://some-url/callback")
-    fields.get("success_action_redirect") should contain ("https://some-url/success")
-    fields.get("x-amz-meta-consuming-service") should contain (SomeOtherConsumingService)
-  }
+    fields.get("x-amz-meta-callback-url")      should contain ("https://some-url/callback")
+    fields.get("success_action_redirect")      should contain ("https://some-url/success")
+    fields.get("x-amz-meta-consuming-service") should contain (someOtherConsumingService)
 
-  "PrepareUploadController prepareUploadV1 with only mandatory request values" in {
-    val postBodyJson = Json.parse("""|{
-                                     |	"callbackUrl": "https://some-url/callback"
-                                     |}""".stripMargin)
+  "PrepareUploadController prepareUploadV1 with only mandatory request values" in:
+    val postBodyJson =
+      Json.parse("""{ "callbackUrl": "https://some-url/callback" }""")
 
     Given("a request containing a User-Agent header")
-    val headers = FakeHeaders(Seq((USER_AGENT, SomeConsumingService)))
+    val headers         = FakeHeaders(Seq((USER_AGENT, someConsumingService)))
     val initiateRequest = FakeRequest(POST, uri = "/upscan/initiate", headers, postBodyJson)
 
     When("a request is posted to the /initiate endpoint")
@@ -91,25 +94,23 @@ class PrepareUploadControllerISpec extends AnyWordSpecLike with should.Matchers 
 
     And("the response should contain the requested upload fields")
     val fields = (responseJson \ "uploadRequest" \ "fields").as[Map[String, String]]
-    fields.get("x-amz-meta-callback-url") should contain ("https://some-url/callback")
-    fields.get("success_action_redirect") shouldBe empty
-    fields.get("x-amz-meta-consuming-service") should contain (SomeConsumingService)
-  }
+    fields.get("x-amz-meta-callback-url")      should contain ("https://some-url/callback")
+    fields.get("success_action_redirect")      shouldBe empty
+    fields.get("x-amz-meta-consuming-service") should contain (someConsumingService)
 
-  "PrepareUploadController prepareUploadV2 with all request values" in {
-    val postBodyJson = Json.parse(s"""
-        |{
-        |  "callbackUrl": "https://some-url/callback",
-        |  "successRedirect": "https://some-url/success",
-        |  "errorRedirect": "https://some-url/error",
-        |  "minimumFileSize" : 0,
-        |  "maximumFileSize" : 1024,
-        |  "consumingService": "$SomeOtherConsumingService"
-        |}
+  "PrepareUploadController prepareUploadV2 with all request values" in:
+    val postBodyJson = Json.parse(s"""{
+      |  "callbackUrl"     : "https://some-url/callback",
+      |  "successRedirect" : "https://some-url/success",
+      |  "errorRedirect"   : "https://some-url/error",
+      |  "minimumFileSize" : 0,
+      |  "maximumFileSize" : 1024,
+      |  "consumingService": "$someOtherConsumingService"
+      |}
       """.stripMargin)
 
     Given("a request containing a User-Agent header")
-    val headers = FakeHeaders(Seq((USER_AGENT, SomeConsumingService)))
+    val headers         = FakeHeaders(Seq((USER_AGENT, someConsumingService)))
     val initiateRequest = FakeRequest(POST, uri = "/upscan/v2/initiate", headers, postBodyJson)
 
     When("a request is posted to the /initiate endpoint")
@@ -127,16 +128,14 @@ class PrepareUploadControllerISpec extends AnyWordSpecLike with should.Matchers 
     fields.get("x-amz-meta-callback-url") should contain ("https://some-url/callback")
     fields.get("success_action_redirect") should contain ("https://some-url/success")
     fields.get("error_action_redirect") should contain ("https://some-url/error")
-    fields.get("x-amz-meta-consuming-service") should contain (SomeOtherConsumingService)
-  }
+    fields.get("x-amz-meta-consuming-service") should contain (someOtherConsumingService)
 
-  "PrepareUploadController prepareUploadV2 with only mandatory request values" in {
-    val postBodyJson = Json.parse("""|{
-                                     |	"callbackUrl": "https://some-url/callback"
-                                     |}""".stripMargin)
+  "PrepareUploadController prepareUploadV2 with only mandatory request values" in:
+    val postBodyJson =
+      Json.parse("""{ "callbackUrl": "https://some-url/callback" }""")
 
     Given("a request containing a User-Agent header")
-    val headers = FakeHeaders(Seq((USER_AGENT, SomeConsumingService)))
+    val headers         = FakeHeaders(Seq((USER_AGENT, someConsumingService)))
     val initiateRequest = FakeRequest(POST, uri = "/upscan/v2/initiate", headers, postBodyJson)
 
     When("a request is posted to the /initiate endpoint")
@@ -151,27 +150,22 @@ class PrepareUploadControllerISpec extends AnyWordSpecLike with should.Matchers 
 
     And("the response should contain the requested upload fields")
     val fields = (responseJson \ "uploadRequest" \ "fields").as[Map[String, String]]
-    fields.get("x-amz-meta-callback-url") should contain ("https://some-url/callback")
-    fields.get("error_action_redirect") shouldBe empty
-    fields.get("success_action_redirect") shouldBe empty
-    fields.get("x-amz-meta-consuming-service") should contain (SomeConsumingService)
-  }
+    fields.get("x-amz-meta-callback-url")      should contain ("https://some-url/callback")
+    fields.get("error_action_redirect")        shouldBe empty
+    fields.get("success_action_redirect")      shouldBe empty
+    fields.get("x-amz-meta-consuming-service") should contain (someConsumingService)
 
-  "Upscan V1" should {
+  "Upscan V1" should:
     val requestJson = Json.parse("""{"callbackUrl": "https://some-url/callback"}""")
-
     behave like upscanInitiate(uri = "/upscan/initiate", requestJson)
-  }
 
-  "Upscan V2" should {
+  "Upscan V2" should:
     val requestJson = Json.parse("""{"callbackUrl": "https://some-url/callback"}""")
-
     behave like upscanInitiate(uri = "/upscan/v2/initiate", requestJson)
-  }
 
   //noinspection ScalaStyle
-  private def upscanInitiate(uri: String, requestJson: JsValue): Unit = {
-    "reject requests which do not include a User-Agent header" in {
+  private def upscanInitiate(uri: String, requestJson: JsValue): Unit =
+    "reject requests which do not include a User-Agent header" in:
       Given("a request not containing a User-Agent header")
       val initiateRequest = FakeRequest(POST, uri, FakeHeaders(Seq((xSessionId, "some-session-id"))), requestJson)
 
@@ -180,11 +174,10 @@ class PrepareUploadControllerISpec extends AnyWordSpecLike with should.Matchers 
 
       Then("the response should indicate the request is invalid")
       status(initiateResponse) shouldBe BAD_REQUEST
-    }
 
-    "include x-amz-meta-consuming-service to identify the client service" in {
+    "include x-amz-meta-consuming-service to identify the client service" in:
       Given("a request containing a User-Agent header")
-      val initiateRequest = FakeRequest(POST, uri, FakeHeaders(Seq((USER_AGENT, SomeConsumingService))), requestJson)
+      val initiateRequest = FakeRequest(POST, uri, FakeHeaders(Seq((USER_AGENT, someConsumingService))), requestJson)
 
       When("a request is posted to the /initiate endpoint")
       val initiateResponse = route(app, initiateRequest).get
@@ -194,12 +187,11 @@ class PrepareUploadControllerISpec extends AnyWordSpecLike with should.Matchers 
 
       And("the response should identify the client service")
       val responseJson = contentAsJson(initiateResponse)
-      (responseJson \ "uploadRequest" \ "fields" \ "x-amz-meta-consuming-service").as[String] shouldBe SomeConsumingService
-    }
+      (responseJson \ "uploadRequest" \ "fields" \ "x-amz-meta-consuming-service").as[String] shouldBe someConsumingService
 
-    "include x-amz-meta-session-id in the response when a session exists" in {
+    "include x-amz-meta-session-id in the response when a session exists" in:
       Given("a valid request containing a x-session-id header")
-      val headers = FakeHeaders(Seq((USER_AGENT, SomeConsumingService), (xSessionId, "some-session-id")))
+      val headers         = FakeHeaders(Seq((USER_AGENT, someConsumingService), (xSessionId, "some-session-id")))
       val initiateRequest = FakeRequest(POST, uri, headers, requestJson)
 
       When("a request is posted to the /initiate endpoint")
@@ -211,11 +203,10 @@ class PrepareUploadControllerISpec extends AnyWordSpecLike with should.Matchers 
       And("the response should include the expected value for x-amz-meta-session-id")
       val responseJson = contentAsJson(initiateResponse)
       (responseJson \ "uploadRequest" \ "fields" \ "x-amz-meta-session-id").as[String] shouldBe "some-session-id"
-    }
 
-    "set a default x-amz-meta-session-id in the response if no session exists" in {
+    "set a default x-amz-meta-session-id in the response if no session exists" in:
       Given("a request containing a x-session-id header")
-      val initiateRequest = FakeRequest(POST, uri, FakeHeaders(Seq((USER_AGENT, SomeConsumingService))), requestJson)
+      val initiateRequest = FakeRequest(POST, uri, FakeHeaders(Seq((USER_AGENT, someConsumingService))), requestJson)
 
       When("a request is posted to the /initiate endpoint")
       val initiateResponse = route(app, initiateRequest).get
@@ -226,11 +217,10 @@ class PrepareUploadControllerISpec extends AnyWordSpecLike with should.Matchers 
       And("the response should include the expected value for x-amz-meta-consuming-service")
       val responseJson = contentAsJson(initiateResponse)
       (responseJson \ "uploadRequest" \ "fields" \ "x-amz-meta-session-id").as[String] shouldBe "n/a"
-    }
 
-    "include standard upload fields" in {
+    "include standard upload fields" in:
       Given("a request containing a User-Agent header")
-      val initiateRequest = FakeRequest(POST, uri, FakeHeaders(Seq((USER_AGENT, SomeConsumingService))), requestJson)
+      val initiateRequest = FakeRequest(POST, uri, FakeHeaders(Seq((USER_AGENT, someConsumingService))), requestJson)
 
       When("a request is posted to the /initiate endpoint")
       val initiateResponse = route(app, initiateRequest).get
@@ -240,20 +230,18 @@ class PrepareUploadControllerISpec extends AnyWordSpecLike with should.Matchers 
 
       And("the response should contain the standard upload fields")
       val responseJson = contentAsJson(initiateResponse)
-      val reference = (responseJson \ "reference").as[String]
-      val fields = (responseJson \ "uploadRequest" \ "fields").as[Map[String, String]]
-      fields.get("key") should contain(reference)
-      fields.get("acl") should contain("private")
+      val reference    = (responseJson \ "reference").as[String]
+      val fields       = (responseJson \ "uploadRequest" \ "fields").as[Map[String, String]]
+      fields.get("key")             should contain(reference)
+      fields.get("acl")             should contain("private")
       fields.get("x-amz-algorithm") should contain("AWS4-HMAC-SHA256")
       fields should contain key "x-amz-date"
       fields should contain key "x-amz-credential"
       fields should contain key "x-amz-signature"
       fields should contain key "policy"
-    }
-  }
-}
 
-private object PrepareUploadControllerISpec {
-  val SomeConsumingService = "PrepareUploadControllerISpec"
-  val SomeOtherConsumingService = "some-other-consuming-service"
-}
+end PrepareUploadControllerISpec
+
+private object PrepareUploadControllerISpec:
+  val someConsumingService      = "PrepareUploadControllerISpec"
+  val someOtherConsumingService = "some-other-consuming-service"

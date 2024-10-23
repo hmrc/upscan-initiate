@@ -27,63 +27,58 @@ import uk.gov.hmrc.upscaninitiate.service.PrepareUploadService
 import uk.gov.hmrc.upscaninitiate.service.model.UploadSettings
 import uk.gov.hmrc.upscaninitiate.test.UnitSpec
 
-import java.time
 import java.time.Instant
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
-class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
+class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen:
 
-  private val serviceConfiguration = new ServiceConfiguration {
+  private val serviceConfiguration =
+    new ServiceConfiguration:
+      override def accessKeyId: String = ???
 
-    override def accessKeyId: String = ???
+      override def secretAccessKey: String = ???
 
-    override def secretAccessKey: String = ???
+      override def uploadProxyUrl: String = ???
 
-    override def uploadProxyUrl: String = ???
+      override def inboundBucketName: String = "test-bucket"
 
-    override def inboundBucketName: String = "test-bucket"
+      override def sessionToken: Option[String] = ???
 
-    override def sessionToken: Option[String] = ???
+      override def region: String = ???
 
-    override def region: String = ???
+      override def fileExpirationPeriod: FiniteDuration = 7.days
 
-    override def fileExpirationPeriod: time.Duration = time.Duration.ofDays(7)
+      override def globalFileSizeLimit = 1024
 
-    override def globalFileSizeLimit = 1024
+      override def allowedCallbackProtocols: List[String] = List("https")
 
-    override def allowedCallbackProtocols: List[String] = List("https")
-  }
+  private def metricsStub() =
+    new Metrics:
+      override val defaultRegistry: MetricRegistry = MetricRegistry()
 
-  private def metricsStub() = new Metrics {
-
-    override val defaultRegistry: MetricRegistry = new MetricRegistry
-
-  }
-
-  private val s3PostSigner = new UploadFormGenerator {
+  private val s3PostSigner = new UploadFormGenerator:
     override def generateFormFields(uploadParameters: UploadParameters): Map[String, String] =
       Map(
         "bucket"  -> uploadParameters.bucketName,
         "key"     -> uploadParameters.objectKey,
         "minSize" -> uploadParameters.contentLengthRange.min.toString,
         "maxSize" -> uploadParameters.contentLengthRange.max.toString
-      ) ++
-        uploadParameters.additionalMetadata.map { case (k, v) => s"x-amz-meta-$k" -> v } ++
-        uploadParameters.successRedirect.map { "success_redirect_url" -> _ } ++
-        uploadParameters.errorRedirect.map { "error_redirect_url"     -> _ }
-  }
+      )
+        ++ uploadParameters.additionalMetadata.map { case (k, v) => s"x-amz-meta-$k" -> v }
+        ++ uploadParameters.successRedirect.map { "success_redirect_url" -> _ }
+        ++ uploadParameters.errorRedirect.map { "error_redirect_url"     -> _ }
 
   val receivedAt: Instant = Instant.now()
 
-  "S3 Prepare Upload Service" should {
+  "S3 Prepare Upload Service" should:
 
-    def service(metrics: Metrics) = new PrepareUploadService(s3PostSigner, serviceConfiguration, metrics)
+    def service(metrics: Metrics) =
+      PrepareUploadService(s3PostSigner, serviceConfiguration, metrics)
 
-    "create post form that allows to upload the file" in {
-
+    "create post form that allows to upload the file" in:
       val metrics = metricsStub()
 
       Given("there are valid upload settings")
-
       val settings =
         settingsTemplate
 
@@ -116,14 +111,10 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
       And("uploadInitiated counter has been incremented")
       metrics.defaultRegistry.counter("uploadInitiated").getCount shouldBe 1
 
-    }
-
-    "take in account file size limits if provided in request" in {
-
+    "take in account file size limits if provided in request" in:
       val metrics = metricsStub()
 
       Given("there are valid upload settings with size limits")
-
       val settings =
         settingsTemplate
           .copy(
@@ -143,14 +134,11 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
 
       result.uploadRequest.fields("minSize") shouldBe "100"
       result.uploadRequest.fields("maxSize") shouldBe "200"
-    }
 
-    "fail when minimum file size is less than 0" in {
-
-      Given("there are upload settings with minimum file size less than zero")
-
+    "fail when minimum file size is less than 0" in:
       val metrics = metricsStub()
 
+      Given("there are upload settings with minimum file size less than zero")
       val settings =
         settingsTemplate
           .copy(
@@ -170,14 +158,10 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
 
       metrics.defaultRegistry.counter("uploadInitiated").getCount shouldBe 0
 
-    }
-
-    "fail when maximum file size is greater than global limit" in {
-
-      Given("there upload settings with maximum file size greater than global limit")
-
+    "fail when maximum file size is greater than global limit" in:
       val metrics = metricsStub()
 
+      Given("there upload settings with maximum file size greater than global limit")
       val settings =
         settingsTemplate
           .copy(
@@ -190,20 +174,16 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
 
       When("we setup the upload")
       Then("an exception should be thrown")
-
       val thrown = the[IllegalArgumentException] thrownBy service(metrics)
         .prepareUpload(settings, "some-request-id", "some-session-id", receivedAt)
       thrown.getMessage should include("Maximum file size is greater than global maximum file size")
 
       metrics.defaultRegistry.counter("uploadInitiated").getCount shouldBe 0
-    }
 
-    "fail when minimum file size is greater than maximum file size" in {
-
-      Given("there are upload settings with minimum file size greater than maximum size")
-
+    "fail when minimum file size is greater than maximum file size" in:
       val metrics = metricsStub()
 
+      Given("there are upload settings with minimum file size greater than maximum size")
       val settings =
         settingsTemplate
           .copy(
@@ -216,20 +196,16 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
 
       When("we setup the upload")
       Then("an exception should be thrown")
-
       val thrown = the[IllegalArgumentException] thrownBy service(metrics)
         .prepareUpload(settings, "some-request-id", "some-session-id", receivedAt)
       thrown.getMessage should include("Minimum file size is greater than maximum file size")
 
       metrics.defaultRegistry.counter("uploadInitiated").getCount shouldBe 0
-    }
 
-    "create post form that allows to upload the file with redirect on success" in {
-
+    "create post form that allows to upload the file with redirect on success" in:
       val metrics = metricsStub()
 
       Given("there are valid upload settings")
-
       val settings =
         settingsTemplate
           .copy(
@@ -245,7 +221,6 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
         .prepareUpload(settings, "some-request-id", "some-session-id", receivedAt)
 
       Then("proper upload request form definition should be returned")
-
       result.uploadRequest.href shouldBe settings.uploadUrl
       result.uploadRequest.fields shouldBe Map(
         "bucket"                              -> serviceConfiguration.inboundBucketName,
@@ -263,14 +238,10 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
       And("uploadInitiated counter has been incremented")
       metrics.defaultRegistry.counter("uploadInitiated").getCount shouldBe 1
 
-    }
-
-    "create post form that allows to upload the file with redirect on error" in {
-
+    "create post form that allows to upload the file with redirect on error" in:
       val metrics = metricsStub()
 
       Given("there are valid upload settings")
-
       val settings =
         settingsTemplate
           .copy(
@@ -281,12 +252,10 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
           )
 
       When("we setup the upload")
-
       val result = service(metrics)
         .prepareUpload(settings, "some-request-id", "some-session-id", receivedAt)
 
       Then("proper upload request form definition should be returned")
-
       result.uploadRequest.href shouldBe settings.uploadUrl
       result.uploadRequest.fields shouldBe Map(
         "bucket"                              -> serviceConfiguration.inboundBucketName,
@@ -303,11 +272,6 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen {
 
       And("uploadInitiated counter has been incremented")
       metrics.defaultRegistry.counter("uploadInitiated").getCount shouldBe 1
-
-    }
-
-  }
-}
 
 object PrepareUploadServiceSpec {
 
