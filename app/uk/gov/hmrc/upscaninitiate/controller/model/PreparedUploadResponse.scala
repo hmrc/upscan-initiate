@@ -24,7 +24,7 @@ case class PreparedUploadResponse(reference: Reference, uploadRequest: UploadFor
 object PreparedUploadResponse {
 
   val writes: OWrites[PreparedUploadResponse] =
-    ((__ \ "reference").write(Reference.writes)
-      ~ (__ \ "uploadRequest").write(UploadFormTemplate.writes))(unlift(PreparedUploadResponse.unapply))
-
+    ( (__ \ "reference"    ).write(Reference.writes)
+    ~ (__ \ "uploadRequest").write(UploadFormTemplate.writes)
+    )(pur => Tuple.fromProductTyped(pur))
 }

@@ -24,7 +24,8 @@ case class UploadFormTemplate(href: String, fields: Map[String, String])
 object UploadFormTemplate {
 
   val writes: OWrites[UploadFormTemplate] =
-    ((__ \ "href").write[String]
-      ~ (__ \ "fields").write[Map[String, String]])(unlift(UploadFormTemplate.unapply))
+    ( (__ \ "href"  ).write[String]
+    ~ (__ \ "fields").write[Map[String, String]]
+    )(uft => Tuple.fromProductTyped(uft))
 
 }

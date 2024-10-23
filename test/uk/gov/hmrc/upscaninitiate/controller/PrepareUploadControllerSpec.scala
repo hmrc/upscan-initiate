@@ -17,6 +17,7 @@
 package uk.gov.hmrc.upscaninitiate.controller
 
 import org.apache.pekko.actor.ActorSystem
+import org.mockito.Mockito.when
 import org.scalatest.GivenWhenThen
 import play.api.http.HeaderNames.USER_AGENT
 import play.api.http.Status.{BAD_REQUEST, OK}
@@ -46,9 +47,9 @@ class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponents
   private val clock = Clock.fixed(Clock.systemDefaultZone().instant(), Clock.systemDefaultZone().getZone)
 
   private trait WithGlobalFileSizeLimitFixture {
-    val GlobalFileSizeLimit = 1024
+    val globalFileSizeLimit = 1024L
     val prepareUploadService = mock[PrepareUploadService]
-    when(prepareUploadService.globalFileSizeLimit).thenReturn(GlobalFileSizeLimit)
+    when(prepareUploadService.globalFileSizeLimit).thenReturn(globalFileSizeLimit)
   }
 
   private trait WithServiceConfiguration {
@@ -289,7 +290,7 @@ class PrepareUploadControllerSpec extends UnitSpec with StubControllerComponents
         ("x-session-id", "some-session-id")
       ).withBody(Json.obj(
         "callbackUrl" -> "https://www.example.com",
-        "maximumFileSize" -> (GlobalFileSizeLimit + 1))
+        "maximumFileSize" -> (globalFileSizeLimit + 1))
       )
 
       When("upload initiation has been requested")

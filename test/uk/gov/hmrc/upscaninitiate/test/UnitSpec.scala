@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.upscaninitiate.test
 
-import org.mockito.scalatest.MockitoSugar
 import org.scalatest.matchers.should
 import org.scalatest.wordspec.AnyWordSpecLike
+import org.scalatestplus.mockito.MockitoSugar
 
 trait UnitSpec extends AnyWordSpecLike with should.Matchers with MockitoSugar

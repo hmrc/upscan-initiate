@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.upscaninitiate.connector.s3
 
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.{verify, when}
 import org.scalatest.GivenWhenThen
 import play.api.libs.json.{JsArray, JsValue, Json}
 import uk.gov.hmrc.upscaninitiate.connector.model.{AwsCredentials, ContentLengthRange, UploadParameters}
