@@ -36,3 +36,6 @@ bin
 t
 nohup.out
 nohup
+.metals/
+.vscode/
+

@@ -1,2 +1,2 @@
-POST        /initiate                                                  controllers.PrepareUploadController.prepareUploadV1
-POST        /v2/initiate                                               controllers.PrepareUploadController.prepareUploadV2
+POST        /initiate                                                  uk.gov.hmrc.upscaninitiate.controller.PrepareUploadController.prepareUploadV1
+POST        /v2/initiate                                               uk.gov.hmrc.upscaninitiate.controller.PrepareUploadController.prepareUploadV2
