@@ -3,10 +3,6 @@ import sbt.Keys._
 import sbt._
 import scoverage.ScoverageKeys
 import uk.gov.hmrc.DefaultBuildSettings
-import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
-
-
-val appName = "upscan-initiate"
 
 ThisBuild / majorVersion := 0
 ThisBuild / scalaVersion := "3.3.4"
@@ -23,8 +19,8 @@ lazy val scoverageSettings = Seq(
   ScoverageKeys.coverageHighlighting := true
 )
 
-lazy val microservice = Project(appName, file("."))
-  .enablePlugins(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtDistributablesPlugin)
+lazy val microservice = Project("upscan-initiate", file("."))
+  .enablePlugins(PlayScala, SbtDistributablesPlugin)
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
   .settings(scoverageSettings: _*)
   .settings(scalacOptions += "-Wconf:src=routes/.*:s")
