@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.upscaninitiate.service
 
+import com.codahale.metrics.MetricRegistry
 import org.slf4j.MDC
 import play.api.Logging
-import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 import uk.gov.hmrc.upscaninitiate.config.ServiceConfiguration
 import uk.gov.hmrc.upscaninitiate.connector.model.{ContentLengthRange, UploadFormGenerator, UploadParameters}
 import uk.gov.hmrc.upscaninitiate.controller.model.{PreparedUploadResponse, Reference, UploadFormTemplate}
@@ -30,9 +30,9 @@ import scala.jdk.DurationConverters.ScalaDurationOps
 
 @Singleton
 class PrepareUploadService @Inject()(
-  postSigner   : UploadFormGenerator,
-  configuration: ServiceConfiguration,
-  metrics      : Metrics
+  postSigner    : UploadFormGenerator,
+  configuration : ServiceConfiguration,
+  metricRegistry: MetricRegistry
 ) extends Logging:
 
   def prepareUpload(
@@ -62,7 +62,7 @@ class PrepareUploadService @Inject()(
       MDC.put("file-reference", reference.toString)
       logger.info(s"Allocated key=[${reference.value}] to uploadRequest with requestId=[$requestId] sessionId=[$sessionId] from [${settings.consumingService}].")
       logger.debug(s"Prepared upload response [$result].")
-      metrics.defaultRegistry.counter("uploadInitiated").inc()
+      metricRegistry.counter("uploadInitiated").inc()
 
       result
     finally
