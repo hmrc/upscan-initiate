@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.upscaninitiate.connector.s3
 
+import software.amazon.awssdk.utils.BinaryUtils
 import uk.gov.hmrc.upscaninitiate.connector.model.AwsCredentials
 
 import java.nio.charset.Charset
@@ -40,7 +41,7 @@ object PolicySigner extends PolicySigner:
   ): String =
     val signingKey      = newSigningKey(credentials, formattedSigningDate, regionName, "s3")
     val policySignature = sign(encodedPolicy, signingKey)
-    toHex(policySignature)
+    BinaryUtils.toHex(policySignature)
 
   private def newSigningKey(
     credentials: AwsCredentials,
@@ -60,5 +61,5 @@ object PolicySigner extends PolicySigner:
     mac.init(SecretKeySpec(key, algorithm))
     mac.doFinal(stringData.getBytes("UTF-8"))
 
-  private def toHex(bytes: Array[Byte]): String =
-    java.lang.String.format("%032x", new java.math.BigInteger(1, bytes))
+//  private def toHex(bytes: Array[Byte]): String =
+//    java.lang.String.format("%032x", new java.math.BigInteger(1, bytes)).dropWhile(_ == '0')
