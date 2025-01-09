@@ -29,7 +29,8 @@ trait ServiceConfiguration:
   def accessKeyId             : String
   def secretAccessKey         : String
   def fileExpirationPeriod    : FiniteDuration
-  def globalFileSizeLimit     : Long
+  def maxFileSizeLimit        : Long
+  def defaultMaxFileSize      : Long
   def allowedCallbackProtocols: Seq[String]
 
 class PlayBasedServiceConfiguration @Inject()(
@@ -57,8 +58,11 @@ class PlayBasedServiceConfiguration @Inject()(
   override val sessionToken: Option[String] =
     configuration.getOptional[String]("aws.sessionToken")
 
-  override val globalFileSizeLimit: Long =
-    configuration.get[Long]("global.file.size.limit")
+  override val maxFileSizeLimit: Long =
+    configuration.get[Long]("maxFileSize.limit")
+
+  override val defaultMaxFileSize: Long =
+    configuration.get[Long]("maxFileSize.default")
 
   override val allowedCallbackProtocols: Seq[String] =
     configuration

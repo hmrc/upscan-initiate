@@ -78,10 +78,10 @@ class PrepareUploadService @Inject()(
   ): UploadFormTemplate =
 
     val minFileSize = settings.prepareUploadRequest.minimumFileSize.getOrElse(0L)
-    val maxFileSize = settings.prepareUploadRequest.maximumFileSize.getOrElse(globalFileSizeLimit)
+    val maxFileSize = settings.prepareUploadRequest.maximumFileSize.getOrElse(defaultMaxFileSize)
 
     require(minFileSize >= 0                  , "Minimum file size is less than 0")
-    require(maxFileSize <= globalFileSizeLimit, "Maximum file size is greater than global maximum file size")
+    require(maxFileSize <= maxFileSizeLimit   , "Maximum file size is greater than global maximum file size")
     require(minFileSize <= maxFileSize        , "Minimum file size is greater than maximum file size")
 
     val uploadParameters = UploadParameters(
@@ -105,7 +105,10 @@ class PrepareUploadService @Inject()(
 
     UploadFormTemplate(settings.uploadUrl, form)
 
-  def globalFileSizeLimit: Long =
-    configuration.globalFileSizeLimit
+  def maxFileSizeLimit: Long =
+    configuration.maxFileSizeLimit
+
+  def defaultMaxFileSize: Long =
+    configuration.defaultMaxFileSize
 
 end PrepareUploadService

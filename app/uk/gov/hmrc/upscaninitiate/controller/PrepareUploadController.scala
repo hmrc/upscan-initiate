@@ -46,14 +46,14 @@ class PrepareUploadController @Inject()(
    * V1 of the API supports direct upload to an S3 bucket and *does not support* error redirects in the event of failure
    */
   def prepareUploadV1: Action[JsValue] =
-    given Reads[PrepareUploadRequest] = PrepareUploadRequest.readsV1(prepareUploadService.globalFileSizeLimit)
+    given Reads[PrepareUploadRequest] = PrepareUploadRequest.readsV1(prepareUploadService.maxFileSizeLimit)
     prepareUpload(uploadUrl = s"https://${configuration.inboundBucketName}.s3.amazonaws.com")
 
   /**
    * V2 of the API supports upload to an S3 bucket via a proxy that additionally supports error redirects in the event of failure
    */
   def prepareUploadV2: Action[JsValue] =
-    given Reads[PrepareUploadRequest] = PrepareUploadRequest.readsV2(prepareUploadService.globalFileSizeLimit)
+    given Reads[PrepareUploadRequest] = PrepareUploadRequest.readsV2(prepareUploadService.maxFileSizeLimit)
     prepareUpload(uploadUrl = s"${configuration.uploadProxyUrl}/v1/uploads/${configuration.inboundBucketName}")
 
   private def prepareUpload(
