@@ -61,7 +61,7 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen:
         "x-amz-meta-session-id"               -> "some-session-id",
         "x-amz-meta-request-id"               -> "some-request-id",
         "minSize"                             -> "0",
-        "maxSize"                             -> "1024",
+        "maxSize"                             -> "100",
         "x-amz-meta-upscan-initiate-received" -> receivedAt.toString
       )
 
@@ -174,7 +174,7 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen:
         "x-amz-meta-session-id"               -> "some-session-id",
         "x-amz-meta-request-id"               -> "some-request-id",
         "minSize"                             -> "0",
-        "maxSize"                             -> "1024",
+        "maxSize"                             -> "100",
         "x-amz-meta-upscan-initiate-received" -> receivedAt.toString,
         "success_redirect_url"                -> settings.prepareUploadRequest.successRedirect.get
       )
@@ -206,7 +206,7 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen:
         "x-amz-meta-session-id"               -> "some-session-id",
         "x-amz-meta-request-id"               -> "some-request-id",
         "minSize"                             -> "0",
-        "maxSize"                             -> "1024",
+        "maxSize"                             -> "100",
         "x-amz-meta-upscan-initiate-received" -> receivedAt.toString,
         "error_redirect_url"                  -> settings.prepareUploadRequest.errorRedirect.get
       )
@@ -220,8 +220,10 @@ class PrepareUploadServiceSpec extends UnitSpec with GivenWhenThen:
       .thenReturn("test-bucket")
     when(serviceConfiguration.fileExpirationPeriod)
       .thenReturn(7.days)
-    when(serviceConfiguration.globalFileSizeLimit)
+    when(serviceConfiguration.maxFileSizeLimit)
       .thenReturn(1024L)
+    when(serviceConfiguration.defaultMaxFileSize)
+      .thenReturn(100L)
     when(serviceConfiguration.allowedCallbackProtocols)
       .thenReturn(List("https"))
 

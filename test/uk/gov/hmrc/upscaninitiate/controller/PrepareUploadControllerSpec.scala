@@ -50,10 +50,13 @@ class PrepareUploadControllerSpec
   private val clock = Clock.fixed(Clock.systemDefaultZone().instant(), Clock.systemDefaultZone().getZone)
 
   private trait WithGlobalFileSizeLimitFixture {
-    val globalFileSizeLimit  = 1024L
+    val maxFileSizeLimit     = 1024L
+    val defaultMaxFileSize   = 100L
     val prepareUploadService = mock[PrepareUploadService]
-    when(prepareUploadService.globalFileSizeLimit)
-      .thenReturn(globalFileSizeLimit)
+    when(prepareUploadService.maxFileSizeLimit)
+      .thenReturn(maxFileSizeLimit)
+    when(prepareUploadService.defaultMaxFileSize)
+      .thenReturn(defaultMaxFileSize)
   }
 
   private trait WithServiceConfiguration:
@@ -293,7 +296,7 @@ class PrepareUploadControllerSpec
         )
         .withBody(Json.obj(
           "callbackUrl" -> "https://www.example.com",
-          "maximumFileSize" -> (globalFileSizeLimit + 1))
+          "maximumFileSize" -> (maxFileSizeLimit + 1))
         )
 
       When("upload initiation has been requested")

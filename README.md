@@ -146,7 +146,7 @@ Another example `upscan/v2/initiate` requests that explicitly identifies the con
 |successRedirect|Url to redirect to after file has been successfully uploaded.|no|
 |errorRedirect|Url to redirect to if error encountered during upload.|no|
 |minimumFileSize|Minimum file size (in Bytes). Default is 0.|no|
-|maximumFileSize|Maximum file size (in Bytes). Cannot be greater than 100MB. Default is 100MB.|no|
+|maximumFileSize|Maximum file size (in Bytes). Cannot be greater than 1024MB. Default is 1024MB.|no|
 
 Example response
 
