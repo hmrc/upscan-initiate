@@ -28,6 +28,7 @@ trait ServiceConfiguration:
   def sessionToken            : Option[String]
   def accessKeyId             : String
   def secretAccessKey         : String
+  def secretArn               : String
   def fileExpirationPeriod    : FiniteDuration
   def maxFileSizeLimit        : Long
   def defaultMaxFileSize      : Long
@@ -54,6 +55,9 @@ class PlayBasedServiceConfiguration @Inject()(
 
   override val secretAccessKey: String =
     configuration.get[String]("aws.secretAccessKey")
+
+  override val secretArn: String =
+    configuration.get[String]("aws.secretArn")
 
   override val sessionToken: Option[String] =
     configuration.getOptional[String]("aws.sessionToken")
