@@ -31,11 +31,12 @@ tmp
 .idea_modules
 bin
 **/Scratchpad.scala
-
 *.log
 t
 nohup.out
 nohup
 .metals/
 .vscode/
-
+.bloop/
+project/.bloop/
+project/metals.sbt

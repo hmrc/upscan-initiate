@@ -22,10 +22,14 @@ import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.inject.bind
 import play.api.libs.json.{JsValue, Json}
 import play.api.test.Helpers._
 import play.api.test.{FakeHeaders, FakeRequest}
 import uk.gov.hmrc.http.HeaderNames.xSessionId
+import uk.gov.hmrc.upscaninitiate.connector.model.{AwsCredentials, UploadFormGenerator}
+import uk.gov.hmrc.upscaninitiate.connector.s3.S3UploadFormGenerator
+import java.time.{Clock, Instant}
 
 class PrepareUploadControllerISpec
   extends AnyWordSpec
@@ -40,6 +44,17 @@ class PrepareUploadControllerISpec
       .configure(
         "uploadProxy.url"       -> "https://upload-proxy.tax.service.gov.uk",
         "aws.s3.bucket.inbound" -> "inbound-bucket"
+      )
+      .overrides(
+        bind[UploadFormGenerator].toInstance(new S3UploadFormGenerator(
+          AwsCredentials(
+            accessKeyId = "test-key-id",
+            secretKey = "test-secret-key",
+            sessionToken = None
+          ),
+          regionName = "eu-west-2",
+          currentTime = () => Instant.now(Clock.systemUTC())
+        ))
       )
       .build()
 

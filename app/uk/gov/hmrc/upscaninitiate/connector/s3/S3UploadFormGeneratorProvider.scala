@@ -21,17 +21,52 @@ import uk.gov.hmrc.upscaninitiate.connector.model.{AwsCredentials, UploadFormGen
 
 import java.time.{Clock, Instant}
 import javax.inject.{Inject, Provider, Singleton}
+import play.api.libs.functional.syntax.toFunctionalBuilderOps
+import play.api.libs.json.*
+import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient
+import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueRequest
+import play.api.Logger
 
 @Singleton
 class S3UploadFormGeneratorProvider @Inject()(
-  configuration: ServiceConfiguration,
-  clock        : Clock
+  configuration       : ServiceConfiguration,
+  clock               : Clock,
+  secretsManagerClient: SecretsManagerClient
 ) extends Provider[UploadFormGenerator]:
   import configuration._
 
+  private val logger = Logger(getClass)
+
   override def get() =
+    val credentials = sessionToken match
+      case Some(_) =>
+        AwsCredentials(accessKeyId, secretAccessKey, sessionToken)
+      case None =>
+        try
+          val request = GetSecretValueRequest.builder()
+            .secretId(secretArn)
+            .build()
+
+          val secretResponse = secretsManagerClient.getSecretValue(request)
+          val creds = Json.parse(secretResponse.secretString()).as[RetrievedCredentials](RetrievedCredentials.reads)
+
+          AwsCredentials(creds.accessKeyId, creds.secretAccessKey, sessionToken = None)
+        catch
+          case e: Exception =>
+            logger.error(s"Failed to retrieve AWS credentials from Secrets Manager: ${e.getMessage}", e)
+            throw e
+
     S3UploadFormGenerator(
-      AwsCredentials(accessKeyId, secretAccessKey, sessionToken),
+      credentials,
       regionName  = region,
       currentTime = () => Instant.now(clock)
     )
+
+final case class RetrievedCredentials(accessKeyId: String, secretAccessKey: String):
+  override def toString(): String = s"RetrievedCredentials($accessKeyId, REDACTED)"
+
+object RetrievedCredentials:
+  val reads: Reads[RetrievedCredentials] =
+    ( (__ \ "accessKeyId"    ).read[String]
+    ~ (__ \ "secretAccessKey").read[String]
+    )(apply)

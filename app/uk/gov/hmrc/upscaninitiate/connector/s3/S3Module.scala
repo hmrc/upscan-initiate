@@ -19,9 +19,30 @@ package uk.gov.hmrc.upscaninitiate.connector.s3
 import play.api.inject.{Binding, Module}
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.upscaninitiate.connector.model.UploadFormGenerator
+import uk.gov.hmrc.upscaninitiate.config.ServiceConfiguration
+import org.apache.pekko.actor.ActorSystem
+import javax.inject.{Inject, Provider}
+import software.amazon.awssdk.auth.credentials.ContainerCredentialsProvider
+import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient
+import software.amazon.awssdk.regions.Region
 
 class S3Module extends Module:
   override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[_]] =
     Seq(
+      bind[SecretsManagerClient].toProvider[SecretsManagerClientProvider],
       bind[UploadFormGenerator].toProvider[S3UploadFormGeneratorProvider]
     )
+
+class SecretsManagerClientProvider @Inject()(
+  configuration: ServiceConfiguration,
+  actorSystem  : ActorSystem
+) extends Provider[SecretsManagerClient]:
+  override def get(): SecretsManagerClient =
+    val containerCredentials = ContainerCredentialsProvider.builder().build()
+    val client =
+      SecretsManagerClient.builder()
+        .credentialsProvider(containerCredentials)
+        .region(Region.of(configuration.region))
+        .build()
+    actorSystem.registerOnTermination(client.close())
+    client
