@@ -484,12 +484,12 @@ These commands will give you an access to SBT shell where you can run the servic
 ## Appendix <a name="appendix"></a>
 ### Quick reference figures <a name="appendix__figures"></a>
 
-| Metric                                                  | Value           | Comments |
-| ------------------------------------------------------- | ----------------|----------|
-| Expiration of S3 upload pre-signed URL                  | 7 days          | A relatively long period, since we can't control exactly when users will initiate the upload process |
-| Expiration of S3 download pre-signed URL (scanned docs) | 1 day (default) | Configurable per-service up to 7 days. Upscan is not intended as a storage solution for services |
-| Callback request retry time                             | 60 seconds      |          |
-| Maximum callback notification retries                   | 30              |          |
+| Metric                                                  | Value             | Comments |
+| ------------------------------------------------------- | ------------------|----------|
+| Expiration of S3 upload pre-signed URL                  | 7 days            | A relatively long period, since we can't control exactly when users will initiate the upload process |
+| Expiration of S3 download pre-signed URL (scanned docs) | 6 hours (default) | Configurable per-service up to 6 hourss. Upscan is not intended as a storage solution for services, for storage needs beyond 6 hours, integrate with [object-store](https://github.com/hmrc/object-store)   |
+| Callback request retry time                             | 60 seconds        |          |
+| Maximum callback notification retries                   | 30                |          |
 
 [[Back to the top]](#top)
 
