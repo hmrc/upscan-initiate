@@ -26,7 +26,6 @@ lazy val microservice = Project("upscan-initiate", file("."))
   .settings(scalacOptions += "-Wconf:src=routes/.*:s")
   .settings(playDefaultPort := 9571)
   .settings(libraryDependencies ++= AppDependencies())
-  .settings(resolvers += Resolver.jcenterRepo)
   .settings(Test / parallelExecution := false)
 
 lazy val it = project
