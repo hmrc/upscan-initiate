@@ -7,8 +7,7 @@ object AppDependencies {
   private val compile = Seq(
     "uk.gov.hmrc"            %% "bootstrap-backend-play-30" % bootstrapVersion,
     "software.amazon.awssdk" %  "s3"                        % awsSdkVersion,
-    "software.amazon.awssdk" %  "secretsmanager"            % awsSdkVersion,
-    "com.fasterxml.jackson.core" % "jackson-core"           % "2.20.0"
+    "software.amazon.awssdk" %  "secretsmanager"            % awsSdkVersion
   )
 
   private val test = Seq(
