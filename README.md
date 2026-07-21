@@ -512,7 +512,6 @@ These commands will give you an access to SBT shell where you can run the servic
 
 #### Slack <a name="appendix__links__slack"></a>
 * [#team-platops](https://hmrcdigital.slack.com/messages/T04RY81HB/)
-* [#event-upscan](https://hmrcdigital.slack.com/messages/C8XPL559N)
 
 [[Back to the top]](#top)
 
