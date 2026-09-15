@@ -47,6 +47,36 @@ The Upscan service allows consuming services to orchestrate the uploading of fil
 temporary storage of the uploaded file, ensures that the file isn't harmful (doesn't contain viruses) and verifies against predefined restrictions provided by the consuming service (e.g. file type & file size).
 Once the upload URL has been requested, upload and verification of a file are performed asynchronously without the involvement of the consuming service.
 
+### Processing time and asynchronous behaviour
+
+Upscan processes files asynchronously. The response from the upload request confirms that the file has been accepted by the upload endpoint; it does not mean that virus scanning and notification have completed.
+
+The time from starting an upload to receiving a `READY` or `FAILED` notification includes:
+
+* the time taken for the user's client to upload the file
+* time spent waiting for processing
+* virus scanning and file validation
+* time spent waiting for notification
+* delivery of the callback to the consuming service
+
+Processing time varies depending on the file size, upload speed, queue depth and service load. Upscan does not provide a guaranteed processing time, so consuming services must not assume that a callback will arrive within a fixed period.
+
+For large files, the upload itself may take a significant amount of time before Upscan can begin processing the file. When investigating a slow upload, use the unique file reference to distinguish the upload duration from the time taken by Upscan to process and notify the consuming service.
+
+### Expected consuming-service behaviour while waiting
+
+Consuming services must not wait synchronously for Upscan to finish processing a file. A consuming service should not keep the user's request open or fail the user's journey because a callback has not arrived within a short timeout.
+
+Instead, consuming services should:
+
+* record the upload as pending using the unique Upscan reference
+* show the user an appropriate waiting or status page, or allow the user to continue and return later
+* receive and process the callback asynchronously
+* allow the callback to arrive after the user's original request has completed
+* return a `2xx` response once the notification has been accepted for processing
+* make callback processing idempotent because a notification may be delivered more than once
+* process successful notifications promptly and download the file using the supplied `downloadUrl`
+
 [[Back to the top]](#top)
 
 ## File upload workflow <a name="workflow"></a>
